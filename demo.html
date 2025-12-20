@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoordFinder Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            margin-top: 0;
+        }
+        .code-block {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .output {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 5px;
+        }
+        .section h2 {
+            color: #764ba2;
+            margin-top: 0;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #764ba2;
+        }
+        .point-card {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .point-card h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        .rating {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .rating-high { background: #4caf50; color: white; }
+        .rating-medium { background: #ff9800; color: white; }
+        .rating-low { background: #f44336; color: white; }
+        .log-output {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ CoordFinder Interactive Demo</h1>
+        
+        <div class="section">
+            <h2>Input Text</h2>
+            <div class="code-block">The ship was at 58.8 and 10,9. Lighthouse at 58°54,0'N, 011 00,0 E.</div>
+        </div>
+
+        <div class="section">
+            <h2>1. Simple Usage - CF.pointsIn()</h2>
+            <button onclick="runSimpleDemo()">Run Demo</button>
+            <div id="simple-output"></div>
+        </div>
+
+        <div class="section">
+            <h2>2. Detailed Usage - With Ratings</h2>
+            <button onclick="runDetailedDemo()">Run Demo</button>
+            <div id="detailed-output"></div>
+        </div>
+
+        <div class="section">
+            <h2>3. Parse Log</h2>
+            <button onclick="runLogDemo()">Show Parse Log</button>
+            <div id="log-output"></div>
+        </div>
+
+        <div class="section">
+            <h2>4. Different Output Formats</h2>
+            <button onclick="runFormatDemo()">Show Formats</button>
+            <div id="format-output"></div>
+        </div>
+    </div>
+
+    <script src="coordfinder.js"></script>
+    <script>
+        var text = 'The ship was at 58.8 and 10,9. Lighthouse at 58°54,0\'N, 011 00,0 E.';
+
+        function getRatingClass(rating) {
+            if (rating >= 0.8) return 'rating-high';
+            if (rating >= 0.5) return 'rating-medium';
+            return 'rating-low';
+        }
+
+        function runSimpleDemo() {
+            var output = document.getElementById('simple-output');
+            output.innerHTML = '<p>Running: <code>var points = CF.pointsIn(text);</code></p>';
+            
+            try {
+                var points = CF.pointsIn(text);
+                
+                var html = '<div class="output">';
+                html += '<strong>Found ' + points.length + ' coordinate pairs:</strong><br><br>';
+                
+                for (var i = 0; i < points.length; i++) {
+                    var p = points[i];
+                    html += '<div class="point-card">';
+                    html += '<h3>Point ' + (i + 1) + '</h3>';
+                    html += '<strong>Formatted:</strong> ' + p.asText() + '<br>';
+                    html += '<strong>Latitude:</strong> ' + p.latitude().toFixed(6) + '<br>';
+                    html += '<strong>Longitude:</strong> ' + p.longitude().toFixed(6) + '<br>';
+                    html += '<strong>Rating:</strong> <span class="rating ' + getRatingClass(p.rating()) + '">' + 
+                            p.rating().toFixed(2) + '</span><br>';
+                    html += '<strong>Original:</strong> ' + p.originalText() + '<br>';
+                    html += '<strong>Context:</strong> ' + p.context({maxChars: 30});
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+                output.innerHTML += html;
+            } catch(e) {
+                output.innerHTML += '<div class="output" style="background:#ffebee;border-color:#f44336;">Error: ' + 
+                                   e.message + '</div>';
+            }
+        }
+
+        function runDetailedDemo() {
+            var output = document.getElementById('detailed-output');
+            output.innerHTML = '<p>Running:</p><div class="code-block">var cf = new CF();<br>' +
+                              'cf.parse(text);<br>' +
+                              'var highConfidence = cf.points({rating: 0.8});</div>';
+            
+            try {
+                var cf = new CF();
+                cf.parse(text);
+                var allPoints = cf.points();
+                var highConfidence = cf.points({rating: 0.8});
+                
+                var html = '<div class="output">';
+                html += '<strong>All points:</strong> ' + allPoints.length + '<br>';
+                html += '<strong>High confidence (≥0.8):</strong> ' + highConfidence.length + '<br><br>';
+                
+                html += '<h3>All Points:</h3>';
+                for (var i = 0; i < allPoints.length; i++) {
+                    var p = allPoints[i];
+                    html += '<div class="point-card">';
+                    html += '<strong>Point ' + (i + 1) + ':</strong> ' + p.asText() + ' ';
+                    html += '<span class="rating ' + getRatingClass(p.rating()) + '">' + 
+                            p.rating().toFixed(2) + '</span><br>';
+                    html += '<em>' + p.ratingLog() + '</em>';
+                    html += '</div>';
+                }
+                
+                if (highConfidence.length > 0) {
+                    html += '<h3>High Confidence Points Only:</h3>';
+                    for (var i = 0; i < highConfidence.length; i++) {
+                        var p = highConfidence[i];
+                        html += '<div class="point-card">';
+                        html += '<strong>' + p.asText() + '</strong><br>';
+                        html += 'Lat: ' + p.latitude().toFixed(6) + ', Lng: ' + p.longitude().toFixed(6);
+                        html += '</div>';
+                    }
+                } else {
+                    html += '<p><em>No points with rating ≥ 0.8</em></p>';
+                }
+                
+                html += '</div>';
+                output.innerHTML += html;
+            } catch(e) {
+                output.innerHTML += '<div class="output" style="background:#ffebee;border-color:#f44336;">Error: ' + 
+                                   e.message + '</div>';
+            }
+        }
+
+        function runLogDemo() {
+            var output = document.getElementById('log-output');
+            output.innerHTML = '<p>Running: <code>console.log(cf.log());</code></p>';
+            
+            try {
+                var cf = new CF();
+                cf.parse(text);
+                cf.points();
+                
+                var log = cf.log();
+                output.innerHTML += '<div class="log-output">' + log + '</div>';
+            } catch(e) {
+                output.innerHTML += '<div class="output" style="background:#ffebee;border-color:#f44336;">Error: ' + 
+                                   e.message + '</div>';
+            }
+        }
+
+        function runFormatDemo() {
+            var output = document.getElementById('format-output');
+            output.innerHTML = '<p>Showing different output formats for the first point:</p>';
+            
+            try {
+                var points = CF.pointsIn(text);
+                if (points.length === 0) {
+                    output.innerHTML += '<div class="output">No points found</div>';
+                    return;
+                }
+                
+                var p = points[0];
+                
+                var html = '<div class="output">';
+                html += '<strong>Plain (default):</strong><br>';
+                html += '<code>p.asText({format: \'plain\'})</code><br>';
+                html += '→ ' + p.asText({format: 'plain'}) + '<br><br>';
+                
+                html += '<strong>Degrees with direction after:</strong><br>';
+                html += '<code>p.asText({format: \'degrees\', directionLetter: \'after\'})</code><br>';
+                html += '→ ' + p.asText({format: 'degrees', directionLetter: 'after'}) + '<br><br>';
+                
+                html += '<strong>Compact format:</strong><br>';
+                html += '<code>p.asText({compact: true})</code><br>';
+                html += '→ ' + p.asText({compact: true}) + '<br><br>';
+                
+                html += '<strong>Non-localized (period as decimal):</strong><br>';
+                html += '<code>p.asText({localized: false})</code><br>';
+                html += '→ ' + p.asText({localized: false}) + '<br><br>';
+                
+                html += '<strong>Direction before (default):</strong><br>';
+                html += '<code>p.asText({directionLetter: \'before\'})</code><br>';
+                html += '→ ' + p.asText({directionLetter: 'before'}) + '<br><br>';
+                
+                html += '<strong>No direction letters:</strong><br>';
+                html += '<code>p.asText({directionLetter: \'none\'})</code><br>';
+                html += '→ ' + p.asText({directionLetter: 'none'}) + '<br>';
+                
+                html += '</div>';
+                output.innerHTML += html;
+            } catch(e) {
+                output.innerHTML += '<div class="output" style="background:#ffebee;border-color:#f44336;">Error: ' + 
+                                   e.message + '</div>';
+            }
+        }
+
+        // Auto-run simple demo on load
+        window.onload = function() {
+            runSimpleDemo();
+        };
+    </script>
+</body>
+</html>

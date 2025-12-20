@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoordFinder Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .section {
+            background: white;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #007acc;
+            padding-bottom: 5px;
+        }
+        .input-text {
+            background: #f9f9f9;
+            padding: 10px;
+            border-left: 3px solid #007acc;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 8px;
+            background: #e8f4f8;
+            border-left: 3px solid #28a745;
+        }
+        .point {
+            margin: 5px 0;
+            padding: 5px;
+            background: #fff;
+            border: 1px solid #ddd;
+        }
+        .log {
+            background: #f0f0f0;
+            padding: 10px;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #d9534f;
+            background: #f9e6e6;
+            padding: 10px;
+            border-left: 3px solid #d9534f;
+        }
+    </style>
+</head>
+<body>
+    <h1>CoordFinder Test Suite</h1>
+    
+    <div class="section">
+        <h2>Input Text</h2>
+        <div class="input-text" id="inputText"></div>
+    </div>
+    
+    <div class="section">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+    
+    <script src="coordfinder.js"></script>
+    <script>
+        var exampleText = `Report: 
+"The ship was seen drifting about 200 meters west of the island at 58.8 and 10,9. Nothing seen around it.
+
+Observation made at 10 minutes past 14 from the lighthouse at 58°54,0'N, 011 00,0 E."`;
+
+        document.getElementById('inputText').textContent = exampleText;
+        
+        var resultsDiv = document.getElementById('results');
+        
+        function addResult(title, content) {
+            var div = document.createElement('div');
+            div.className = 'result';
+            div.innerHTML = '<strong>' + title + '</strong><br>' + content;
+            resultsDiv.appendChild(div);
+        }
+        
+        function addError(message) {
+            var div = document.createElement('div');
+            div.className = 'error';
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        try {
+            // Test 1: CF.pointIn()
+            addResult('1. CF.pointIn() - First point', 'Testing...');
+            var firstPoint = CF.pointIn(exampleText);
+            if (firstPoint) {
+                var html = 'Found: ' + firstPoint.asText() + '<br>';
+                html += 'Latitude: ' + firstPoint.latitude() + '<br>';
+                html += 'Longitude: ' + firstPoint.longitude() + '<br>';
+                html += 'Rating: ' + firstPoint.rating() + '<br>';
+                html += 'Context: ' + firstPoint.context({maxChars: 30});
+                resultsDiv.lastChild.innerHTML = '<strong>1. CF.pointIn() - First point</strong><br>' + html;
+            } else {
+                resultsDiv.lastChild.innerHTML = '<strong>1. CF.pointIn() - First point</strong><br>No point found';
+            }
+            
+            // Test 2: CF.pointsIn()
+            addResult('2. CF.pointsIn() - All points', 'Testing...');
+            var allPoints = CF.pointsIn(exampleText);
+            var html = 'Found ' + allPoints.length + ' points:<br>';
+            for (var i = 0; i < allPoints.length; i++) {
+                html += '<div class="point">';
+                html += '<strong>Point ' + (i+1) + ':</strong> ' + allPoints[i].asText() + '<br>';
+                html += 'Lat/Lng: ' + allPoints[i].latitude() + ', ' + allPoints[i].longitude() + '<br>';
+                html += 'Rating: ' + allPoints[i].rating() + '<br>';
+                html += 'Original: ' + allPoints[i].originalText();
+                html += '</div>';
+            }
+            resultsDiv.lastChild.innerHTML = '<strong>2. CF.pointsIn() - All points</strong><br>' + html;
+            
+            // Test 3: Instance method with logging
+            addResult('3. Instance method with logging', 'Testing...');
+            var cf = new CF();
+            cf.parse(exampleText);
+            var points = cf.points();
+            var html = 'Found ' + points.length + ' points<br>';
+            html += '<div class="log">' + cf.log().replace(/\n/g, '<br>') + '</div>';
+            resultsDiv.lastChild.innerHTML = '<strong>3. Instance method with logging</strong><br>' + html;
+            
+            // Test 4: Grouping
+            addResult('4. CF.groupsIn() - Grouped points', 'Testing...');
+            var groups = CF.groupsIn(exampleText);
+            var html = 'Found ' + groups.length + ' groups:<br>';
+            for (var i = 0; i < groups.length; i++) {
+                html += '<div class="point">';
+                html += '<strong>Group ' + (i+1) + '</strong> (' + groups[i].length + ' points):<br>';
+                for (var j = 0; j < groups[i].length; j++) {
+                    html += '&nbsp;&nbsp;• ' + groups[i][j].asText() + '<br>';
+                }
+                html += '</div>';
+            }
+            resultsDiv.lastChild.innerHTML = '<strong>4. CF.groupsIn() - Grouped points</strong><br>' + html;
+            
+            // Test 5: Unused coords
+            addResult('5. Unused coordinates', 'Testing...');
+            var unused = cf.unusedCoords();
+            var html = 'Found ' + unused.length + ' unused coordinates:<br>';
+            for (var i = 0; i < unused.length; i++) {
+                html += '• ' + unused[i].originalText() + ' (value: ' + unused[i].value + ')<br>';
+            }
+            resultsDiv.lastChild.innerHTML = '<strong>5. Unused coordinates</strong><br>' + html;
+            
+            // Test 6: Different formats
+            if (allPoints.length > 0) {
+                addResult('6. Different output formats', 'Testing...');
+                var p = allPoints[0];
+                var html = 'Plain: ' + p.asText({format: 'plain'}) + '<br>';
+                html += 'Degrees: ' + p.asText({format: 'degrees', directionLetter: 'after'}) + '<br>';
+                html += 'Compact: ' + p.asText({format: 'plain', compact: true}) + '<br>';
+                html += 'Non-localized: ' + p.asText({localized: false});
+                resultsDiv.lastChild.innerHTML = '<strong>6. Different output formats</strong><br>' + html;
+            }
+            
+        } catch(e) {
+            addError('Error: ' + e.message + '\n' + e.stack);
+        }
+    </script>
+</body>
+</html>
