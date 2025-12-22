@@ -77,12 +77,43 @@ verification-test-runner.html
 # Ladda din stora testsvit
 ```
 
-## Kända begränsningar:
+## Alla TDD-tester implementerade! ✅
 
-- URL-format (tdd-012, tdd-013) inte implementerat än
-- GeoJSON (tdd-014) inte implementerat än
-- GML (tdd-015) inte implementerat än
-- Flerradiga koordinater (tdd-016) inte implementerat än
-- WKT POINT (tdd-036) inte implementerat än
+### Ytterligare format som nu stöds:
 
-Dessa kommer implementeras i nästa iteration baserat på testresultat.
+5. **URL-format** (tdd-012, tdd-013)
+   - Google Maps: `@59.32894,18.06491`
+   - Eniro: `map/59.329440/18.064510`
+
+6. **GeoJSON** (tdd-014)
+   - Format: `{"coordinates": [18.06491, 59.32894]}`
+   - Hanterar lon,lat ordning korrekt
+
+7. **GML** (tdd-015)
+   - Format: `<gml:pos>59.32894 18.06491</gml:pos>`
+
+8. **WKT POINT** (tdd-036)
+   - Format: `POINT(18.06491 59.32894)`
+   - Hanterar lon,lat ordning korrekt
+
+9. **Prefix-format** (tdd-025)
+   - Format: `Lat: 61.234567 Long: 15.876543`
+   - Stöder Latitude/Longitude och Lat/Long
+
+10. **Very compact DM** (tdd-023)
+    - Format: `5830N01245E` (DDMM format)
+
+11. **Sparse format** (tdd-024)
+    - Hanterar extra whitespace automatiskt
+
+12. **Flerradiga koordinater** (tdd-016, tdd-017)
+    - Fungerar automatiskt över flera rader
+
+### Validering:
+
+- Koordinater utanför giltiga intervall avvisas (tdd-030, tdd-031)
+- RefSys bounds checking förhindrar falska positiva
+
+## Testning:
+
+Öppna **debug-test.html** för att se resultat av alla implementerade tester!
