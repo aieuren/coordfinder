@@ -65,9 +65,15 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
             continue;
         }
         
-        // Input section
-        if (trimmed === 'Input:') {
+        // Input section (can be "Input:" or "Input: value")
+        if (trimmed.match(/^Input:\s*(.*)$/)) {
             state = 'input';
+            var inputValue = RegExp.$1.trim();
+            if (inputValue) {
+                // Input on same line
+                var inputLine = inputValue.replace(/^["']|["']$/g, '');
+                currentTest.input = inputLine;
+            }
             continue;
         }
         
@@ -92,9 +98,12 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
         // Collect expected
         if (state === 'expected' && trimmed !== '') {
             if (currentTest.type === 'Point') {
-                // Point Test: expected format is "lat lon" or "null"
+                // Point Test: expected format is "lat lon" or "- Coords: lat lon" or "null"
                 if (trimmed.toLowerCase() === 'null' || trimmed === '-') {
                     currentTest.expected = null;
+                } else if (trimmed.match(/^-\s*Coords:\s*(.+)$/)) {
+                    // Format: "- Coords: 59.32894 18.06491"
+                    currentTest.expected = RegExp.$1.trim();
                 } else {
                     currentTest.expected = trimmed;
                 }
