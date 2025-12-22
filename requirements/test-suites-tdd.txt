@@ -1,0 +1,266 @@
+# TDD Test Suite - Koordinatparser
+
+# === GRUNDLÄGGANDE WGS84 DECIMALGRADER ===
+
+## Point Test: Enkel decimalform
+Test-ID: tdd-001
+Input: "59.32894 18.06491"
+Expected:
+- Coords: 59.32894 18.06491
+
+## Point Test: Decimalkomma
+Test-ID: tdd-002
+Input: "59,32894 18,06491"
+Expected:
+- Coords: 59.32894 18.06491
+
+## Point Test: Semikolon som separator
+Test-ID: tdd-003
+Input: "59.32894; 18.06491"
+Expected:
+- Coords: 59.32894 18.06491
+
+# === GRADER OCH MINUTER ===
+
+## Point Test: Grader och decimalminuter
+Test-ID: tdd-004
+Input: "59° 19.736' N 18° 3.895' E"
+Expected:
+- Coords: 59.32893 18.06492
+
+## Point Test: Grader, minuter och sekunder
+Test-ID: tdd-005
+Input: "59° 19' 44.2\" N 18° 3' 53.7\" E"
+Expected:
+- Coords: 59.32894 18.06492
+
+## Point Test: Kompakt DMS format
+Test-ID: tdd-006
+Input: "591944N0180354E"
+Expected:
+- Coords: 59.32889 18.06500
+
+# === VÄDERSTRECK OCH KVADRANTER ===
+
+## Point Test: Väderstreck före värden
+Test-ID: tdd-007
+Input: "N 62.45 E 17.38"
+Expected:
+- Coords: 62.45 17.38
+
+## Point Test: Sydvästra kvadranten
+Test-ID: tdd-008
+Input: "S 33.92 W 18.42"
+Expected:
+- Coords: -33.92 -18.42
+
+## Point Test: Svenska väderstreck
+Test-ID: tdd-009
+Input: "N 65.58 Ö 22.14"
+Expected:
+- Coords: 65.58 22.14
+
+# === MINUSTECKEN SOM SEPARATOR ===
+
+## Point Test: Grader-minuter format
+Test-ID: tdd-010
+Input: "58-30 16-45"
+Expected:
+- Coords: 58.50 16.75
+
+## Point Test: Kompakt gradminut
+Test-ID: tdd-011
+Input: "6230-1545"
+Expected:
+- Coords: 62.50 15.75
+
+# === URL-FORMAT ===
+
+## Point Test: Google Maps URL
+Test-ID: tdd-012
+Input: "https://www.google.com/maps/place/59.32894,18.06491"
+Expected:
+- Coords: 59.32894 18.06491
+
+## Point Test: Eniro-stil
+Test-ID: tdd-013
+Input: "map/59.329440/18.064510"
+Expected:
+- Coords: 59.32944 18.06451
+
+# === DATAFORMAT ===
+
+## Point Test: GeoJSON koordinater
+Test-ID: tdd-014
+Input: '{"coordinates": [18.06491, 59.32894]}'
+Expected:
+- Coords: 59.32894 18.06491
+
+## Point Test: GML format
+Test-ID: tdd-015
+Input: "<gml:pos>59.32894 18.06491</gml:pos>"
+Expected:
+- Coords: 59.32894 18.06491
+
+# === FLERRADIGA OCH LISTOR ===
+
+## Points Test: Tvåradiga koordinater
+Test-ID: tdd-016
+Input: |
+  Lat: 60.12345
+  Long: 19.54321
+Expected:
+- Count: 1
+- Coords: 60.12345 19.54321
+
+## Points Test: Numrerad lista
+Test-ID: tdd-017
+Input: |
+  1) 57°30'N 12°15'E
+  2) 57°45'N 12°30'E
+  3) 58°00'N 12°45'E
+Expected:
+- Count: 3
+- Bounds: 57.5 12.25 58.0 12.75
+
+# === SWEREF 99 TM ===
+
+## Points Test: SWEREF 99 TM grundformat
+Test-ID: tdd-018
+Input: "6580000 540000"
+Expected:
+- Count: 1
+- CRS: SWEREF99TM
+
+## Points Test: SWEREF med x-separator
+Test-ID: tdd-019
+Input: "7350000 x 850000"
+Expected:
+- Count: 1
+- CRS: SWEREF99TM
+
+## Points Test: SWEREF i text
+Test-ID: tdd-020
+Input: "Punkten ligger på N 6450000, E 320000 i SWEREF 99 TM"
+Expected:
+- Count: 1
+- CRS: SWEREF99TM
+
+# === RT90 ===
+
+## Points Test: RT90 2.5 gon V
+Test-ID: tdd-021
+Input: "6580000 1540000"
+Expected:
+- Count: 1
+- CRS: RT90
+
+## Points Test: RT90 med kommaseparering
+Test-ID: tdd-022
+Input: "X: 6580000, Y: 1540000"
+Expected:
+- Count: 1
+- CRS: RT90
+
+# === SPECIALFALL OCH KANTFALL ===
+
+## Points Test: Mycket kompakt format
+Test-ID: tdd-023
+Input: "5830N01245E"
+Expected:
+- Coords: 58.50 12.75
+
+## Points Test: Mycket glest format
+Test-ID: tdd-024
+Input: "58  °  30  '  N    12  °  45  '  E"
+Expected:
+- Coords: 58.50 12.75
+
+## Points Test: Prefix Lat/Long
+Test-ID: tdd-025
+Input: "Lat: 61.234567 Long: 15.876543"
+Expected:
+- Coords: 61.234567 15.876543
+
+# === INTERNATIONELLA KOORDINATER ===
+
+## Points Test: Södra halvklotet
+Test-ID: tdd-026
+Input: "POINT(-35.5 149.1)"
+Expected:
+- Coords: -35.5 149.1
+
+## Points Test: Västra halvklotet
+Test-ID: tdd-027
+Input: "40.7128 N, 74.0060 W"
+Expected:
+- Coords: 40.7128 -74.0060
+
+# === BLANDAD TEXT ===
+
+## Points Test: Koordinater i löptext
+Test-ID: tdd-028
+Input: "Fartyget befann sig vid position 58°45'N 17°30'E när händelsen inträffade."
+Expected:
+- Count: 1
+- Coords: 58.75 17.50
+
+## Points Test: Fiskeriloggbok-stil
+Test-ID: tdd-029
+Input: |
+  Fångstområde: 5820N-1145E
+  Position vid start: 5835N-1152E
+Expected:
+- Count: 2
+
+# === NEGATIVA TESTER (ska inte matcha) ===
+
+## Points Test: För stora latitudvärden
+Test-ID: tdd-030
+Input: "95.0 18.0"
+Expected:
+- Count: 0
+
+## Points Test: För stora longitudvärden  
+Test-ID: tdd-031
+Input: "58.0 185.0"
+Expected:
+- Count: 0
+
+## Points Test: Telefonnummer ska inte matcha
+Test-ID: tdd-032
+Input: "Ring 08-123 45 67"
+Expected:
+- Count: 0
+
+## Points Test: Datum ska inte matcha
+Test-ID: tdd-033
+Input: "2024-01-15"
+Expected:
+- Count: 0
+
+# === PRECISION OCH DECIMALER ===
+
+## Points Test: Olika antal decimaler
+Test-ID: tdd-034
+Input: |
+  59.3 18.1
+  59.32 18.06
+  59.329 18.065
+  59.3289 18.0649
+Expected:
+- Count: 4
+
+## Points Test: Hög precision
+Test-ID: tdd-035
+Input: "59.328944123 18.064910456"
+Expected:
+- Coords: 59.328944123 18.064910456
+
+# === NOTATIONER FÖR HELTÄCKNING ===
+
+## Points Test: WKT POINT notation
+Test-ID: tdd-036
+Input: "POINT(18.06491 59.32894)"
+Expected:
+- Count: 1
