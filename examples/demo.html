@@ -133,7 +133,11 @@
 
     <script src="../src/coordfinder.js"></script>
     <script>
-        document.getElementById('cfVersion').textContent = 'v' + (CF.version || 'unknown');
+        var versionText = 'v' + (CF.version || 'unknown');
+        if (CF.build && CF.build !== 'dev') {
+            versionText += ' (build ' + CF.build + ')';
+        }
+        document.getElementById('cfVersion').textContent = versionText;
         
         var text = 'The ship was at 58.8 and 10,9. Lighthouse at 58°54,0\'N, 011 00,0 E.';
 

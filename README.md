@@ -126,3 +126,5 @@ MIT License
 - **Author:** Bernt Rane
 
 **Note:** Version, author, and license are defined in `src/coordfinder.js` as `CF.version`, `CF.author`, and `CF.license`. HTML pages read these dynamically.
+
+**Build number:** Run `./update-build.sh` before committing to update `CF.build` with current git commit hash. This helps identify exact deployed version.
