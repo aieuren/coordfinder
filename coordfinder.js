@@ -237,8 +237,26 @@ TextParser.prototype.lineText = function(lineNo) {
 var Patterns = {
     // Coordinate patterns (ordered by specificity)
     
+    // URL formats: maps.google.com/@59.32894,18.06491 or map/59.329440/18.064510
+    urlCoords: /[@\/](-?\d{1,3}\.\d+)[,\/](-?\d{1,3}\.\d+)/gi,
+    
+    // GeoJSON: {"coordinates": [18.06491, 59.32894]}
+    geoJSON: /["']coordinates["']\s*:\s*\[\s*(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)\s*\]/gi,
+    
+    // GML: <gml:pos>59.32894 18.06491</gml:pos>
+    gml: /<gml:pos>(-?\d{1,3}\.\d+)\s+(-?\d{1,3}\.\d+)<\/gml:pos>/gi,
+    
+    // WKT: POINT(18.06491 59.32894)
+    wkt: /POINT\s*\(\s*(-?\d{1,3}\.\d+)\s+(-?\d{1,3}\.\d+)\s*\)/gi,
+    
+    // Prefix formats: Lat: 59.32894 Long: 18.06491 or Latitude: / Longitude:
+    prefixLatLong: /(?:Lat(?:itude)?|N)\s*:\s*(-?\d{1,3}[,.]\d+)[\s,;]+(?:Long(?:itude)?|E)\s*:\s*(-?\d{1,3}[,.]\d+)/gi,
+    
     // Kompakt DMS: 591944N0180354E
     compactDMS: /(\d{6})([NSEWÖV])(\d{7})([NSEWÖV])/gi,
+    
+    // Very compact: 5830N01245E
+    veryCompactDM: /(\d{4})([NSEWÖV])(\d{5})([NSEWÖV])/gi,
     
     // Degrees, minutes, seconds: 59°19'44.2"N or 59°19'44"N
     degsMinsSecs: /([NSEWÖV])?\s*(\d+)\s*[°º]?\s*(\d+)\s*['′´`]?\s*(\d+(?:[,.]?\d+)?)\s*["″]?\s*([NSEWÖV])?/gi,
@@ -260,7 +278,13 @@ var Patterns = {
 };
 
 Patterns.allPatterns = [
+    {regex: Patterns.geoJSON, format: CoordFormat.Degs, handler: 'geoJSON'},
+    {regex: Patterns.gml, format: CoordFormat.Degs, handler: 'gml'},
+    {regex: Patterns.wkt, format: CoordFormat.Degs, handler: 'wkt'},
+    {regex: Patterns.urlCoords, format: CoordFormat.Degs, handler: 'url'},
+    {regex: Patterns.prefixLatLong, format: CoordFormat.Degs, handler: 'prefix'},
     {regex: Patterns.compactDMS, format: CoordFormat.DegsMinsSecs, handler: 'compactDMS'},
+    {regex: Patterns.veryCompactDM, format: CoordFormat.DegsMins, handler: 'veryCompactDM'},
     {regex: Patterns.degsMinsSecs, format: CoordFormat.DegsMinsSecs},
     {regex: Patterns.degsMinus, format: CoordFormat.DegsMins, handler: 'degsMinus'},
     {regex: Patterns.degsMins, format: CoordFormat.DegsMins},
@@ -361,7 +385,71 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
     snippet.lineNo = parser ? parser.lineNoFromIndex(snippet.index) : 0;
     
     // Handle special patterns
-    if (bestPattern.handler === 'compactDMS') {
+    if (bestPattern.handler === 'geoJSON') {
+        // Format: {"coordinates": [18.06491, 59.32894]} - lon, lat order!
+        var lon = parseFloat(bestMatch[1]);
+        var lat = parseFloat(bestMatch[2]);
+        snippet.number = lat; // Return lat for first coord, lon for second
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = (bestMatch[2].match(/\.(\d+)/) || ['',''])[1].length;
+        snippet._isLonFirst = true;
+        snippet._lon = lon;
+        snippet._lat = lat;
+        
+    } else if (bestPattern.handler === 'gml') {
+        // Format: <gml:pos>59.32894 18.06491</gml:pos> - lat, lon order
+        var lat = parseFloat(bestMatch[1]);
+        var lon = parseFloat(bestMatch[2]);
+        snippet.number = lat;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = (bestMatch[1].match(/\.(\d+)/) || ['',''])[1].length;
+        snippet._lon = lon;
+        snippet._lat = lat;
+        
+    } else if (bestPattern.handler === 'wkt') {
+        // Format: POINT(18.06491 59.32894) - lon, lat order!
+        var lon = parseFloat(bestMatch[1]);
+        var lat = parseFloat(bestMatch[2]);
+        snippet.number = lat;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = (bestMatch[2].match(/\.(\d+)/) || ['',''])[1].length;
+        snippet._isLonFirst = true;
+        snippet._lon = lon;
+        snippet._lat = lat;
+        
+    } else if (bestPattern.handler === 'url') {
+        // Format: @59.32894,18.06491 or /59.329440/18.064510
+        var lat = parseFloat(bestMatch[1]);
+        var lon = parseFloat(bestMatch[2]);
+        snippet.number = lat;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = (bestMatch[1].match(/\.(\d+)/) || ['',''])[1].length;
+        snippet._lon = lon;
+        snippet._lat = lat;
+        
+    } else if (bestPattern.handler === 'prefix') {
+        // Format: Lat: 59.32894 Long: 18.06491
+        var lat = parseFloat(bestMatch[1].replace(',', '.'));
+        var lon = parseFloat(bestMatch[2].replace(',', '.'));
+        snippet.number = lat;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = (bestMatch[1].match(/[,.](\d+)/) || ['',''])[1].length;
+        snippet._lon = lon;
+        snippet._lat = lat;
+        
+    } else if (bestPattern.handler === 'veryCompactDM') {
+        // Format: 5830N01245E (DDMM format)
+        var degsStr = bestMatch[1]; // 5830
+        var dirMiddle = bestMatch[2]; // N
+        
+        var degs = parseInt(degsStr.substring(0, 2), 10);
+        var mins = parseInt(degsStr.substring(2, 4), 10);
+        
+        snippet.number = degs + mins/60;
+        snippet.directionLetter = dirMiddle;
+        snippet.noOfDecimals = 0;
+        
+    } else if (bestPattern.handler === 'compactDMS') {
         // Format: 591944N0180354E
         var degsStr = bestMatch[1]; // 591944
         var dirMiddle = bestMatch[2]; // N
@@ -928,16 +1016,46 @@ CF.prototype._snippetsToCoords = function() {
 CF.prototype._coordsToPoints = function() {
     var usedCoords = {};
     
-    // Try to pair coordinates
+    // First, handle special formats where both coords are in one snippet
     for (var i = 0; i < this._coords.length; i++) {
+        var c = this._coords[i];
+        if (!c || !c.parsedFrom) continue;
+        
+        // Check if this snippet contains both lat and lon
+        if (c.parsedFrom._lat !== undefined && c.parsedFrom._lon !== undefined) {
+            var latCoord = new Coord();
+            latCoord.value = c.parsedFrom._lat;
+            latCoord.axis = CoordAxis.Northing;
+            latCoord.parsedFrom = c.parsedFrom;
+            
+            var lonCoord = new Coord();
+            lonCoord.value = c.parsedFrom._lon;
+            lonCoord.axis = CoordAxis.Easting;
+            lonCoord.parsedFrom = c.parsedFrom;
+            
+            var point = new Point(latCoord, lonCoord, RefSys.WGS84);
+            latCoord.point = point;
+            lonCoord.point = point;
+            
+            this._points.push(point);
+            this._log("Created point from combined format: " + point.asText());
+            
+            usedCoords[i] = true;
+            continue;
+        }
+    }
+    
+    // Try to pair remaining coordinates
+    for (var i = 0; i < this._coords.length; i++) {
+        if (usedCoords[i]) continue;
+        
         for (var j = i + 1; j < this._coords.length; j++) {
+            if (usedCoords[j]) continue;
+            
             var c1 = this._coords[i];
             var c2 = this._coords[j];
             
             if (!c1 || !c2) continue;
-            
-            // Skip if already used in a high-rated point
-            if (usedCoords[i] || usedCoords[j]) continue;
             
             // Try to find a reference system that contains both coords
             var result = RefSys.fromCoords(c1, c2, false);
@@ -960,7 +1078,7 @@ CF.prototype._coordsToPoints = function() {
     // Collect unused coords
     this._unusedCoords = [];
     for (var i = 0; i < this._coords.length; i++) {
-        if (!this._coords[i].point) {
+        if (!this._coords[i].point && !usedCoords[i]) {
             this._unusedCoords.push(this._coords[i]);
         }
     }

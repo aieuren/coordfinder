@@ -21,17 +21,46 @@ function t(id, input) {
     }
 }
 
+log.push('=== GRUNDLÄGGANDE ===');
 t('tdd-001', '59.32894 18.06491');
 t('tdd-002', '59,32894 18,06491');
 t('tdd-003', '59.32894; 18.06491');
+
+log.push('\n=== GRADER OCH MINUTER ===');
 t('tdd-004', '59° 19.736\' N 18° 3.895\' E');
 t('tdd-005', '59° 19\' 44.2" N 18° 3\' 53.7" E');
 t('tdd-006', '591944N0180354E');
+
+log.push('\n=== VÄDERSTRECK ===');
 t('tdd-007', 'N 62.45 E 17.38');
 t('tdd-008', 'S 33.92 W 18.42');
 t('tdd-009', 'N 65.58 Ö 22.14');
+
+log.push('\n=== MINUSTECKEN ===');
 t('tdd-010', '58-30 16-45');
 t('tdd-011', '6230-1545');
+
+log.push('\n=== URL-FORMAT ===');
+t('tdd-012', 'https://www.google.com/maps/place/59.32894,18.06491');
+t('tdd-013', 'map/59.329440/18.064510');
+
+log.push('\n=== DATAFORMAT ===');
+t('tdd-014', '{"coordinates": [18.06491, 59.32894]}');
+t('tdd-015', '<gml:pos>59.32894 18.06491</gml:pos>');
+
+log.push('\n=== PREFIX ===');
+t('tdd-025', 'Lat: 61.234567 Long: 15.876543');
+
+log.push('\n=== KOMPAKT/GLEST ===');
+t('tdd-023', '5830N01245E');
+t('tdd-024', '58  °  30  \'  N    12  °  45  \'  E');
+
+log.push('\n=== WKT ===');
+t('tdd-036', 'POINT(18.06491 59.32894)');
+
+log.push('\n=== NEGATIVA TESTER (ska inte hitta) ===');
+t('tdd-030', '95.0 18.0');
+t('tdd-031', '58.0 185.0');
 
 document.getElementById('out').textContent = log.join('\n');
 </script>
