@@ -261,8 +261,8 @@ var Patterns = {
     // Degrees, minutes, seconds: 59°19'44.2"N or 59°19'44"N (requires seconds marker)
     degsMinsSecs: /([NSEWÖV])?\s*(\d+)\s*[°º]\s*(\d+)\s*['′´`]\s*(\d+(?:[,.]?\d+)?)\s*["″]\s*([NSEWÖV])?/gi,
     
-    // Grader-minuter med minustecken: 58-30 or 6230-1545
-    degsMinus: /([NSEWÖV])?(\d{2,4})-(\d{2,4})([NSEWÖV])?/gi,
+    // Grader-minuter med minustecken: 58-30 or 6230-1545 or 5820N-1145E
+    degsMinus: /([NSEWÖV])?(\d{2,4})([NSEWÖV])?-(\d{2,4})([NSEWÖV])?/gi,
     
     // Degrees and minutes: 59°19.736'N or 59°19,736'N
     degsMins: /([NSEWÖV])?\s*(\d+)\s*[°º]\s*(\d+(?:[,.]?\d+)?)\s*['′´`]?\s*([NSEWÖV])?/gi,
@@ -271,7 +271,8 @@ var Patterns = {
     degsSemicolon: /([NSEWÖV])?\s*(\d{1,3}[,.]\d+)\s*[;]\s*([NSEWÖV])?/gi,
     
     // Decimal degrees: 59.32894 or 59,32894
-    degs: /([NSEWÖV])?\s*(\d{1,3}[,.]\d+)(?:\s+([NSEWÖV])(?!\s*\d))?/gi,
+    // Negative lookahead for ) to avoid matching list numbers like "2)"
+    degs: /([NSEWÖV])?\s*(\d{1,3}[,.]\d+)(?!\s*\))(?:\s+([NSEWÖV])(?!\s*\d))?/gi,
     
     // Plain number (meters or large coordinates)
     plain: /([NSEWÖV])?\s*(\d{5,})\s*([NSEWÖV])?/gi
@@ -490,13 +491,14 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet._lon = lon;
         
     } else if (bestPattern.handler === 'degsMinus') {
-        // Format: 58-30 or 6230-1545
+        // Format: 58-30 or 6230-1545 or 5820N-1145E
         var dirBefore = bestMatch[1] || "";
         var part1 = bestMatch[2];
-        var part2 = bestMatch[3];
-        var dirAfter = bestMatch[4] || "";
+        var dirMiddle = bestMatch[3] || "";
+        var part2 = bestMatch[4];
+        var dirAfter = bestMatch[5] || "";
         
-        snippet.directionLetter = dirBefore || dirAfter;
+        snippet.directionLetter = dirBefore || dirMiddle || dirAfter;
         
         if (part1.length === 2 && part2.length === 2) {
             // 58-30 format (DD-MM)
@@ -505,7 +507,7 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
             snippet.number = degs + mins/60;
             snippet.noOfDecimals = 0;
         } else if (part1.length === 4 && part2.length === 4) {
-            // 6230-1545 format (DDMM-DDMM) - contains BOTH coordinates!
+            // 6230-1545 or 5820N-1145E format (DDMM-DDMM) - contains BOTH coordinates!
             var lat1 = parseInt(part1.substring(0, 2), 10);
             var lat2 = parseInt(part1.substring(2, 4), 10);
             var lat = lat1 + lat2/60;
@@ -513,6 +515,22 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
             var lon1 = parseInt(part2.substring(0, 2), 10);
             var lon2 = parseInt(part2.substring(2, 4), 10);
             var lon = lon1 + lon2/60;
+            
+            // Apply direction from middle position if present
+            if (dirMiddle) {
+                var dir = new CoordDirection(dirMiddle);
+                if (dir.axis() === CoordAxis.Northing) {
+                    if (dir.isNegative()) lat = -lat;
+                }
+            }
+            
+            // Apply direction from after position if present
+            if (dirAfter) {
+                var dir = new CoordDirection(dirAfter);
+                if (dir.axis() === CoordAxis.Easting) {
+                    if (dir.isNegative()) lon = -lon;
+                }
+            }
             
             snippet.number = lat;
             snippet.directionLetter = "";
@@ -828,6 +846,33 @@ Point.prototype.rate = function(grouping, hints) {
         this._rating = 0;
         this._ratingLog.push("Missing coordinate");
         return this._rating;
+    }
+    
+    // Validate coordinate ranges for WGS84
+    if (this.refsys.unit === CoordUnit.Degrees) {
+        var lat = this.N.value;
+        var lon = this.E.value;
+        
+        // Latitude must be between -90 and 90
+        if (Math.abs(lat) > 90) {
+            this._rating = 0;
+            this._ratingLog.push("Invalid latitude: " + lat + " (must be -90 to 90)");
+            return this._rating;
+        }
+        
+        // Longitude must be between -180 and 180
+        if (Math.abs(lon) > 180) {
+            this._rating = 0;
+            this._ratingLog.push("Invalid longitude: " + lon + " (must be -180 to 180)");
+            return this._rating;
+        }
+        
+        // If longitude is > 90, it's likely a swapped coordinate
+        if (Math.abs(lon) > 90 && Math.abs(lat) <= 90) {
+            this._rating = 0;
+            this._ratingLog.push("Suspicious: longitude " + lon + " > 90, likely swapped coordinates");
+            return this._rating;
+        }
     }
     
     // Check if coordinates have direction letters
