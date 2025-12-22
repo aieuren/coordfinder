@@ -258,8 +258,8 @@ var Patterns = {
     // Very compact: 5830N01245E
     veryCompactDM: /(\d{4})([NSEWÖV])(\d{5})([NSEWÖV])/gi,
     
-    // Degrees, minutes, seconds: 59°19'44.2"N or 59°19'44"N
-    degsMinsSecs: /([NSEWÖV])?\s*(\d+)\s*[°º]?\s*(\d+)\s*['′´`]?\s*(\d+(?:[,.]?\d+)?)\s*["″]?\s*([NSEWÖV])?/gi,
+    // Degrees, minutes, seconds: 59°19'44.2"N or 59°19'44"N (requires seconds marker)
+    degsMinsSecs: /([NSEWÖV])?\s*(\d+)\s*[°º]\s*(\d+)\s*['′´`]\s*(\d+(?:[,.]?\d+)?)\s*["″]\s*([NSEWÖV])?/gi,
     
     // Grader-minuter med minustecken: 58-30 or 6230-1545
     degsMinus: /([NSEWÖV])?(\d{2,4})-(\d{2,4})([NSEWÖV])?/gi,
@@ -271,7 +271,7 @@ var Patterns = {
     degsSemicolon: /([NSEWÖV])?\s*(\d{1,3}[,.]\d+)\s*[;]\s*([NSEWÖV])?/gi,
     
     // Decimal degrees: 59.32894 or 59,32894
-    degs: /([NSEWÖV])?\s*(\d{1,3}[,.]\d+)\s*([NSEWÖV])?/gi,
+    degs: /([NSEWÖV])?\s*(\d{1,3}[,.]\d+)(?:\s+([NSEWÖV])(?!\s*\d))?/gi,
     
     // Plain number (meters or large coordinates)
     plain: /([NSEWÖV])?\s*(\d{5,})\s*([NSEWÖV])?/gi
@@ -438,30 +438,56 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet._lat = lat;
         
     } else if (bestPattern.handler === 'veryCompactDM') {
-        // Format: 5830N01245E (DDMM format)
-        var degsStr = bestMatch[1]; // 5830
-        var dirMiddle = bestMatch[2]; // N
+        // Format: 5830N01245E (DDMM format) - contains BOTH coordinates!
+        var latStr = bestMatch[1]; // 5830
+        var latDir = bestMatch[2]; // N
+        var lonStr = bestMatch[3]; // 01245
+        var lonDir = bestMatch[4]; // E
         
-        var degs = parseInt(degsStr.substring(0, 2), 10);
-        var mins = parseInt(degsStr.substring(2, 4), 10);
+        // Parse latitude DDMM
+        var latDegs = parseInt(latStr.substring(0, 2), 10);
+        var latMins = parseInt(latStr.substring(2, 4), 10);
+        var lat = latDegs + latMins/60;
+        if (latDir === 'S') lat = -lat;
         
-        snippet.number = degs + mins/60;
-        snippet.directionLetter = dirMiddle;
+        // Parse longitude DDDMM (5 digits)
+        var lonDegs = parseInt(lonStr.substring(0, 3), 10);
+        var lonMins = parseInt(lonStr.substring(3, 5), 10);
+        var lon = lonDegs + lonMins/60;
+        if (lonDir === 'W') lon = -lon;
+        
+        snippet.number = lat;
+        snippet.directionLetter = "";
         snippet.noOfDecimals = 0;
+        snippet._lat = lat;
+        snippet._lon = lon;
         
     } else if (bestPattern.handler === 'compactDMS') {
-        // Format: 591944N0180354E
-        var degsStr = bestMatch[1]; // 591944
-        var dirMiddle = bestMatch[2]; // N
+        // Format: 591944N0180354E - contains BOTH coordinates!
+        var latStr = bestMatch[1]; // 591944
+        var latDir = bestMatch[2]; // N
+        var lonStr = bestMatch[3]; // 0180354
+        var lonDir = bestMatch[4]; // E
         
-        // Parse DDMMSS from 6 digits
-        var degs = parseInt(degsStr.substring(0, 2), 10);
-        var mins = parseInt(degsStr.substring(2, 4), 10);
-        var secs = parseInt(degsStr.substring(4, 6), 10);
+        // Parse latitude DDMMSS from 6 digits
+        var latDegs = parseInt(latStr.substring(0, 2), 10);
+        var latMins = parseInt(latStr.substring(2, 4), 10);
+        var latSecs = parseInt(latStr.substring(4, 6), 10);
+        var lat = latDegs + latMins/60 + latSecs/3600;
+        if (latDir === 'S') lat = -lat;
         
-        snippet.number = degs + mins/60 + secs/3600;
-        snippet.directionLetter = dirMiddle;
+        // Parse longitude DDDMMSS from 7 digits
+        var lonDegs = parseInt(lonStr.substring(0, 3), 10);
+        var lonMins = parseInt(lonStr.substring(3, 5), 10);
+        var lonSecs = parseInt(lonStr.substring(5, 7), 10);
+        var lon = lonDegs + lonMins/60 + lonSecs/3600;
+        if (lonDir === 'W') lon = -lon;
+        
+        snippet.number = lat;
+        snippet.directionLetter = "";
         snippet.noOfDecimals = 0;
+        snippet._lat = lat;
+        snippet._lon = lon;
         
     } else if (bestPattern.handler === 'degsMinus') {
         // Format: 58-30 or 6230-1545
@@ -479,11 +505,20 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
             snippet.number = degs + mins/60;
             snippet.noOfDecimals = 0;
         } else if (part1.length === 4 && part2.length === 4) {
-            // 6230-1545 format (DDMM-DDMM)
-            var degs = parseInt(part1.substring(0, 2), 10);
-            var mins = parseInt(part1.substring(2, 4), 10);
-            snippet.number = degs + mins/60;
+            // 6230-1545 format (DDMM-DDMM) - contains BOTH coordinates!
+            var lat1 = parseInt(part1.substring(0, 2), 10);
+            var lat2 = parseInt(part1.substring(2, 4), 10);
+            var lat = lat1 + lat2/60;
+            
+            var lon1 = parseInt(part2.substring(0, 2), 10);
+            var lon2 = parseInt(part2.substring(2, 4), 10);
+            var lon = lon1 + lon2/60;
+            
+            snippet.number = lat;
+            snippet.directionLetter = "";
             snippet.noOfDecimals = 0;
+            snippet._lat = lat;
+            snippet._lon = lon;
         } else {
             // Fallback
             snippet.number = parseFloat(part1);
