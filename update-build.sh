@@ -4,7 +4,7 @@
 # Get short commit hash
 BUILD=$(git rev-parse --short HEAD)
 
-# Update coordfinder.js
-sed -i "s/CF.build = \"dev\";/CF.build = \"$BUILD\";/" src/coordfinder.js
+# Update coordfinder.js - replace any existing build value
+sed -i.bak "s/CF.build = \"[^\"]*\";/CF.build = \"$BUILD\";/" src/coordfinder.js && rm src/coordfinder.js.bak
 
 echo "Updated CF.build to: $BUILD"
