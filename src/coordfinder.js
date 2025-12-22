@@ -121,6 +121,14 @@ RefSys.prototype.contains = function(c1, c2, ordered) {
     if (!c1 || !c2) return null;
     
     var tryPair = function(cN, cE, refsys) {
+        // Validate axis if known (not Unknown)
+        // This prevents pairing two latitudes or two longitudes
+        if (cN.axis !== CoordAxis.Unknown && cE.axis !== CoordAxis.Unknown) {
+            if (cN.axis !== CoordAxis.Northing || cE.axis !== CoordAxis.Easting) {
+                return null;
+            }
+        }
+        
         if (refsys.bounds.covers(cN.value, cE.value)) {
             return {N: cN, E: cE, RefSys: refsys};
         }
@@ -991,7 +999,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.2";
-CF.build = "61edda6"; // Replaced during build with git commit hash
+CF.build = "bd9b0ad"; // Replaced during build with git commit hash
 CF.author = "Bernt Rane";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
@@ -1154,6 +1162,7 @@ CF.prototype._coordsToPoints = function() {
                 // Mark as used for this pairing
                 usedCoords[i] = true;
                 usedCoords[j] = true;
+                break; // Stop looking for more pairs for this coordinate
             }
         }
     }
