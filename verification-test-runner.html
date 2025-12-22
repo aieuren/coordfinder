@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoordFinder - Verifieringstester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            padding: 20px 30px;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #2a5298;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .file-input-label {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #28a745;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .file-input-label:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .file-info {
+            padding: 10px 15px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .stats-bar {
+            padding: 20px 30px;
+            background: #fff;
+            border-bottom: 2px solid #ddd;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+        
+        .stat-box .label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stat-box .value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        
+        .stat-box.passed .value {
+            color: #28a745;
+        }
+        
+        .stat-box.failed .value {
+            color: #dc3545;
+        }
+        
+        .stat-box.total .value {
+            color: #1e3c72;
+        }
+        
+        .stat-box.rate .value {
+            color: #17a2b8;
+        }
+        
+        .results-container {
+            padding: 30px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .test-suite-result {
+            margin-bottom: 30px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .test-suite-result h2 {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            margin: 0;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .test-suite-result h2:hover {
+            background: #e9ecef;
+        }
+        
+        .test-suite-result h2::before {
+            content: '▼ ';
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+        
+        .test-suite-result.collapsed h2::before {
+            transform: rotate(-90deg);
+        }
+        
+        .summary {
+            padding: 15px 20px;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            gap: 20px;
+            font-size: 1.1em;
+        }
+        
+        .summary .passed {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .summary .failed {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .test-results {
+            padding: 10px;
+        }
+        
+        .test-suite-result.collapsed .test-results {
+            display: none;
+        }
+        
+        .test-result {
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        
+        .test-pass {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        
+        .test-fail {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        
+        .test-header {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .test-status {
+            font-size: 1.2em;
+        }
+        
+        .test-id {
+            font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.1);
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        
+        .test-name {
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        .test-message {
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 5px;
+        }
+        
+        .info-box h3 {
+            margin-bottom: 10px;
+            color: #1976D2;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .filter-controls {
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .filter-controls label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🗺️ CoordFinder Verifieringstester</h1>
+            <p>Komplett testsvit för validering av implementation</p>
+        </header>
+        
+        <div class="controls">
+            <div class="file-input-wrapper">
+                <label class="file-input-label">
+                    📁 Välj testsvit (.md/.txt)
+                    <input type="file" id="fileInput" accept=".md,.txt" onchange="loadTestFile(event)">
+                </label>
+            </div>
+            
+            <button id="runBtn" onclick="runTests()" disabled>▶️ Kör alla tester</button>
+            <button id="stopBtn" onclick="stopTests()" disabled style="background: #dc3545;">⏹️ Stoppa</button>
+            <button id="clearBtn" onclick="clearResults()">🗑️ Rensa</button>
+            <button id="exportBtn" onclick="exportResults()" disabled>💾 Exportera resultat</button>
+            
+            <div class="file-info" id="fileInfo">Ingen fil vald</div>
+        </div>
+        
+        <div class="stats-bar" id="statsBar" style="display: none;">
+            <div class="stat-box total">
+                <div class="label">Totalt</div>
+                <div class="value" id="statTotal">0</div>
+            </div>
+            <div class="stat-box passed">
+                <div class="label">Godkända</div>
+                <div class="value" id="statPassed">0</div>
+            </div>
+            <div class="stat-box failed">
+                <div class="label">Misslyckade</div>
+                <div class="value" id="statFailed">0</div>
+            </div>
+            <div class="stat-box rate">
+                <div class="label">Godkänt %</div>
+                <div class="value" id="statRate">0%</div>
+            </div>
+        </div>
+        
+        <div class="filter-controls" id="filterControls" style="display: none;">
+            <label>
+                <input type="checkbox" id="filterPassed" checked onchange="applyFilters()">
+                <span>Visa godkända</span>
+            </label>
+            <label>
+                <input type="checkbox" id="filterFailed" checked onchange="applyFilters()">
+                <span>Visa misslyckade</span>
+            </label>
+            <button onclick="collapseAll()">📁 Fäll ihop alla</button>
+            <button onclick="expandAll()">📂 Expandera alla</button>
+        </div>
+        
+        <div class="results-container" id="results">
+            <div class="info-box">
+                <h3>Välkommen till Verifieringstester!</h3>
+                <p><strong>Steg 1:</strong> Välj din testsvit-fil (.md eller .txt)</p>
+                <p><strong>Steg 2:</strong> Klicka "Kör alla tester"</p>
+                <p><strong>Steg 3:</strong> Se detaljerade resultat</p>
+                <br>
+                <p><strong>Format:</strong> Använd samma Markdown-format som i test-suites-tdd.txt</p>
+                <p><strong>Tips:</strong> Stora testsviter kan ta tid - du kan stoppa körningen när som helst</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="coordfinder.js"></script>
+    <script src="test-framework.js"></script>
+    <script src="test-parser.js"></script>
+    <script>
+        var loadedSuites = [];
+        var testResults = null;
+        var isRunning = false;
+        
+        function loadTestFile(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('fileInfo').textContent = 'Laddar: ' + file.name;
+            
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var parser = new MarkdownTestParser();
+                    loadedSuites = parser.parse(e.target.result);
+                    
+                    var totalTests = 0;
+                    for (var i = 0; i < loadedSuites.length; i++) {
+                        totalTests += loadedSuites[i].tests.length;
+                    }
+                    
+                    document.getElementById('fileInfo').textContent = 
+                        file.name + ' (' + loadedSuites.length + ' sviter, ' + totalTests + ' tester)';
+                    document.getElementById('runBtn').disabled = false;
+                    
+                    document.getElementById('results').innerHTML = 
+                        '<div class="info-box">' +
+                        '<h3>✅ Testsvit laddad!</h3>' +
+                        '<p><strong>Fil:</strong> ' + file.name + '</p>' +
+                        '<p><strong>Testsviter:</strong> ' + loadedSuites.length + '</p>' +
+                        '<p><strong>Totalt antal tester:</strong> ' + totalTests + '</p>' +
+                        '<p>Klicka "Kör alla tester" för att starta verifiering</p>' +
+                        '</div>';
+                } catch(err) {
+                    displayError(err);
+                    document.getElementById('fileInfo').textContent = 'Fel vid laddning';
+                    document.getElementById('runBtn').disabled = true;
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function runTests() {
+            if (loadedSuites.length === 0) {
+                alert('Ladda en testsvit först!');
+                return;
+            }
+            
+            isRunning = true;
+            document.getElementById('runBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('exportBtn').disabled = true;
+            
+            document.getElementById('statsBar').style.display = 'grid';
+            document.getElementById('filterControls').style.display = 'flex';
+            
+            setTimeout(function() {
+                try {
+                    var runner = new TestFramework.TestRunner();
+                    
+                    for (var i = 0; i < loadedSuites.length; i++) {
+                        if (!isRunning) break;
+                        runner.addSuite(loadedSuites[i]);
+                    }
+                    
+                    if (isRunning) {
+                        testResults = runner.run();
+                        displayResults(testResults);
+                        updateStats(testResults);
+                    }
+                } catch(e) {
+                    displayError(e);
+                }
+                
+                isRunning = false;
+                document.getElementById('runBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('exportBtn').disabled = false;
+            }, 100);
+        }
+        
+        function stopTests() {
+            isRunning = false;
+            document.getElementById('stopBtn').disabled = true;
+        }
+        
+        function clearResults() {
+            testResults = null;
+            document.getElementById('results').innerHTML = 
+                '<div class="info-box">' +
+                '<h3>Välkommen till Verifieringstester!</h3>' +
+                '<p><strong>Steg 1:</strong> Välj din testsvit-fil (.md eller .txt)</p>' +
+                '<p><strong>Steg 2:</strong> Klicka "Kör alla tester"</p>' +
+                '<p><strong>Steg 3:</strong> Se detaljerade resultat</p>' +
+                '</div>';
+            document.getElementById('statsBar').style.display = 'none';
+            document.getElementById('filterControls').style.display = 'none';
+        }
+        
+        function displayResults(result) {
+            var html = result.toHTML();
+            document.getElementById('results').innerHTML = html;
+            
+            // Add click handlers for collapsing
+            var suites = document.querySelectorAll('.test-suite-result h2');
+            for (var i = 0; i < suites.length; i++) {
+                suites[i].addEventListener('click', function() {
+                    this.parentElement.classList.toggle('collapsed');
+                });
+            }
+        }
+        
+        function updateStats(result) {
+            document.getElementById('statTotal').textContent = result.totalTests;
+            document.getElementById('statPassed').textContent = result.totalPassed;
+            document.getElementById('statFailed').textContent = result.totalFailed;
+            
+            var rate = result.totalTests > 0 ? 
+                Math.round((result.totalPassed / result.totalTests) * 100) : 0;
+            document.getElementById('statRate').textContent = rate + '%';
+        }
+        
+        function applyFilters() {
+            var showPassed = document.getElementById('filterPassed').checked;
+            var showFailed = document.getElementById('filterFailed').checked;
+            
+            var passed = document.querySelectorAll('.test-pass');
+            var failed = document.querySelectorAll('.test-fail');
+            
+            for (var i = 0; i < passed.length; i++) {
+                passed[i].style.display = showPassed ? 'block' : 'none';
+            }
+            
+            for (var i = 0; i < failed.length; i++) {
+                failed[i].style.display = showFailed ? 'block' : 'none';
+            }
+        }
+        
+        function collapseAll() {
+            var suites = document.querySelectorAll('.test-suite-result');
+            for (var i = 0; i < suites.length; i++) {
+                suites[i].classList.add('collapsed');
+            }
+        }
+        
+        function expandAll() {
+            var suites = document.querySelectorAll('.test-suite-result');
+            for (var i = 0; i < suites.length; i++) {
+                suites[i].classList.remove('collapsed');
+            }
+        }
+        
+        function exportResults() {
+            if (!testResults) {
+                alert('Inga resultat att exportera!');
+                return;
+            }
+            
+            var text = testResults.toString();
+            var blob = new Blob([text], {type: 'text/plain'});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'test-results-' + new Date().toISOString().split('T')[0] + '.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function displayError(error) {
+            document.getElementById('results').innerHTML = 
+                '<div class="error-message"><strong>Fel:</strong> ' + error.message + 
+                '<br><pre>' + (error.stack || '') + '</pre></div>';
+        }
+    </script>
+</body>
+</html>

@@ -236,22 +236,35 @@ TextParser.prototype.lineText = function(lineNo) {
 // ——————————— Patterns (Internal) ——————————— //
 var Patterns = {
     // Coordinate patterns (ordered by specificity)
-    // Degrees, minutes, seconds: 58°54'30"N or 58°54'30.5"
-    degsMinsSecs: /([NSEWÖVÖV])?\s*(\d+)\s*[°º]\s*(\d+)\s*['′´`]\s*(\d+(?:[,.]?\d+)?)\s*["″]\s*([NSEWÖVÖV])?/gi,
     
-    // Degrees and minutes: 58°54.5'N or 58°54,5' or 58°54,0'N
-    degsMins: /([NSEWÖVÖV])?\s*(\d+)\s*[°º]\s*(\d+(?:[,.]?\d+)?)\s*['′´`]?\s*([NSEWÖVÖV])?/gi,
+    // Kompakt DMS: 591944N0180354E
+    compactDMS: /(\d{6})([NSEWÖV])(\d{7})([NSEWÖV])/gi,
     
-    // Decimal degrees: 58.912 or 58,912 or 10,9
-    degs: /([NSEWÖVÖV])?\s*(\d{1,3}[,.]\d+)\s*([NSEWÖVÖV])?/gi,
+    // Degrees, minutes, seconds: 59°19'44.2"N or 59°19'44"N
+    degsMinsSecs: /([NSEWÖV])?\s*(\d+)\s*[°º]?\s*(\d+)\s*['′´`]?\s*(\d+(?:[,.]?\d+)?)\s*["″]?\s*([NSEWÖV])?/gi,
+    
+    // Grader-minuter med minustecken: 58-30 or 6230-1545
+    degsMinus: /([NSEWÖV])?(\d{2,4})-(\d{2,4})([NSEWÖV])?/gi,
+    
+    // Degrees and minutes: 59°19.736'N or 59°19,736'N
+    degsMins: /([NSEWÖV])?\s*(\d+)\s*[°º]\s*(\d+(?:[,.]?\d+)?)\s*['′´`]?\s*([NSEWÖV])?/gi,
+    
+    // Decimal degrees with semicolon: 59.32894; 18.06491
+    degsSemicolon: /([NSEWÖV])?\s*(\d{1,3}[,.]\d+)\s*[;]\s*([NSEWÖV])?/gi,
+    
+    // Decimal degrees: 59.32894 or 59,32894
+    degs: /([NSEWÖV])?\s*(\d{1,3}[,.]\d+)\s*([NSEWÖV])?/gi,
     
     // Plain number (meters or large coordinates)
-    plain: /([NSEWÖVÖV])?\s*(\d{5,})\s*([NSEWÖVÖV])?/gi
+    plain: /([NSEWÖV])?\s*(\d{5,})\s*([NSEWÖV])?/gi
 };
 
 Patterns.allPatterns = [
+    {regex: Patterns.compactDMS, format: CoordFormat.DegsMinsSecs, handler: 'compactDMS'},
     {regex: Patterns.degsMinsSecs, format: CoordFormat.DegsMinsSecs},
+    {regex: Patterns.degsMinus, format: CoordFormat.DegsMins, handler: 'degsMinus'},
     {regex: Patterns.degsMins, format: CoordFormat.DegsMins},
+    {regex: Patterns.degsSemicolon, format: CoordFormat.Degs, handler: 'semicolon'},
     {regex: Patterns.degs, format: CoordFormat.Degs},
     {regex: Patterns.plain, format: CoordFormat.Meters}
 ];
@@ -300,7 +313,7 @@ Snippet.prototype.direction = function() {
     switch(letter) {
         case 'N': return CoordDirection.North;
         case 'S': return CoordDirection.South;
-        case 'E': case 'Ö': return CoordDirection.East;
+        case 'E': case 'Ö': case 'O': return CoordDirection.East;
         case 'W': case 'V': return CoordDirection.West;
         default: return CoordDirection.Unknown;
     }
@@ -328,7 +341,7 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
     // Try each pattern and find the earliest match
     for (var i = 0; i < Patterns.allPatterns.length; i++) {
         var pattern = Patterns.allPatterns[i];
-        var regex = new RegExp(pattern.regex.source, 'i'); // Create non-global version
+        var regex = new RegExp(pattern.regex.source, 'i');
         var match = regex.exec(encodedText);
         
         if (match && (bestIndex === -1 || match.index < bestIndex)) {
@@ -347,29 +360,82 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
     snippet.index = originalTextPosition + bestMatch.index;
     snippet.lineNo = parser ? parser.lineNoFromIndex(snippet.index) : 0;
     
-    // Extract direction letters
-    var dirBefore = bestMatch[1] || "";
-    var dirAfter = bestMatch[bestMatch.length - 1] || "";
-    snippet.directionLetter = dirBefore || dirAfter;
-    
-    // Parse number based on format
-    if (bestPattern.format === CoordFormat.DegsMinsSecs) {
-        var degs = parseFloat(bestMatch[2]);
-        var mins = parseFloat(bestMatch[3]);
-        var secs = parseFloat(bestMatch[4].replace(',', '.'));
+    // Handle special patterns
+    if (bestPattern.handler === 'compactDMS') {
+        // Format: 591944N0180354E
+        var degsStr = bestMatch[1]; // 591944
+        var dirMiddle = bestMatch[2]; // N
+        
+        // Parse DDMMSS from 6 digits
+        var degs = parseInt(degsStr.substring(0, 2), 10);
+        var mins = parseInt(degsStr.substring(2, 4), 10);
+        var secs = parseInt(degsStr.substring(4, 6), 10);
+        
         snippet.number = degs + mins/60 + secs/3600;
-        var secDecimals = (bestMatch[4].match(/[,.](\d+)/) || ['',''])[1].length;
-        snippet.noOfDecimals = secDecimals;
-    } else if (bestPattern.format === CoordFormat.DegsMins) {
-        var degs = parseFloat(bestMatch[2]);
-        var mins = parseFloat(bestMatch[3].replace(',', '.'));
-        snippet.number = degs + mins/60;
-        var minDecimals = (bestMatch[3].match(/[,.](\d+)/) || ['',''])[1].length;
-        snippet.noOfDecimals = minDecimals;
-    } else {
+        snippet.directionLetter = dirMiddle;
+        snippet.noOfDecimals = 0;
+        
+    } else if (bestPattern.handler === 'degsMinus') {
+        // Format: 58-30 or 6230-1545
+        var dirBefore = bestMatch[1] || "";
+        var part1 = bestMatch[2];
+        var part2 = bestMatch[3];
+        var dirAfter = bestMatch[4] || "";
+        
+        snippet.directionLetter = dirBefore || dirAfter;
+        
+        if (part1.length === 2 && part2.length === 2) {
+            // 58-30 format (DD-MM)
+            var degs = parseInt(part1, 10);
+            var mins = parseInt(part2, 10);
+            snippet.number = degs + mins/60;
+            snippet.noOfDecimals = 0;
+        } else if (part1.length === 4 && part2.length === 4) {
+            // 6230-1545 format (DDMM-DDMM)
+            var degs = parseInt(part1.substring(0, 2), 10);
+            var mins = parseInt(part1.substring(2, 4), 10);
+            snippet.number = degs + mins/60;
+            snippet.noOfDecimals = 0;
+        } else {
+            // Fallback
+            snippet.number = parseFloat(part1);
+            snippet.noOfDecimals = 0;
+        }
+        
+    } else if (bestPattern.handler === 'semicolon') {
+        // Semicolon separator - just parse as decimal
+        var dirBefore = bestMatch[1] || "";
+        var dirAfter = bestMatch[3] || "";
+        snippet.directionLetter = dirBefore || dirAfter;
         snippet.number = parseFloat(bestMatch[2].replace(',', '.'));
         var decimals = (bestMatch[2].match(/[,.](\d+)/) || ['',''])[1].length;
         snippet.noOfDecimals = decimals;
+        
+    } else {
+        // Extract direction letters
+        var dirBefore = bestMatch[1] || "";
+        var dirAfter = bestMatch[bestMatch.length - 1] || "";
+        snippet.directionLetter = dirBefore || dirAfter;
+        
+        // Parse number based on format
+        if (bestPattern.format === CoordFormat.DegsMinsSecs) {
+            var degs = parseFloat(bestMatch[2]);
+            var mins = parseFloat(bestMatch[3]);
+            var secs = parseFloat(bestMatch[4].replace(',', '.'));
+            snippet.number = degs + mins/60 + secs/3600;
+            var secDecimals = (bestMatch[4].match(/[,.](\d+)/) || ['',''])[1].length;
+            snippet.noOfDecimals = secDecimals;
+        } else if (bestPattern.format === CoordFormat.DegsMins) {
+            var degs = parseFloat(bestMatch[2]);
+            var mins = parseFloat(bestMatch[3].replace(',', '.'));
+            snippet.number = degs + mins/60;
+            var minDecimals = (bestMatch[3].match(/[,.](\d+)/) || ['',''])[1].length;
+            snippet.noOfDecimals = minDecimals;
+        } else {
+            snippet.number = parseFloat(bestMatch[2].replace(',', '.'));
+            var decimals = (bestMatch[2].match(/[,.](\d+)/) || ['',''])[1].length;
+            snippet.noOfDecimals = decimals;
+        }
     }
     
     return snippet;
