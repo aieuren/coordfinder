@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Debug CF</title>
+</head>
+<body>
+    <h1>Debug CF</h1>
+    <pre id="output"></pre>
+    
+    <script src="src/coordfinder.js"></script>
+    <script>
+        var output = [];
+        
+        output.push('CF loaded: ' + (typeof CF !== 'undefined'));
+        output.push('CF.pointIn exists: ' + (typeof CF.pointIn === 'function'));
+        
+        try {
+            var result = CF.pointIn('59.32894 18.06491');
+            output.push('Result: ' + result);
+            output.push('Result type: ' + typeof result);
+            
+            if (result) {
+                output.push('Has latitude: ' + (typeof result.latitude === 'function'));
+                if (typeof result.latitude === 'function') {
+                    output.push('Latitude: ' + result.latitude());
+                    output.push('Longitude: ' + result.longitude());
+                }
+            }
+        } catch(e) {
+            output.push('ERROR: ' + e.message);
+            output.push('Stack: ' + e.stack);
+        }
+        
+        document.getElementById('output').textContent = output.join('\n');
+    </script>
+</body>
+</html>

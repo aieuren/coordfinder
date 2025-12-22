@@ -945,7 +945,7 @@ function CF(text, opts) {
     this._foundRatings = null;
 }
 
-CF.version = "4.3";
+CF.version = "5.0.0-beta.1";
 CF.ratingDefault = 0.5;
 
 // Static method: Get first point from text

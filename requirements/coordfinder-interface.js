@@ -5,7 +5,7 @@
  * This is not actual code but a description of the interface that
  * the implementation should expose to users.
  * 
- * @version 4.3
+ * @version 5.0.0-beta.1
  * @author Bernt Rane
  * @license MIT
  */
@@ -40,7 +40,7 @@
      * Version number for the module
      * @type {string}
      */
-    CoordFinder.version = "4.3";
+    CoordFinder.version = "5.0.0-beta.1";
     
     /**
      * Default value for point rating

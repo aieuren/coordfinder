@@ -99,6 +99,7 @@
 <body>
     <div class="container">
         <h1>🗺️ CoordFinder Interactive Demo</h1>
+        <p style="color: #666; margin-bottom: 20px;">Version: <span id="cfVersion">...</span></p>
         
         <div class="section">
             <h2>Input Text</h2>
@@ -132,6 +133,8 @@
 
     <script src="../src/coordfinder.js"></script>
     <script>
+        document.getElementById('cfVersion').textContent = 'v' + (CF.version || 'unknown');
+        
         var text = 'The ship was at 58.8 and 10,9. Lighthouse at 58°54,0\'N, 011 00,0 E.';
 
         function getRatingClass(rating) {

@@ -106,5 +106,5 @@ MIT License
 - **📖 Documentation:** https://aieuren.github.io/coordfinder/docs/README.md
 - **🎮 Interactive Demo:** https://aieuren.github.io/coordfinder/examples/demo.html
 - **🧪 Test Runner:** https://aieuren.github.io/coordfinder/tests/verification-test-runner.html
-- **Version:** 4.3
+- **Version:** 5.0.0-beta.1
 - **Author:** Bernt Rane

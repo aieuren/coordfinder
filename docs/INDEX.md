@@ -260,6 +260,6 @@ INDEX.md                    - This overview
 
 ---
 
-**Version**: 4.3  
+**Version**: 5.0.0-beta.1  
 **License**: MIT  
 **Author**: Bernt Rane

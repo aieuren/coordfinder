@@ -216,6 +216,6 @@ var trusted = cf.points({rating: 0.8}); // Only high confidence
 
 ---
 
-**Version**: 4.3  
+**Version**: 5.0.0-beta.1  
 **License**: MIT  
 **Author**: Bernt Rane
