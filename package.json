@@ -1,6 +1,6 @@
 {
   "name": "coordfinder",
-  "version": "5.0.0-beta.1",
+  "version": "5.0.0-beta.2",
   "description": "JavaScript library for extracting and parsing geographic coordinates from text",
   "main": "src/coordfinder.js",
   "scripts": {

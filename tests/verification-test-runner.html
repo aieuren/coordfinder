@@ -338,7 +338,11 @@
         <header>
             <h1>🗺️ CoordFinder Verifieringstester</h1>
             <p>Komplett testsvit för validering av implementation</p>
-            <p style="opacity: 0.7; margin-top: 10px; font-size: 0.9em;">Version: <span id="cfVersion">...</span></p>
+            <p style="opacity: 0.7; margin-top: 10px; font-size: 0.9em;">
+                <span id="cfVersion">...</span> • 
+                <span id="cfAuthor">...</span> • 
+                <span id="cfLicense">...</span>
+            </p>
         </header>
         
         <div class="controls">
@@ -407,6 +411,8 @@
     <script src="../src/test-parser.js"></script>
     <script>
         document.getElementById('cfVersion').textContent = 'v' + (CF.version || 'unknown');
+        document.getElementById('cfAuthor').textContent = CF.author || 'Unknown';
+        document.getElementById('cfLicense').textContent = (CF.license || 'Unknown') + ' License';
         
         var loadedSuites = [];
         var testResults = null;

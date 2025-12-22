@@ -1,6 +1,5 @@
 // coordfinder.js - Coordinate Finder Implementation
-// Author: Bernt Rane
-// MIT License
+// Version, author, and license are defined as CF.version, CF.author, CF.license
 
 (function(global) {
 'use strict';
@@ -990,7 +989,10 @@ function CF(text, opts) {
     this._foundRatings = null;
 }
 
-CF.version = "5.0.0-beta.1";
+// Metadata
+CF.version = "5.0-beta.2";
+CF.author = "Bernt Rane";
+CF.license = "MIT";
 CF.ratingDefault = 0.5;
 
 // Static method: Get first point from text
