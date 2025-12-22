@@ -6,8 +6,8 @@ var fs = require('fs');
 var path = require('path');
 
 // Load dependencies
-require('./test-framework.js');
-require('./test-parser.js');
+require('../src/test-framework.js');
+require('../src/test-parser.js');
 
 // Parse command line arguments
 var args = process.argv.slice(2);

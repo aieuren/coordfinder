@@ -8,7 +8,7 @@ console.log("CoordFinder Demo");
 console.log("=".repeat(60));
 
 // Load the library
-require('./coordfinder.js');
+require('../src/coordfinder.js');
 
 var text = 'The ship was at 58.8 and 10,9. Lighthouse at 58°54,0\'N, 011 00,0 E.';
 

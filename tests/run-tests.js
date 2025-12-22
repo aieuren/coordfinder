@@ -3,8 +3,8 @@
 // run-tests.js - Command-line test runner for CoordFinder
 
 // Load dependencies
-require('./coordfinder.js');
-require('./test-framework.js');
+require('../src/coordfinder.js');
+require('../src/test-framework.js');
 require('./test-suites.js');
 
 // Parse command line arguments

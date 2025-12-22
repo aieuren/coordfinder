@@ -1,0 +1,37 @@
+{
+  "name": "coordfinder",
+  "version": "4.3.0",
+  "description": "JavaScript library for extracting and parsing geographic coordinates from text",
+  "main": "src/coordfinder.js",
+  "scripts": {
+    "test": "node tests/run-tests.js --all",
+    "test:tdd": "node tests/run-tests.js --standard --format",
+    "convert-tests": "node tests/convert-tests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aieuren/coordfinder.git"
+  },
+  "keywords": [
+    "coordinates",
+    "gps",
+    "geolocation",
+    "parser",
+    "wgs84",
+    "sweref99",
+    "rt90",
+    "latitude",
+    "longitude"
+  ],
+  "author": "Bernt Rane",
+  "license": "MIT",
+  "files": [
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "devDependencies": {},
+  "optionalDependencies": {
+    "proj4": "^2.3.12"
+  }
+}

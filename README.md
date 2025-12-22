@@ -1,133 +1,104 @@
-# CoordFinder - JavaScript Coordinate Parser
+# CoordFinder
 
-A JavaScript library for extracting and parsing coordinate pairs from text in various formats.
+A JavaScript library for extracting and parsing geographic coordinates from text in various formats and coordinate reference systems.
 
-## Features
+## 🚀 Quick Start
 
-- Parses multiple coordinate formats:
-  - Decimal degrees (e.g., `58.8`, `10,9`)
-  - Degrees and minutes (e.g., `58°54,0'N`)
-  - Degrees, minutes, and seconds (e.g., `58°54'30"N`)
-  - Meter-based coordinates (SWEREF99TM, RT90, etc.)
+```html
+<script src="src/coordfinder.js"></script>
+<script>
+    var point = CF.pointIn("Ship at 59.32894, 18.06491");
+    console.log(point.latitude(), point.longitude());
+</script>
+```
 
-- Supports multiple reference systems:
+## 📁 Project Structure
+
+```
+coordfinder/
+├── src/                    # Source code
+│   ├── coordfinder.js      # Main library
+│   ├── test-framework.js   # Test framework
+│   └── test-parser.js      # Markdown test parser
+├── tests/                  # Test files and runners
+│   ├── test-runner.html    # Main test runner
+│   ├── tdd-runner.html     # TDD test runner
+│   ├── verification-test-runner.html  # Large test suite runner
+│   └── ...
+├── examples/               # Examples and demos
+│   ├── demo.html           # Interactive demo
+│   └── demo-simple.js      # Simple usage example
+├── docs/                   # Documentation
+│   ├── README.md           # Full documentation
+│   ├── QUICKSTART.md       # Quick start guide
+│   └── ...
+├── requirements/           # Requirements and specifications
+│   ├── kravspecifikation.md
+│   └── test-suites-tdd.txt
+└── README.md              # This file
+```
+
+## 📖 Documentation
+
+- **[Quick Start Guide](docs/QUICKSTART.md)** - Get started in 5 minutes
+- **[Full Documentation](docs/README.md)** - Complete API reference
+- **[Implementation Details](docs/IMPLEMENTATION.md)** - Technical architecture
+- **[Test Framework](docs/TEST_FRAMEWORK.md)** - Testing documentation
+
+## ✨ Features
+
+- **Multiple coordinate formats:**
+  - Decimal degrees: `59.32894 18.06491`
+  - Degrees and minutes: `59°19.736'N 18°3.895'E`
+  - Degrees, minutes, seconds: `59°19'44"N 18°3'54"E`
+  - Compact formats: `591944N0180354E`
+  - URL formats: Google Maps, Eniro
+  - Data formats: GeoJSON, GML, WKT
+
+- **Multiple coordinate systems:**
   - WGS84 (global and Northern Europe)
   - SWEREF99 TM
   - RT90 2.5 gon V
   - ETRS89, ETRS-LAEA, ETRS-LCC
 
-- Features:
-  - Automatic coordinate system detection
-  - Coordinate reprojection (requires proj4js)
-  - Rating system for coordinate confidence
-  - Context extraction (text before/after coordinates)
-  - Grouping of coordinates by text structure
-  - Multiple output formats
+- **Smart parsing:**
+  - Handles comma and period as decimal separators
+  - Recognizes direction letters (N/S/E/W/Ö/V)
+  - Validates coordinate ranges
+  - Rates coordinate confidence (0.0-1.0)
 
-## Usage
+## 🧪 Testing
 
-### Basic Usage
+Open test runners in your browser:
 
-```javascript
-// Get first coordinate pair from text
-var point = CF.pointIn(text);
-console.log(point.latitude(), point.longitude());
+- **[tests/test-runner.html](tests/test-runner.html)** - Main test suite
+- **[tests/tdd-runner.html](tests/tdd-runner.html)** - TDD tests
+- **[tests/verification-test-runner.html](tests/verification-test-runner.html)** - Large test suites
 
-// Get all coordinate pairs
-var points = CF.pointsIn(text);
-points.forEach(function(p) {
-    console.log(p.asText());
-});
+## 🎯 Examples
 
-// Get grouped coordinates
-var groups = CF.groupsIn(text);
-```
+See [examples/](examples/) directory for:
+- Interactive demo
+- Simple usage examples
+- Expected output examples
 
-### Advanced Usage
+## 📝 Requirements
 
-```javascript
-// Create instance for detailed control
-var cf = new CF();
-cf.parse(text, {grouping: true});
+See [requirements/](requirements/) directory for:
+- Formal requirements specification
+- TDD test suite
+- Interface definition
 
-// Get points above rating threshold
-var points = cf.points({rating: 0.7});
+## 🤝 Contributing
 
-// Get parse log
-console.log(cf.log());
+This project follows Test-Driven Development (TDD). See [docs/TDD_PROGRESS.md](docs/TDD_PROGRESS.md) for implementation status.
 
-// Get unused coordinates
-var unused = cf.unusedCoords();
-```
-
-### Output Formatting
-
-```javascript
-var point = CF.pointIn(text);
-
-// Different formats
-point.asText({format: 'plain'});                    // "58.9 10.9"
-point.asText({format: 'degrees'});                  // "N 58.9, E 10.9"
-point.asText({directionLetter: 'after'});           // "58.9 N, 10.9 E"
-point.asText({compact: true});                      // "N58.9 E10.9"
-point.asText({localized: false});                   // Use period as decimal separator
-```
-
-## Example
-
-```javascript
-var text = `Report: 
-"The ship was seen drifting about 200 meters west of the island at 58.8 and 10,9. Nothing seen around it.
-
-Observation made at 10 minutes past 14 from the lighthouse at 58°54,0'N, 011 00,0 E."`;
-
-var points = CF.pointsIn(text);
-console.log("Found " + points.length + " coordinate pairs");
-
-points.forEach(function(point) {
-    console.log("Coordinates: " + point.asText());
-    console.log("Lat/Lng: " + point.latitude() + ", " + point.longitude());
-    console.log("Rating: " + point.rating());
-    console.log("Context: " + point.context({maxChars: 30}));
-});
-```
-
-## API Reference
-
-### Static Methods
-
-- `CF.pointIn(text)` - Returns first Point found or null
-- `CF.pointsIn(text)` - Returns array of all Points found
-- `CF.groupsIn(text)` - Returns array of Point groups
-
-### Instance Methods
-
-- `parse(text, opts)` - Parse text for coordinates
-- `points(opts)` - Get Points above rating threshold
-- `groups(opts)` - Get grouped Points
-- `unusedCoords()` - Get coordinates that weren't paired
-- `log()` - Get parsing log
-- `foundRatings()` - Get array of found ratings
-- `ratingIndex(rating)` - Get index for a rating value
-
-### Point Methods
-
-- `latitude()` - Get WGS84 latitude
-- `longitude()` - Get WGS84 longitude
-- `asText(opts)` - Format as text
-- `rating()` - Get confidence rating (0-1)
-- `reprojectTo(refSys)` - Reproject to another system
-- `context(opts)` - Get surrounding text
-- `originalText()` - Get original coordinate text
-
-## Testing
-
-Open `test-coordfinder.html` in a web browser to run the test suite.
-
-## Dependencies
-
-- proj4js (optional, for coordinate reprojection)
-
-## License
+## 📄 License
 
 MIT License
+
+## 🔗 Links
+
+- **Repository:** https://github.com/aieuren/coordfinder
+- **Version:** 4.3
+- **Author:** Bernt Rane
