@@ -4,6 +4,8 @@ A JavaScript library for extracting and parsing geographic coordinates from text
 
 ## 🚀 Quick Start
 
+**Try it live:** [https://aieuren.github.io/coordfinder/](https://aieuren.github.io/coordfinder/)
+
 ```html
 <script src="src/coordfinder.js"></script>
 <script>
@@ -99,6 +101,10 @@ MIT License
 
 ## 🔗 Links
 
-- **Repository:** https://github.com/aieuren/coordfinder
+- **🌐 Live Demo:** https://aieuren.github.io/coordfinder/
+- **💻 Repository:** https://github.com/aieuren/coordfinder
+- **📖 Documentation:** https://aieuren.github.io/coordfinder/docs/README.md
+- **🎮 Interactive Demo:** https://aieuren.github.io/coordfinder/examples/demo.html
+- **🧪 Test Runner:** https://aieuren.github.io/coordfinder/tests/verification-test-runner.html
 - **Version:** 4.3
 - **Author:** Bernt Rane
