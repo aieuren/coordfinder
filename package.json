@@ -4,8 +4,9 @@
   "description": "JavaScript library for extracting and parsing geographic coordinates from text",
   "main": "src/coordfinder.js",
   "scripts": {
-    "test": "node tests/run-tests.js --all",
-    "test:tdd": "node tests/run-tests.js --standard --format",
+    "test": "node run-full-tdd.js",
+    "test:old": "node tests/run-tests.js --all",
+    "test:tdd": "node run-tdd-tests.js",
     "convert-tests": "node tests/convert-tests.js"
   },
   "repository": {

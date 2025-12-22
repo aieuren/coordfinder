@@ -40,6 +40,22 @@ coordfinder/
 └── README.md              # This file
 ```
 
+## 🧪 Testing
+
+Run the complete TDD test suite (30 tests):
+
+```bash
+npm test
+```
+
+This runs all tests from `requirements/test-suites-tdd.txt` and must pass before any commit.
+
+**Test in browser:**
+- [Verification Test Runner](https://aieuren.github.io/coordfinder/tests/verification-test-runner.html) - Load and run test suites
+- [TDD Complete](https://aieuren.github.io/coordfinder/tdd-complete.html) - 23 embedded tests
+
+**Current status:** 26/30 tests passing (87%)
+
 ## 📖 Documentation
 
 - **[Quick Start Guide](docs/QUICKSTART.md)** - Get started in 5 minutes
