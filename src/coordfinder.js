@@ -256,6 +256,9 @@ var Patterns = {
     // WKT: POINT(18.06491 59.32894)
     wkt: /POINT\s*\(\s*(-?\d{1,3}\.\d+)\s+(-?\d{1,3}\.\d+)\s*\)/gi,
     
+    // Verbal pair: "Norr 59 grader 19,8 minuter Öst 18 grader 3,9 minuter"
+    verbalPair: /(Norr?|Nord|Syd|Söder|South|Väst|Vest|West|Öst|Øst|East|N|S|E|W|V|Ö)\s+(\d{1,3})\s+grader?\s+(\d{1,2}[,.]?\d*)\s+min[iu]tt?e?r?\s+(Norr?|Nord|Syd|Söder|South|Väst|Vest|West|Öst|Øst|East|N|S|E|W|V|Ö)\s+(\d{1,3})\s+grader?\s+(\d{1,2}[,.]?\d*)\s+min[iu]tt?e?r?/gi,
+    
     // Prefix formats: Lat: 59.32894 Long: 18.06491 or Latitude: / Longitude:
     prefixLatLong: /(?:Lat(?:itude)?|N)\s*:\s*(-?\d{1,3}[,.]\d+)[\s,;]+(?:Long(?:itude)?|E)\s*:\s*(-?\d{1,3}[,.]\d+)/gi,
     
@@ -289,6 +292,7 @@ Patterns.allPatterns = [
     {regex: Patterns.geoJSON, format: CoordFormat.Degs, handler: 'geoJSON'},
     {regex: Patterns.gml, format: CoordFormat.Degs, handler: 'gml'},
     {regex: Patterns.wkt, format: CoordFormat.Degs, handler: 'wkt'},
+    {regex: Patterns.verbalPair, format: CoordFormat.DegsMins, handler: 'verbalPair'},
     {regex: Patterns.urlCoords, format: CoordFormat.Degs, handler: 'url'},
     {regex: Patterns.prefixLatLong, format: CoordFormat.Degs, handler: 'prefix'},
     {regex: Patterns.compactDMS, format: CoordFormat.DegsMinsSecs, handler: 'compactDMS'},
@@ -424,6 +428,38 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet._isLonFirst = true;
         snippet._lon = lon;
         snippet._lat = lat;
+        
+    } else if (bestPattern.handler === 'verbalPair') {
+        // Format: "Norr 59 grader 19,8 minuter Öst 18 grader 3,9 minuter"
+        // Groups: [1]=dir1, [2]=deg1, [3]=min1, [4]=dir2, [5]=deg2, [6]=min2
+        var dir1 = bestMatch[1].toUpperCase();
+        var deg1 = parseInt(bestMatch[2], 10);
+        var min1 = parseFloat(bestMatch[3].replace(',', '.'));
+        var dir2 = bestMatch[4].toUpperCase();
+        var deg2 = parseInt(bestMatch[5], 10);
+        var min2 = parseFloat(bestMatch[6].replace(',', '.'));
+        
+        // Convert to decimal degrees
+        var val1 = deg1 + min1 / 60;
+        var val2 = deg2 + min2 / 60;
+        
+        // Determine which is lat and which is lon based on direction
+        var isNS1 = dir1.match(/^(N|S|NORR?|NORD|SYD|SÖDER|SOUTH)/);
+        var isEW2 = dir2.match(/^(E|W|V|Ö|ØST|ÖEST|EAST|VÄST|VEST|WEST)/);
+        
+        if (isNS1 && isEW2) {
+            // First is lat, second is lon
+            snippet._lat = dir1.match(/^S/) ? -val1 : val1;
+            snippet._lon = dir2.match(/^(W|V|VÄST|VEST|WEST)/) ? -val2 : val2;
+        } else {
+            // Fallback: assume first is lat, second is lon
+            snippet._lat = val1;
+            snippet._lon = val2;
+        }
+        
+        snippet.number = snippet._lat;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = 5;
         
     } else if (bestPattern.handler === 'url') {
         // Format: @59.32894,18.06491 or /59.329440/18.064510
@@ -991,8 +1027,8 @@ function CF(text, opts) {
 }
 
 // Metadata
-CF.version = "5.0-beta.2";
-CF.build = "0f5398f"; // Replaced during build with git commit hash
+CF.version = "5.0-beta.3";
+CF.build = "2010542"; // Replaced during build with git commit hash
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
