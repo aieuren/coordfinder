@@ -873,13 +873,6 @@ Point.prototype.rate = function(grouping, hints) {
             this._ratingLog.push("Invalid longitude: " + lon + " (must be -180 to 180)");
             return this._rating;
         }
-        
-        // If longitude is > 90, it's likely a swapped coordinate
-        if (Math.abs(lon) > 90 && Math.abs(lat) <= 90) {
-            this._rating = 0;
-            this._ratingLog.push("Suspicious: longitude " + lon + " > 90, likely swapped coordinates");
-            return this._rating;
-        }
     }
     
     // Check if coordinates have direction letters
@@ -999,7 +992,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.2";
-CF.build = "ae61d35"; // Replaced during build with git commit hash
+CF.build = "9d0ec6f"; // Replaced during build with git commit hash
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
@@ -1096,7 +1089,12 @@ CF.prototype._findSnippets = function() {
 
 CF.prototype._snippetsToCoords = function() {
     for (var i = 0; i < this._snippets.length; i++) {
-        var coord = Coord.fromSnippet(this._snippets[i]);
+        var snippet = this._snippets[i];
+        // Skip snippets with both lat and lon - they'll be handled in _coordsToPoints
+        if (snippet._lat !== undefined && snippet._lon !== undefined) {
+            continue;
+        }
+        var coord = Coord.fromSnippet(snippet);
         if (coord) {
             this._coords.push(coord);
         }
@@ -1108,21 +1106,35 @@ CF.prototype._coordsToPoints = function() {
     var usedCoords = {};
     
     // First, handle special formats where both coords are in one snippet
-    for (var i = 0; i < this._coords.length; i++) {
-        var c = this._coords[i];
-        if (!c || !c.parsedFrom) continue;
+    for (var i = 0; i < this._snippets.length; i++) {
+        var snippet = this._snippets[i];
+        if (!snippet) continue;
         
         // Check if this snippet contains both lat and lon
-        if (c.parsedFrom._lat !== undefined && c.parsedFrom._lon !== undefined) {
+        if (snippet._lat !== undefined && snippet._lon !== undefined) {
+            var lat = snippet._lat;
+            var lon = snippet._lon;
+            
+            // Auto-correct if values are swapped (lat out of range or lon out of range)
+            if (Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+                if (Math.abs(lon) <= 90 && Math.abs(lat) <= 180) {
+                    // Swap them
+                    var temp = lat;
+                    lat = lon;
+                    lon = temp;
+                    this._log("Auto-corrected swapped lat/lon values");
+                }
+            }
+            
             var latCoord = new Coord();
-            latCoord.value = c.parsedFrom._lat;
+            latCoord.value = lat;
             latCoord.axis = CoordAxis.Northing;
-            latCoord.parsedFrom = c.parsedFrom;
+            latCoord.parsedFrom = snippet;
             
             var lonCoord = new Coord();
-            lonCoord.value = c.parsedFrom._lon;
+            lonCoord.value = lon;
             lonCoord.axis = CoordAxis.Easting;
-            lonCoord.parsedFrom = c.parsedFrom;
+            lonCoord.parsedFrom = snippet;
             
             var point = new Point(latCoord, lonCoord, RefSys.WGS84);
             latCoord.point = point;
@@ -1130,8 +1142,6 @@ CF.prototype._coordsToPoints = function() {
             
             this._points.push(point);
             this._log("Created point from combined format: " + point.asText());
-            
-            usedCoords[i] = true;
             continue;
         }
     }
@@ -1149,7 +1159,8 @@ CF.prototype._coordsToPoints = function() {
             if (!c1 || !c2) continue;
             
             // Try to find a reference system that contains both coords
-            var result = RefSys.fromCoords(c1, c2, false);
+            // Use ordered=true to prevent auto-swapping (only swap for explicit formats like WKT)
+            var result = RefSys.fromCoords(c1, c2, true);
             
             if (result) {
                 var point = new Point(result.N, result.E, result.RefSys);
