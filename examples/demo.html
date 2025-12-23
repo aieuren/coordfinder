@@ -131,7 +131,11 @@
         </div>
     </div>
 
-    <script src="../src/coordfinder.js"></script>
+    <script>
+        // Cache-busting: use timestamp to force reload of JS files
+        var cacheBust = new Date().getTime();
+        document.write('<script src="../src/coordfinder.js?v=' + cacheBust + '"><\/script>');
+    </script>
     <script>
         var versionText = 'v' + (CF.version || 'unknown');
         if (CF.build && CF.build !== 'dev') {
