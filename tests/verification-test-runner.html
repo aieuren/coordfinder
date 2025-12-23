@@ -543,9 +543,14 @@
             document.getElementById('filterControls').style.display = 'none';
         }
         
-        function copyTest(id, passed, name, message) {
+        function copyTest(id, passed, name, message, input) {
             var status = passed ? 'PASS' : 'FAIL';
             var text = status + ' [' + id + '] ' + name;
+            
+            if (input) {
+                text += '\nInput: "' + input + '"';
+            }
+            
             if (message) {
                 text += '\n' + message;
             }

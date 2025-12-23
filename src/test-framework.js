@@ -264,7 +264,8 @@ TestSuiteResult.prototype.toHTML = function() {
         html += '<span class="test-id">[' + r.test.id + ']</span>';
         html += '<span class="test-name">' + r.test.name + '</span>';
         html += '<button class="copy-btn" onclick="copyTest(\'' + r.test.id + '\', ' + r.passed + ', \'' + 
-                this._escapeForJs(r.test.name) + '\', \'' + this._escapeForJs(r.message || '') + '\')">📋</button>';
+                this._escapeForJs(r.test.name) + '\', \'' + this._escapeForJs(r.message || '') + '\', \'' + 
+                this._escapeForJs(r.test.input || '') + '\')">📋</button>';
         html += '</div>';
         
         if (!r.passed) {
