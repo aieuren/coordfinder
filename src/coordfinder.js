@@ -1028,7 +1028,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.3";
-CF.build = "5077340"; // Replaced during build with git commit hash
+CF.build = "af4c565"; // Replaced during build with git commit hash
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
