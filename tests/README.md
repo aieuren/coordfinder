@@ -25,6 +25,15 @@
 - `test-runner-md.html` - Old test runner for tests.md
 - Other test-*.html files - Various experimental runners
 
+## Test File Format
+
+See [TEST_FORMAT.md](TEST_FORMAT.md) for detailed documentation on how to write test files.
+
+**Key features:**
+- `Count:` - Number of points expected (required for Points Test)
+- `Coords:` - Exact coordinates to validate (optional)
+- `CRS:` - Expected coordinate reference system (optional)
+
 ## Recommendation
 
 Use `verification-test-runner.html` with `test-suites-tdd.txt` for all testing.
