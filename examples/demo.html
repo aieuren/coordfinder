@@ -103,7 +103,7 @@
         
         <div class="section">
             <h2>Input Text</h2>
-            <div class="code-block">The ship was at 58.8 and 10,9. Lighthouse at 58°54,0'N, 011 00,0 E.</div>
+            <textarea id="inputText" class="code-block" style="width: 100%; min-height: 80px; font-family: 'Courier New', monospace; padding: 15px; border: 1px solid #ddd; border-radius: 5px; resize: vertical;">The ship was at 58.8 and 10,9. Lighthouse at 58°54,0'N, 011 00,0 E.</textarea>
         </div>
 
         <div class="section">
@@ -139,7 +139,9 @@
         }
         document.getElementById('cfVersion').textContent = versionText;
         
-        var text = 'The ship was at 58.8 and 10,9. Lighthouse at 58°54,0\'N, 011 00,0 E.';
+        function getText() {
+            return document.getElementById('inputText').value;
+        }
 
         function getRatingClass(rating) {
             if (rating >= 0.8) return 'rating-high';
@@ -148,6 +150,7 @@
         }
 
         function runSimpleDemo() {
+            var text = getText();
             var output = document.getElementById('simple-output');
             output.innerHTML = '<p>Running: <code>var points = CF.pointsIn(text);</code></p>';
             
@@ -180,6 +183,7 @@
         }
 
         function runDetailedDemo() {
+            var text = getText();
             var output = document.getElementById('detailed-output');
             output.innerHTML = '<p>Running:</p><div class="code-block">var cf = new CF();<br>' +
                               'cf.parse(text);<br>' +
@@ -228,6 +232,7 @@
         }
 
         function runLogDemo() {
+            var text = getText();
             var output = document.getElementById('log-output');
             output.innerHTML = '<p>Running: <code>console.log(cf.log());</code></p>';
             
@@ -245,6 +250,7 @@
         }
 
         function runFormatDemo() {
+            var text = getText();
             var output = document.getElementById('format-output');
             output.innerHTML = '<p>Showing different output formats for the first point:</p>';
             

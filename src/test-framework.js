@@ -227,6 +227,8 @@ TestSuiteResult.prototype.toHTML = function() {
         html += '<span class="test-status">' + (r.passed ? '✅' : '❌') + '</span>';
         html += '<span class="test-id">[' + r.test.id + ']</span>';
         html += '<span class="test-name">' + r.test.name + '</span>';
+        html += '<button class="copy-btn" onclick="copyTest(\'' + r.test.id + '\', ' + r.passed + ', \'' + 
+                this._escapeForJs(r.test.name) + '\', \'' + this._escapeForJs(r.message || '') + '\')">📋</button>';
         html += '</div>';
         
         if (!r.passed) {
@@ -246,6 +248,13 @@ TestSuiteResult.prototype._escapeHtml = function(text) {
                .replace(/</g, '&lt;')
                .replace(/>/g, '&gt;')
                .replace(/\n/g, '<br>');
+};
+
+TestSuiteResult.prototype._escapeForJs = function(text) {
+    return text.replace(/\\/g, '\\\\')
+               .replace(/'/g, "\\'")
+               .replace(/"/g, '\\"')
+               .replace(/\n/g, '\\n');
 };
 
 // ——————————— TestRunner ——————————— //
