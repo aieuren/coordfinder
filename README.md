@@ -54,7 +54,7 @@ This runs all tests from `requirements/test-suites-tdd.txt` and must pass before
 - [Verification Test Runner](https://aieuren.github.io/coordfinder/tests/verification-test-runner.html) - Load and run test suites
 - [TDD Complete](https://aieuren.github.io/coordfinder/tdd-complete.html) - 23 embedded tests
 
-**Current status:** 30/30 tests passing (100%) 🎉
+**Current status:** 35/36 tests passing (97%)
 
 ## 📖 Documentation
 

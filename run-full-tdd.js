@@ -12,7 +12,7 @@ eval(cfCode);
 
 console.log('=== TDD Test Suite ===');
 console.log('CoordFinder version:', CF.version);
-console.log('Running 30 tests from requirements/test-suites-tdd.txt\n');
+console.log('Running 36 tests from requirements/test-suites-tdd.txt\n');
 
 // Simple test runner that mimics what test-framework does
 function test(id, name, input, expectedLat, expectedLon) {
@@ -112,6 +112,15 @@ console.log('\n=== RT90 ===\n');
 passed += testPoints('tdd-021', 'RT90 2.5 gon V', '6580000 1540000', 1) ? 1 : 0; failed += !testPoints('tdd-021', 'RT90 2.5 gon V', '6580000 1540000', 1) ? 1 : 0;
 passed += testPoints('tdd-022', 'RT90 med kommaseparering', 'X: 6580000, Y: 1540000', 1) ? 1 : 0; failed += !testPoints('tdd-022', 'RT90 med kommaseparering', 'X: 6580000, Y: 1540000', 1) ? 1 : 0;
 
+console.log('\n=== SPECIALFALL OCH KANTFALL ===\n');
+passed += test('tdd-023', 'Very compact DM', '5830N01245E', 58.50, 12.75) ? 1 : 0; failed += !test('tdd-023', 'Very compact DM', '5830N01245E', 58.50, 12.75) ? 1 : 0;
+passed += test('tdd-024', 'Mycket glest format', '58  °  30  \'  N    12  °  45  \'  E', 58.50, 12.75) ? 1 : 0; failed += !test('tdd-024', 'Mycket glest format', '58  °  30  \'  N    12  °  45  \'  E', 58.50, 12.75) ? 1 : 0;
+passed += test('tdd-025', 'Prefix Lat/Long', 'Lat: 61.234567 Long: 15.876543', 61.234567, 15.876543) ? 1 : 0; failed += !test('tdd-025', 'Prefix Lat/Long', 'Lat: 61.234567 Long: 15.876543', 61.234567, 15.876543) ? 1 : 0;
+
+console.log('\n=== INTERNATIONELLA KOORDINATER ===\n');
+passed += test('tdd-026', 'Södra halvklotet', 'POINT(-35.5 149.1)', -35.5, 149.1) ? 1 : 0; failed += !test('tdd-026', 'Södra halvklotet', 'POINT(-35.5 149.1)', -35.5, 149.1) ? 1 : 0;
+passed += test('tdd-027', 'Västra halvklotet', '40.7128 N, 74.0060 W', 40.7128, -74.0060) ? 1 : 0; failed += !test('tdd-027', 'Västra halvklotet', '40.7128 N, 74.0060 W', 40.7128, -74.0060) ? 1 : 0;
+
 console.log('\n=== BLANDAD TEXT ===\n');
 passed += testPoints('tdd-028', 'Koordinater i löptext', 'Fartyget befann sig vid position 58°45\'N 17°30\'E när händelsen inträffade.', 1) ? 1 : 0; failed += !testPoints('tdd-028', 'Koordinater i löptext', 'Fartyget befann sig vid position 58°45\'N 17°30\'E när händelsen inträffade.', 1) ? 1 : 0;
 passed += testPoints('tdd-029', 'Fiskeriloggbok-stil', 'Fångstområde: 5820N-1145E\nPosition vid start: 5835N-1152E', 2) ? 1 : 0; failed += !testPoints('tdd-029', 'Fiskeriloggbok-stil', 'Fångstområde: 5820N-1145E\nPosition vid start: 5835N-1152E', 2) ? 1 : 0;
@@ -124,6 +133,7 @@ passed += testPoints('tdd-033', 'Datum ska inte matcha', '2024-01-15', 0) ? 1 : 
 
 console.log('\n=== PRECISION OCH DECIMALER ===\n');
 passed += testPoints('tdd-034', 'Olika antal decimaler', '59.3 18.1\n59.32 18.06\n59.329 18.065\n59.3289 18.0649', 4) ? 1 : 0; failed += !testPoints('tdd-034', 'Olika antal decimaler', '59.3 18.1\n59.32 18.06\n59.329 18.065\n59.3289 18.0649', 4) ? 1 : 0;
+passed += test('tdd-035', 'Hög precision', '59.328944123 18.064910456', 59.328944123, 18.064910456) ? 1 : 0; failed += !test('tdd-035', 'Hög precision', '59.328944123 18.064910456', 59.328944123, 18.064910456) ? 1 : 0;
 
 console.log('\n=== NOTATIONER FÖR HELTÄCKNING ===\n');
 passed += test('tdd-036', 'WKT POINT notation', 'POINT(18.06491 59.32894)', 59.32894, 18.06491) ? 1 : 0; failed += !test('tdd-036', 'WKT POINT notation', 'POINT(18.06491 59.32894)', 59.32894, 18.06491) ? 1 : 0;
@@ -150,6 +160,12 @@ var tests = [
     ['tdd-013', 'Eniro-stil', 'map/59.329440/18.064510', 59.32944, 18.06451],
     ['tdd-014', 'GeoJSON koordinater', '{"coordinates": [18.06491, 59.32894]}', 59.32894, 18.06491],
     ['tdd-015', 'GML format', '<gml:pos>59.32894 18.06491</gml:pos>', 59.32894, 18.06491],
+    ['tdd-023', 'Very compact DM', '5830N01245E', 58.50, 12.75],
+    ['tdd-024', 'Mycket glest format', '58  °  30  \'  N    12  °  45  \'  E', 58.50, 12.75],
+    ['tdd-025', 'Prefix Lat/Long', 'Lat: 61.234567 Long: 15.876543', 61.234567, 15.876543],
+    ['tdd-026', 'Södra halvklotet', 'POINT(-35.5 149.1)', -35.5, 149.1],
+    ['tdd-027', 'Västra halvklotet', '40.7128 N, 74.0060 W', 40.7128, -74.0060],
+    ['tdd-035', 'Hög precision', '59.328944123 18.064910456', 59.328944123, 18.064910456],
     ['tdd-036', 'WKT POINT notation', 'POINT(18.06491 59.32894)', 59.32894, 18.06491]
 ];
 

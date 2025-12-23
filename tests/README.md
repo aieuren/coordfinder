@@ -2,9 +2,10 @@
 
 ## Active Test Suite
 
-**`../requirements/test-suites-tdd.txt`** - Primary test suite (30 TDD tests)
+**`../requirements/test-suites-tdd.txt`** - Primary test suite (36 TDD tests)
 - Used by: `verification-test-runner.html`, `run-full-tdd.js`, `npm test`
-- Status: 30/30 passing (100%)
+- Status: 35/36 passing (97%)
+- Failing: tdd-026 (WKT POINT with negative coordinates)
 - This is the canonical test suite for the project
 
 ## Legacy Test Files
