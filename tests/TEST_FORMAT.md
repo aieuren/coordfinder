@@ -38,8 +38,8 @@ Expected:
 
 Use `Count: 0` for negative tests (should not match).
 
-### Coords (optional) ⚠️ NOT YET IMPLEMENTED
-Exact coordinates expected. Will validate both count AND coordinate values.
+### Coords (optional)
+Exact coordinates expected. Validates both count AND coordinate values.
 
 **Single point:**
 ```markdown
@@ -56,10 +56,8 @@ Expected:
 - Coords: 59.00 13.00
 ```
 
-**Current behavior:** Coords are parsed but NOT validated. Only Count is checked.
-
-### CRS (optional) ⚠️ NOT YET IMPLEMENTED
-Expected Coordinate Reference System. Will validate that parser identified correct CRS.
+### CRS (optional)
+Expected Coordinate Reference System. Validates that parser identified correct CRS.
 
 ```markdown
 Expected:
@@ -72,7 +70,7 @@ Expected:
 - `SWEREF99TM` - Swedish reference system
 - `RT90` - Swedish RT90 system
 
-**Current behavior:** CRS is parsed but NOT validated. Only Count is checked.
+**CRS matching:** Case-insensitive, ignores spaces. "RT90" matches "RT90 2.5 gon V".
 
 ## Complete Examples
 

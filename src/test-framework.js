@@ -101,11 +101,13 @@ PointTest.prototype._comparePoints = function(actual, expected) {
 
 // ——————————— PointsTest ——————————— //
 // Tests finding multiple coordinate pairs
-function PointsTest(id, name, input, expectedCount) {
+function PointsTest(id, name, input, expectedCount, expectedCoords, expectedCRS) {
     this.id = id;
     this.name = name;
     this.input = input;
     this.expectedCount = expectedCount;
+    this.expectedCoords = expectedCoords || null; // Array of {lat, lon} objects
+    this.expectedCRS = expectedCRS || null; // Expected CRS name
     this.type = "PointsTest";
 }
 
@@ -114,11 +116,8 @@ PointsTest.prototype.run = function() {
         var points = CF.pointsIn(this.input);
         var actualCount = points.length;
         
-        if (actualCount === this.expectedCount) {
-            return new TestResult(this, true, 
-                "Found " + actualCount + " point(s) as expected",
-                actualCount, this.expectedCount);
-        } else {
+        // Check count
+        if (actualCount !== this.expectedCount) {
             var msg = "Expected " + this.expectedCount + " point(s), found " + actualCount;
             if (actualCount > 0) {
                 msg += "\n   Found points:";
@@ -129,6 +128,43 @@ PointsTest.prototype.run = function() {
             }
             return new TestResult(this, false, msg, actualCount, this.expectedCount);
         }
+        
+        // Check coordinates if specified
+        if (this.expectedCoords && this.expectedCoords.length > 0) {
+            for (var i = 0; i < this.expectedCoords.length && i < points.length; i++) {
+                var expected = this.expectedCoords[i];
+                var actual = points[i];
+                var latDiff = Math.abs(actual.latitude() - expected.lat);
+                var lonDiff = Math.abs(actual.longitude() - expected.lon);
+                
+                if (latDiff > 0.00001 || lonDiff > 0.00001) {
+                    var msg = "Point " + (i + 1) + " coordinates mismatch\n";
+                    msg += "   Expected: " + expected.lat.toFixed(5) + ", " + expected.lon.toFixed(5) + "\n";
+                    msg += "   Actual:   " + actual.latitude().toFixed(5) + ", " + actual.longitude().toFixed(5);
+                    return new TestResult(this, false, msg, actual, expected);
+                }
+            }
+        }
+        
+        // Check CRS if specified
+        if (this.expectedCRS && points.length > 0) {
+            var actualCRS = points[0].refsys.name;
+            // Normalize for comparison: remove spaces, lowercase
+            var normalizedActual = actualCRS.replace(/\s+/g, '').toLowerCase();
+            var normalizedExpected = this.expectedCRS.replace(/\s+/g, '').toLowerCase();
+            
+            // Check if expected is contained in actual (allows "RT90" to match "RT90 2.5 gon V")
+            if (normalizedActual.indexOf(normalizedExpected) === -1) {
+                var msg = "CRS mismatch\n";
+                msg += "   Expected: " + this.expectedCRS + "\n";
+                msg += "   Actual:   " + actualCRS;
+                return new TestResult(this, false, msg, actualCRS, this.expectedCRS);
+            }
+        }
+        
+        return new TestResult(this, true, 
+            "Found " + actualCount + " point(s) as expected",
+            actualCount, this.expectedCount);
         
     } catch(e) {
         return new TestResult(this, false, "Exception: " + e.message, null, this.expectedCount);
@@ -151,8 +187,8 @@ TestSuite.prototype.addPointTest = function(id, name, input, expected) {
     return this;
 };
 
-TestSuite.prototype.addPointsTest = function(id, name, input, expectedCount) {
-    this.tests.push(new PointsTest(id, name, input, expectedCount));
+TestSuite.prototype.addPointsTest = function(id, name, input, expectedCount, expectedCoords, expectedCRS) {
+    this.tests.push(new PointsTest(id, name, input, expectedCount, expectedCoords, expectedCRS));
     return this;
 };
 

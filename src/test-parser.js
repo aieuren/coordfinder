@@ -53,7 +53,9 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
                 id: null,
                 input: '',
                 expected: null,
-                count: null
+                count: null,
+                coords: [],
+                crs: null
             };
             state = 'test';
             continue;
@@ -109,9 +111,22 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
                     currentTest.expected = trimmed;
                 }
             } else if (currentTest.type === 'Points') {
-                // Points Test: expected format is "- Count: N"
+                // Points Test: expected format is "- Count: N", "- Coords: lat lon", "- CRS: name"
                 if (trimmed.match(/^-?\s*Count:\s*(\d+)$/i)) {
                     currentTest.count = parseInt(RegExp.$1, 10);
+                } else if (trimmed.match(/^-\s*Coords:\s*(.+)$/)) {
+                    // Format: "- Coords: 59.32894 18.06491"
+                    var coordStr = RegExp.$1.trim();
+                    var parts = coordStr.split(/\s+/);
+                    if (parts.length >= 2) {
+                        currentTest.coords.push({
+                            lat: parseFloat(parts[0]),
+                            lon: parseFloat(parts[1])
+                        });
+                    }
+                } else if (trimmed.match(/^-\s*CRS:\s*(.+)$/i)) {
+                    // Format: "- CRS: SWEREF99TM"
+                    currentTest.crs = RegExp.$1.trim();
                 }
             }
             continue;
@@ -146,7 +161,9 @@ MarkdownTestParser.prototype._addTestToSuite = function(suite, test) {
             console.warn('Points test without count skipped:', test.id);
             return;
         }
-        suite.addPointsTest(test.id, test.name, test.input, test.count);
+        var coords = test.coords.length > 0 ? test.coords : null;
+        var crs = test.crs || null;
+        suite.addPointsTest(test.id, test.name, test.input, test.count, coords, crs);
     }
 };
 
