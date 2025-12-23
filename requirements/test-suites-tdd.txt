@@ -164,19 +164,19 @@ Expected:
 
 # === SPECIALFALL OCH KANTFALL ===
 
-## Points Test: Mycket kompakt format
+## Point Test: Mycket kompakt format
 Test-ID: tdd-023
 Input: "5830N01245E"
 Expected:
 - Coords: 58.50 12.75
 
-## Points Test: Mycket glest format
+## Point Test: Mycket glest format
 Test-ID: tdd-024
 Input: "58  °  30  '  N    12  °  45  '  E"
 Expected:
 - Coords: 58.50 12.75
 
-## Points Test: Prefix Lat/Long
+## Point Test: Prefix Lat/Long
 Test-ID: tdd-025
 Input: "Lat: 61.234567 Long: 15.876543"
 Expected:
@@ -184,13 +184,13 @@ Expected:
 
 # === INTERNATIONELLA KOORDINATER ===
 
-## Points Test: Södra halvklotet
+## Point Test: Södra halvklotet
 Test-ID: tdd-026
 Input: "POINT(-35.5 149.1)"
 Expected:
 - Coords: -35.5 149.1
 
-## Points Test: Västra halvklotet
+## Point Test: Västra halvklotet
 Test-ID: tdd-027
 Input: "40.7128 N, 74.0060 W"
 Expected:
@@ -251,7 +251,7 @@ Input: |
 Expected:
 - Count: 4
 
-## Points Test: Hög precision
+## Point Test: Hög precision
 Test-ID: tdd-035
 Input: "59.328944123 18.064910456"
 Expected:
