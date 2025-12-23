@@ -6,7 +6,7 @@
  * the implementation should expose to users.
  * 
  * @version 5.0-beta.2
- * @author Bernt Rane
+ * @author Bernt Rane, Claude & Ona
  * @license MIT
  */
 

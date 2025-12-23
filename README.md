@@ -123,7 +123,7 @@ MIT License
 - **🎮 Interactive Demo:** https://aieuren.github.io/coordfinder/examples/demo.html
 - **🧪 Test Runner:** https://aieuren.github.io/coordfinder/tests/verification-test-runner.html
 - **Version:** 5.0-beta.2
-- **Author:** Bernt Rane
+- **Author:** Bernt Rane, Claude & Ona
 
 **Note:** Version, author, and license are defined in `src/coordfinder.js` as `CF.version`, `CF.author`, and `CF.license`. HTML pages read these dynamically.
 
