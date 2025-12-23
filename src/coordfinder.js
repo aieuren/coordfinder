@@ -257,7 +257,7 @@ var Patterns = {
     wkt: /POINT\s*\(\s*(-?\d{1,3}\.\d+)\s+(-?\d{1,3}\.\d+)\s*\)/gi,
     
     // Verbal pair: "Norr 59 grader 19,8 minuter Öst 18 grader 3,9 minuter"
-    verbalPair: /(Norr?|Nord|Syd|Söder|South|Väst|Vest|West|Öst|Øst|East|N|S|E|W|V|Ö)\s+(\d{1,3})\s+grader?\s+(\d{1,2}[,.]?\d*)\s+min[iu]tt?e?r?\s+(Norr?|Nord|Syd|Söder|South|Väst|Vest|West|Öst|Øst|East|N|S|E|W|V|Ö)\s+(\d{1,3})\s+grader?\s+(\d{1,2}[,.]?\d*)\s+min[iu]tt?e?r?/gi,
+    verbalPair: /(Norr?|Nord|Syd|Söder|South|Väst|Vest|West|Öst|Øst|East|N|S|E|W|V|Ö)\s+(\d{1,3})\s+grader?\s+(\d{1,2}[,.]?\d*)\s+min[iu]tt?e?r?[.,]?\s+(Norr?|Nord|Syd|Söder|South|Väst|Vest|West|Öst|Øst|East|N|S|E|W|V|Ö)\s+(\d{1,3})\s+grader?\s+(\d{1,2}[,.]?\d*)\s+min[iu]tt?e?r?[.,]?/gi,
     
     // Prefix formats: Lat: 59.32894 Long: 18.06491 or Latitude: / Longitude:
     prefixLatLong: /(?:Lat(?:itude)?|N)\s*:\s*(-?\d{1,3}[,.]\d+)[\s,;]+(?:Long(?:itude)?|E)\s*:\s*(-?\d{1,3}[,.]\d+)/gi,
@@ -1028,7 +1028,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.3";
-CF.build = "20251223-144325"; // Timestamp-based build number
+CF.build = "20251223-154014"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
