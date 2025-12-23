@@ -269,3 +269,23 @@ Test-ID: tdd-036
 Input: "POINT(18.06491 59.32894)"
 Expected:
 - Count: 1
+
+# Övrigt
+
+## Point Test: Svensk verbal notation
+Test-ID: tdd-037
+Input: "Norr 59 grader 19,8 minuter Öst 18 grader 3,9 minuter"
+Expected:
+- Coords: 59.33000 18.06500
+
+## Point Test: Verbalt format - grader och minuter
+Test-ID: tdd-038
+Input: "Nord 65 grader 30 minutter Øst 015 grader 45 minutter"
+Expected:
+- Coords: 65.50000 15.75000
+
+## Point Test: Verbalt format med decimalminuter
+Test-ID: tdd-039
+Input: "N 58 grader 45,5 minutter E 012 grader 30,2 minutter"
+Expected:
+- Coords: 58.75833 12.50333
