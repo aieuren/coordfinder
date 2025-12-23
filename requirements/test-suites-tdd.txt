@@ -289,3 +289,9 @@ Test-ID: tdd-039
 Input: "N 58 grader 45,5 minutter E 012 grader 30,2 minutter"
 Expected:
 - Coords: 58.75833 12.50333
+
+## Point Test: Verbalt format med extremt whitespace och punktavslut
+Test-ID: tdd-041
+Input: "Nord 69 grader 29,2   minutter.  Øst 018 grader 20,0  minutter."
+Expected:
+- Coords: 69.48667 18.33333
