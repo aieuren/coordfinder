@@ -1,6 +1,6 @@
-# TDD Test Suite - Koordinatparser
+=== TDD Test Suite - Koordinatparser ===
 
-# === GRUNDLÄGGANDE WGS84 DECIMALGRADER ===
+# GRUNDLÄGGANDE WGS84 DECIMALGRADER
 
 ## Point Test: Enkel decimalform
 Test-ID: tdd-001
@@ -20,7 +20,7 @@ Input: "59.32894; 18.06491"
 Expected:
 - Coords: 59.32894 18.06491
 
-# === GRADER OCH MINUTER ===
+# GRADER OCH MINUTER
 
 ## Point Test: Grader och decimalminuter
 Test-ID: tdd-004
@@ -40,7 +40,7 @@ Input: "591944N0180354E"
 Expected:
 - Coords: 59.32889 18.06500
 
-# === VÄDERSTRECK OCH KVADRANTER ===
+# VÄDERSTRECK OCH KVADRANTER
 
 ## Point Test: Väderstreck före värden
 Test-ID: tdd-007
@@ -60,7 +60,7 @@ Input: "N 65.58 Ö 22.14"
 Expected:
 - Coords: 65.58 22.14
 
-# === MINUSTECKEN SOM SEPARATOR ===
+# MINUSTECKEN SOM SEPARATOR
 
 ## Point Test: Grader-minuter format
 Test-ID: tdd-010
@@ -74,7 +74,7 @@ Input: "6230-1545"
 Expected:
 - Coords: 62.50 15.75
 
-# === URL-FORMAT ===
+# URL-FORMAT
 
 ## Point Test: Google Maps URL
 Test-ID: tdd-012
@@ -88,7 +88,7 @@ Input: "map/59.329440/18.064510"
 Expected:
 - Coords: 59.32944 18.06451
 
-# === DATAFORMAT ===
+# DATAFORMAT
 
 ## Point Test: GeoJSON koordinater
 Test-ID: tdd-014
@@ -102,7 +102,7 @@ Input: "<gml:pos>59.32894 18.06491</gml:pos>"
 Expected:
 - Coords: 59.32894 18.06491
 
-# === FLERRADIGA OCH LISTOR ===
+# FLERRADIGA OCH LISTOR
 
 ## Points Test: Tvåradiga koordinater
 Test-ID: tdd-016
@@ -123,7 +123,7 @@ Expected:
 - Count: 3
 - Bounds: 57.5 12.25 58.0 12.75
 
-# === SWEREF 99 TM ===
+# SWEREF 99 TM
 
 ## Points Test: SWEREF 99 TM grundformat
 Test-ID: tdd-018
@@ -146,7 +146,7 @@ Expected:
 - Count: 1
 - CRS: SWEREF99TM
 
-# === RT90 ===
+# RT90
 
 ## Points Test: RT90 2.5 gon V
 Test-ID: tdd-021
@@ -162,41 +162,46 @@ Expected:
 - Count: 1
 - CRS: RT90
 
-# === SPECIALFALL OCH KANTFALL ===
+# SPECIALFALL OCH KANTFALL
 
-## Point Test: Mycket kompakt format
+## Points Test: Mycket kompakt format
 Test-ID: tdd-023
 Input: "5830N01245E"
 Expected:
+- Count: 1
 - Coords: 58.50 12.75
 
-## Point Test: Mycket glest format
+## Points Test: Mycket glest format
 Test-ID: tdd-024
 Input: "58  °  30  '  N    12  °  45  '  E"
 Expected:
+- Count: 1
 - Coords: 58.50 12.75
 
-## Point Test: Prefix Lat/Long
+## Points Test: Prefix Lat/Long
 Test-ID: tdd-025
 Input: "Lat: 61.234567 Long: 15.876543"
 Expected:
+- Count: 1
 - Coords: 61.234567 15.876543
 
-# === INTERNATIONELLA KOORDINATER ===
+# INTERNATIONELLA KOORDINATER
 
-## Point Test: Södra halvklotet
+## Points Test: Södra halvklotet
 Test-ID: tdd-026
 Input: "POINT(-35.5 149.1)"
 Expected:
+- Count: 1
 - Coords: -35.5 149.1
 
-## Point Test: Västra halvklotet
+## Points Test: Västra halvklotet
 Test-ID: tdd-027
 Input: "40.7128 N, 74.0060 W"
 Expected:
+- Count: 1
 - Coords: 40.7128 -74.0060
 
-# === BLANDAD TEXT ===
+# BLANDAD TEXT
 
 ## Points Test: Koordinater i löptext
 Test-ID: tdd-028
@@ -213,7 +218,7 @@ Input: |
 Expected:
 - Count: 2
 
-# === NEGATIVA TESTER (ska inte matcha) ===
+# NEGATIVA TESTER (ska inte matcha)
 
 ## Points Test: För stora latitudvärden
 Test-ID: tdd-030
@@ -239,7 +244,7 @@ Input: "2024-01-15"
 Expected:
 - Count: 0
 
-# === PRECISION OCH DECIMALER ===
+# PRECISION OCH DECIMALER
 
 ## Points Test: Olika antal decimaler
 Test-ID: tdd-034
@@ -251,13 +256,13 @@ Input: |
 Expected:
 - Count: 4
 
-## Point Test: Hög precision
+## Points Test: Hög precision
 Test-ID: tdd-035
 Input: "59.328944123 18.064910456"
 Expected:
 - Coords: 59.328944123 18.064910456
 
-# === NOTATIONER FÖR HELTÄCKNING ===
+# NOTATIONER FÖR HELTÄCKNING
 
 ## Points Test: WKT POINT notation
 Test-ID: tdd-036
