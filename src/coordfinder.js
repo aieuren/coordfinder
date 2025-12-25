@@ -162,16 +162,8 @@ RefSys.SWEREF99TM = new RefSys("SWEREF99 TM", 3006, CoordUnit.Meters,
     new BoundingBox(6100000, 200000, 7700000, 1000000), 
     "+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
 
-RefSys.SWEREF99TM_Extended = new RefSys("nästan SWEREF99 TM", 3006, CoordUnit.Meters, 
-    RefSys.SWEREF99TM.bounds.scale(1.1, 1.25), 
-    "+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
-
 RefSys.RT90_25gonV = new RefSys("RT90 2.5 gon V", 3021, CoordUnit.Meters, 
     new BoundingBox(6100000, 1200000, 7700000, 1900000), 
-    "+proj=tmerc +lat_0=0 +lon_0=15.80827777777778 +k=1 +x_0=1500000 +y_0=0 +ellps=bessel +units=m +no_defs");
-
-RefSys.RT90_25gonV_Extended = new RefSys("nästan RT90 2.5 gon V", 3021, CoordUnit.Meters, 
-    RefSys.RT90_25gonV.bounds.scale(1.1, 1.25), 
     "+proj=tmerc +lat_0=0 +lon_0=15.80827777777778 +k=1 +x_0=1500000 +y_0=0 +ellps=bessel +units=m +no_defs");
 
 RefSys.ETRS89 = new RefSys("ETRS89", 4258, CoordUnit.Degrees, 
@@ -194,8 +186,6 @@ RefSys.fromCoords = function(c1, c2, ordered) {
         RefSys.ETRS89,
         RefSys.ETRSLAEA,
         RefSys.ETRSLCC,
-        RefSys.SWEREF99TM_Extended,
-        RefSys.RT90_25gonV_Extended,
         RefSys.WGS84
     ];
     
@@ -265,6 +255,9 @@ var Patterns = {
     // URL parameters: x=540000&y=6580000 or y=6580000&x=540000
     urlParams: /[?&]?([xy])\s*=\s*(-?\d+(?:\.\d+)?)\s*&\s*([xy])\s*=\s*(-?\d+(?:\.\d+)?)/gi,
     
+    // Comma-separated large numbers with decimals: 1450000.5, 6700000.75 (Y,X order for RT90/SWEREF)
+    commaSeparatedLarge: /(\d{6,}\.\d+)\s*,\s*(\d{6,}\.\d+)/gi,
+    
     // Prefix formats with large numbers: N: 6504089 E: 278978 or Y: 1570600, X: 7546077
     prefixLargeNumbers: /([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})[\s,;]+([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})/gi,
     
@@ -314,6 +307,7 @@ Patterns.allPatterns = [
     {regex: Patterns.verbalPair, format: CoordFormat.DegsMins, handler: 'verbalPair'},
     {regex: Patterns.urlCoords, format: CoordFormat.Degs, handler: 'url'},
     {regex: Patterns.urlParams, format: CoordFormat.Meters, handler: 'urlParams'},
+    {regex: Patterns.commaSeparatedLarge, format: CoordFormat.Meters, handler: 'commaSeparatedLarge'},
     {regex: Patterns.prefixLargeNumbers, format: CoordFormat.Meters, handler: 'prefixLargeNumbers'},
     {regex: Patterns.singlePrefixLarge, format: CoordFormat.Meters, handler: 'singlePrefixLarge'},
     {regex: Patterns.prefixLatLong, format: CoordFormat.Degs, handler: 'prefix'},
@@ -531,6 +525,18 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet.noOfDecimals = 0;
         snippet._lon = x;
         snippet._lat = y;
+        
+    } else if (bestPattern.handler === 'commaSeparatedLarge') {
+        // Format: 6480082.101, 1164034.843 (Y,X order - Swedish convention for RT90/SWEREF)
+        // First value is Y (easting/longitude), second is X (northing/latitude)
+        var y = parseFloat(bestMatch[1]);
+        var x = parseFloat(bestMatch[2]);
+        
+        snippet.number = x;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = (bestMatch[2].match(/\.(\d+)/) || ['',''])[1].length;
+        snippet._lat = x;  // X is northing (latitude)
+        snippet._lon = y;  // Y is easting (longitude)
         
     } else if (bestPattern.handler === 'prefixLargeNumbers') {
         // Format: N: 6504089 E: 278978 or Y: 1570600, X: 7546077
@@ -1170,7 +1176,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.3";
-CF.build = "20251225-221257"; // Timestamp-based build number
+CF.build = "20251225-225141"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
@@ -1206,6 +1212,10 @@ CF.prototype.parse = function(text, opts) {
         this._log("No text to parse");
         return this;
     }
+    
+    // Pre-process: Remove CRS names that contain direction letters
+    // e.g., "RT90 2.5 gon V" -> "RT90 2.5 gon" to avoid "V" being parsed as West
+    this._text = this._text.replace(/\bgon\s+[VW]\b/gi, 'gon');
     
     this._parser = new TextParser(this._text);
     this._snippets = [];
