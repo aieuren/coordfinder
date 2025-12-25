@@ -295,3 +295,89 @@ Test-ID: tdd-041
 Input: "Nord 69 grader 29,2   minutter.  Øst 018 grader 20,0  minutter."
 Expected:
 - Coords: 69.48667 18.33333
+
+## Point Test: GML format med koordinatordning lon,lat
+Test-ID: tdd-042
+Input: "<gml:coordinates>18.06491,59.32894</gml:coordinates>"
+Expected:
+- Coords: 59.32894 18.06491
+
+## Point Test: GML Point med namespace
+Test-ID: tdd-043
+Input: "<gml:Point><gml:coordinates>15.5,62.5</gml:coordinates></gml:Point>"
+Expected:
+- Coords: 62.5 15.5
+
+## Points Test: Google Maps @-notation
+Test-ID: tdd-044
+Input: "https://www.google.com/maps/@59.32894,18.06491,15z"
+Expected:
+- Count: 1
+- Coords: 59.32894 18.06491
+
+## Points Test: Google Maps med place och koordinater
+Test-ID: tdd-045
+Input: "https://www.google.com/maps/place/Stockholm/@59.3293,18.0686,12z/data=!4m5!3m4"
+Expected:
+- Count: 1
+- Coords: 59.3293 18.0686
+
+## Points Test: Hitta.se kartan-format
+Test-ID: tdd-046
+Input: "http://www.hitta.se/kartan!~59.32894,18.06491,14z/tr"
+Expected:
+- Count: 1
+- Coords: 59.32894 18.06491
+
+## Points Test: Leaflet bounds array
+Test-ID: tdd-047
+Input: "imageBounds = [[59.32894, 18.06491],[60.12345, 19.54321]];"
+Expected:
+- Count: 2
+
+## Point Test: Kompakt DDMM format utan väderstreck
+Test-ID: tdd-048
+Input: "5930 1815"
+Expected:
+- Coords: 59.50 18.25
+
+## Points Test: Fiskeriloggbok DDMM-lista
+Test-ID: tdd-049
+Input: "6015 1230
+6020 1245
+6025 1300"
+Expected:
+- Count: 3
+
+## Point Test: DDMM med ledande nolla i longitud
+Test-ID: tdd-050
+Input: "6007 0530"
+Expected:
+- Coords: 60.11667 5.50000
+
+## Point Test: DDMM.M med minustecken och väderstreck
+Test-ID: tdd-051
+Input: "5930.5N-01815.2E"
+Expected:
+- Coords: 59.50833 18.25333
+
+## Point Test: DD MM med minustecken som separator
+Test-ID: tdd-052
+Input: "59 30N - 018 15E"
+Expected:
+- Coords: 59.50 18.25
+
+## Point Test: Kompakt DDMM.M utan separator
+Test-ID: tdd-053
+Input: "5930.5N-01815.2E"
+Expected:
+- Coords: 59.50833 18.25333
+
+## Points Test: Numrerad lista med olika format
+Test-ID: tdd-054
+Input: "1. 5930.0N-01800.0E
+2. 5935.0N-01805.0E
+3. 59 40N - 018 10E"
+Expected:
+- Count: 3
+
