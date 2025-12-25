@@ -527,16 +527,19 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet._lat = y;
         
     } else if (bestPattern.handler === 'commaSeparatedLarge') {
-        // Format: 6480082.101, 1164034.843 (Y,X order - Swedish convention for RT90/SWEREF)
-        // First value is Y (easting/longitude), second is X (northing/latitude)
-        var y = parseFloat(bestMatch[1]);
-        var x = parseFloat(bestMatch[2]);
+        // Format: Could be either X,Y or Y,X order - test both against bounding boxes
+        var val1 = parseFloat(bestMatch[1]);
+        var val2 = parseFloat(bestMatch[2]);
         
-        snippet.number = x;
+        snippet.number = val1;
         snippet.directionLetter = "";
-        snippet.noOfDecimals = (bestMatch[2].match(/\.(\d+)/) || ['',''])[1].length;
-        snippet._lat = x;  // X is northing (latitude)
-        snippet._lon = y;  // Y is easting (longitude)
+        snippet.noOfDecimals = Math.max(
+            (bestMatch[1].match(/\.(\d+)/) || ['',''])[1].length,
+            (bestMatch[2].match(/\.(\d+)/) || ['',''])[1].length
+        );
+        snippet._lat = val1;  // Tentative - will test both orders
+        snippet._lon = val2;
+        snippet._ambiguousOrder = true;  // Flag to test both X,Y and Y,X
         
     } else if (bestPattern.handler === 'prefixLargeNumbers') {
         // Format: N: 6504089 E: 278978 or Y: 1570600, X: 7546077
@@ -1176,7 +1179,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.3";
-CF.build = "20251225-225141"; // Timestamp-based build number
+CF.build = "20251225-230518"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
@@ -1319,6 +1322,7 @@ CF.prototype._coordsToPoints = function() {
             var lon = snippet._lon;
             
             // Auto-correct if values are swapped (lat out of range or lon out of range)
+            // Only for WGS84-like coordinates
             if (Math.abs(lat) > 90 || Math.abs(lon) > 180) {
                 if (Math.abs(lon) <= 90 && Math.abs(lat) <= 180) {
                     // Swap them
@@ -1331,16 +1335,18 @@ CF.prototype._coordsToPoints = function() {
             
             var latCoord = new Coord();
             latCoord.value = lat;
-            latCoord.axis = CoordAxis.Northing;
+            latCoord.axis = snippet._ambiguousOrder ? CoordAxis.Unknown : CoordAxis.Northing;
             latCoord.parsedFrom = snippet;
             
             var lonCoord = new Coord();
             lonCoord.value = lon;
-            lonCoord.axis = CoordAxis.Easting;
+            lonCoord.axis = snippet._ambiguousOrder ? CoordAxis.Unknown : CoordAxis.Easting;
             lonCoord.parsedFrom = snippet;
             
             // Determine reference system from coordinate values
-            var refSysResult = RefSys.fromCoords(latCoord, lonCoord, true);
+            // If ambiguous order, allow testing both X,Y and Y,X
+            var ordered = !snippet._ambiguousOrder;
+            var refSysResult = RefSys.fromCoords(latCoord, lonCoord, ordered);
             if (refSysResult) {
                 var point = new Point(refSysResult.N, refSysResult.E, refSysResult.RefSys);
                 refSysResult.N.point = point;
