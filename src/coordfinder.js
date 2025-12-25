@@ -268,6 +268,9 @@ var Patterns = {
     // Prefix formats with large numbers: N: 6504089 E: 278978 or Y: 1570600, X: 7546077
     prefixLargeNumbers: /([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})[\s,;]+([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})/gi,
     
+    // Single prefix with large number: Nordlig: 7148101 or X: 6580000
+    singlePrefixLarge: /(Nordlig|Östlig|N|E|X|Y)\s*:\s*(-?\d{5,})/gi,
+    
     // Prefix formats: Lat: 59.32894 Long: 18.06491 or Latitude: / Longitude:
     prefixLatLong: /(?:Lat(?:itude)?|N)\s*:\s*(-?\d{1,3}[,.]\d+)[\s,;]+(?:Long(?:itude)?|E)\s*:\s*(-?\d{1,3}[,.]\d+)/gi,
     
@@ -312,6 +315,7 @@ Patterns.allPatterns = [
     {regex: Patterns.urlCoords, format: CoordFormat.Degs, handler: 'url'},
     {regex: Patterns.urlParams, format: CoordFormat.Meters, handler: 'urlParams'},
     {regex: Patterns.prefixLargeNumbers, format: CoordFormat.Meters, handler: 'prefixLargeNumbers'},
+    {regex: Patterns.singlePrefixLarge, format: CoordFormat.Meters, handler: 'singlePrefixLarge'},
     {regex: Patterns.prefixLatLong, format: CoordFormat.Degs, handler: 'prefix'},
     {regex: Patterns.compactDMS, format: CoordFormat.DegsMinsSecs, handler: 'compactDMS'},
     {regex: Patterns.veryCompactDM, format: CoordFormat.DegsMins, handler: 'veryCompactDM'},
@@ -559,6 +563,23 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet.noOfDecimals = 0;
         snippet._lon = lon;
         snippet._lat = lat;
+        
+    } else if (bestPattern.handler === 'singlePrefixLarge') {
+        // Format: Nordlig: 7148101 or X: 6580000 (single coordinate)
+        var prefix = bestMatch[1].toUpperCase();
+        var value = parseFloat(bestMatch[2]);
+        
+        snippet.number = value;
+        snippet.noOfDecimals = 0;
+        
+        // Set direction letter to indicate axis (N for northing, E for easting)
+        if (prefix.match(/^(N|NORDLIG|Y)$/)) {
+            snippet.directionLetter = "N";
+        } else if (prefix.match(/^(E|ÖSTLIG|X)$/)) {
+            snippet.directionLetter = "E";
+        } else {
+            snippet.directionLetter = "";
+        }
         
     } else if (bestPattern.handler === 'veryCompactDM') {
         // Format: 5830N01245E (DDMM format) - contains BOTH coordinates!
@@ -1147,7 +1168,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.3";
-CF.build = "20251225-143252"; // Timestamp-based build number
+CF.build = "20251225-145508"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
@@ -1249,6 +1270,21 @@ CF.prototype._snippetsToCoords = function() {
         if (snippet._lat !== undefined && snippet._lon !== undefined) {
             continue;
         }
+        
+        // Skip snippets that are part of Google Maps data parameters (!3d, !4d)
+        var textBefore = snippet.textBefore(10);
+        if (textBefore.match(/![34]d$/i)) {
+            this._log("Skipping Google Maps data parameter: " + snippet.text);
+            continue;
+        }
+        
+        // Skip snippets that look like CSV extra columns (e.g., "0,1" or "0,2")
+        // These are single-digit numbers with comma (not valid coordinates)
+        if (snippet.text.match(/^\d,\d+$/)) {
+            this._log("Skipping CSV column: " + snippet.text);
+            continue;
+        }
+        
         var coord = Coord.fromSnippet(snippet);
         if (coord) {
             this._coords.push(coord);
