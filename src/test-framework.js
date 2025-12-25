@@ -25,11 +25,12 @@ TestResult.prototype.toString = function() {
 
 // ——————————— PointTest ——————————— //
 // Tests finding a single coordinate pair
-function PointTest(id, name, input, expected) {
+function PointTest(id, name, input, expected, implementsTestIds) {
     this.id = id;
     this.name = name;
     this.input = input;
     this.expected = expected; // Format: "lat lon" with specific decimals
+    this.implementsTestIds = implementsTestIds || null; // Optional: test-IDs this implements
     this.type = "PointTest";
 }
 
@@ -101,13 +102,14 @@ PointTest.prototype._comparePoints = function(actual, expected) {
 
 // ——————————— PointsTest ——————————— //
 // Tests finding multiple coordinate pairs
-function PointsTest(id, name, input, expectedCount, expectedCoords, expectedCRS) {
+function PointsTest(id, name, input, expectedCount, expectedCoords, expectedCRS, implementsTestIds) {
     this.id = id;
     this.name = name;
     this.input = input;
     this.expectedCount = expectedCount;
     this.expectedCoords = expectedCoords || null; // Array of {lat, lon} objects
     this.expectedCRS = expectedCRS || null; // Expected CRS name
+    this.implementsTestIds = implementsTestIds || null; // Optional: test-IDs this implements
     this.type = "PointsTest";
 }
 
@@ -182,13 +184,13 @@ TestSuite.prototype.addTest = function(test) {
     return this;
 };
 
-TestSuite.prototype.addPointTest = function(id, name, input, expected) {
-    this.tests.push(new PointTest(id, name, input, expected));
+TestSuite.prototype.addPointTest = function(id, name, input, expected, implementsTestIds) {
+    this.tests.push(new PointTest(id, name, input, expected, implementsTestIds));
     return this;
 };
 
-TestSuite.prototype.addPointsTest = function(id, name, input, expectedCount, expectedCoords, expectedCRS) {
-    this.tests.push(new PointsTest(id, name, input, expectedCount, expectedCoords, expectedCRS));
+TestSuite.prototype.addPointsTest = function(id, name, input, expectedCount, expectedCoords, expectedCRS, implementsTestIds) {
+    this.tests.push(new PointsTest(id, name, input, expectedCount, expectedCoords, expectedCRS, implementsTestIds));
     return this;
 };
 
@@ -263,10 +265,17 @@ TestSuiteResult.prototype.toHTML = function() {
         html += '<span class="test-status">' + (r.passed ? '✅' : '❌') + '</span>';
         html += '<span class="test-id">[' + r.test.id + ']</span>';
         html += '<span class="test-name">' + r.test.name + '</span>';
+        if (r.test.implementsTestIds) {
+            html += '<span class="test-implements" title="Implements: ' + this._escapeHtml(r.test.implementsTestIds) + '">🔗</span>';
+        }
         html += '<button class="copy-btn" onclick="copyTest(\'' + r.test.id + '\', ' + r.passed + ', \'' + 
                 this._escapeForJs(r.test.name) + '\', \'' + this._escapeForJs(r.message || '') + '\', \'' + 
                 this._escapeForJs(r.test.input || '') + '\')">📋</button>';
         html += '</div>';
+        
+        if (r.test.implementsTestIds) {
+            html += '<div class="test-implements-info">Implements: ' + this._escapeHtml(r.test.implementsTestIds) + '</div>';
+        }
         
         if (!r.passed) {
             html += '<div class="test-message">' + this._escapeHtml(r.message) + '</div>';

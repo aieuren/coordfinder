@@ -51,6 +51,7 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
                 type: testType,
                 name: testName,
                 id: null,
+                implements: null,
                 input: '',
                 expected: null,
                 count: null,
@@ -64,6 +65,12 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
         // Test-ID
         if (state === 'test' && trimmed.match(/^Test-ID:\s*(.+)$/)) {
             currentTest.id = RegExp.$1.trim();
+            continue;
+        }
+        
+        // Implements test-IDs (optional)
+        if (state === 'test' && trimmed.match(/^Implements test-IDs?:\s*(.+)$/i)) {
+            currentTest.implements = RegExp.$1.trim();
             continue;
         }
         
@@ -182,9 +189,9 @@ MarkdownTestParser.prototype._addTestToSuite = function(suite, test) {
             } else {
                 count = 1;
             }
-            suite.addPointsTest(test.id, test.name, test.input, count, coords, crs);
+            suite.addPointsTest(test.id, test.name, test.input, count, coords, crs, test.implements);
         } else {
-            suite.addPointTest(test.id, test.name, test.input, test.expected);
+            suite.addPointTest(test.id, test.name, test.input, test.expected, test.implements);
         }
     } else if (test.type === 'Points') {
         if (test.count === null) {
@@ -193,7 +200,7 @@ MarkdownTestParser.prototype._addTestToSuite = function(suite, test) {
         }
         var coords = test.coords.length > 0 ? test.coords : null;
         var crs = test.crs || null;
-        suite.addPointsTest(test.id, test.name, test.input, test.count, coords, crs);
+        suite.addPointsTest(test.id, test.name, test.input, test.count, coords, crs, test.implements);
     }
 };
 
