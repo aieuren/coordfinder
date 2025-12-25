@@ -505,8 +505,9 @@ Expected:
 
 ## Points Test: RT90 med decimaler
 Test-ID: tdd-071
-Input: "6405112.192, 1272031.939
-6480082.101, 1164034.843"
+Input: 
+6405112.192, 1272031.939
+6480082.101, 1372031.843
 Expected:
 - Count: 2
 - CRS: RT90
