@@ -687,8 +687,10 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
             // 58-30 or 014-52 format (DD-MM or DDD-MM)
             var degs = parseInt(part1, 10);
             var mins = parseInt(part2, 10);
-            snippet.number = degs + mins/60;
-            snippet.noOfDecimals = 0;
+            var decimalValue = degs + mins/60;
+            // Round to 3 decimals for integer minutes (per kravspec 9.2)
+            snippet.number = Math.round(decimalValue * 1000) / 1000;
+            snippet.noOfDecimals = 3;
         } else if (part1.length === 4 && part2.length === 4) {
             // 6230-1545 or 5820N-1145E format (DDMM-DDMM) - contains BOTH coordinates!
             var lat1 = parseInt(part1.substring(0, 2), 10);
@@ -1168,7 +1170,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.3";
-CF.build = "20251225-220852"; // Timestamp-based build number
+CF.build = "20251225-221257"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
