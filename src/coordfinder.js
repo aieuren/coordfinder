@@ -256,11 +256,17 @@ var Patterns = {
     // GML coordinates: <gml:coordinates>18.06491,59.32894</gml:coordinates> (lon,lat order)
     gmlCoordinates: /<gml:coordinates>(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)<\/gml:coordinates>/gi,
     
-    // WKT: POINT(18.06491 59.32894)
-    wkt: /POINT\s*\(\s*(-?\d{1,3}\.\d+)\s+(-?\d{1,3}\.\d+)\s*\)/gi,
+    // WKT: POINT(18.06491 59.32894) or POINT(313096 6353860) for SWEREF/RT90
+    wkt: /POINT\s*\(\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*\)/gi,
     
     // Verbal pair: "Norr 59 grader 19,8 minuter Öst 18 grader 3,9 minuter"
     verbalPair: /(Norr?|Nord|Syd|Söder|South|Väst|Vest|West|Öst|Øst|East|N|S|E|W|V|Ö)\s+(\d{1,3})\s+grader?\s+(\d{1,2}[,.]?\d*)\s+min[iu]tt?e?r?[.,]?\s+(Norr?|Nord|Syd|Söder|South|Väst|Vest|West|Öst|Øst|East|N|S|E|W|V|Ö)\s+(\d{1,3})\s+grader?\s+(\d{1,2}[,.]?\d*)\s+min[iu]tt?e?r?[.,]?/gi,
+    
+    // URL parameters: x=540000&y=6580000 or y=6580000&x=540000
+    urlParams: /[?&]?([xy])\s*=\s*(-?\d+(?:\.\d+)?)\s*&\s*([xy])\s*=\s*(-?\d+(?:\.\d+)?)/gi,
+    
+    // Prefix formats with large numbers: N: 6504089 E: 278978 or Nordlig: 6580000 Östlig: 540000
+    prefixLargeNumbers: /(?:Nordlig|Östlig|N|E|X|Y)\s*:\s*(-?\d{5,})[\s,;]+(?:Nordlig|Östlig|N|E|X|Y)\s*:\s*(-?\d{5,})/gi,
     
     // Prefix formats: Lat: 59.32894 Long: 18.06491 or Latitude: / Longitude:
     prefixLatLong: /(?:Lat(?:itude)?|N)\s*:\s*(-?\d{1,3}[,.]\d+)[\s,;]+(?:Long(?:itude)?|E)\s*:\s*(-?\d{1,3}[,.]\d+)/gi,
@@ -304,6 +310,8 @@ Patterns.allPatterns = [
     {regex: Patterns.wkt, format: CoordFormat.Degs, handler: 'wkt'},
     {regex: Patterns.verbalPair, format: CoordFormat.DegsMins, handler: 'verbalPair'},
     {regex: Patterns.urlCoords, format: CoordFormat.Degs, handler: 'url'},
+    {regex: Patterns.urlParams, format: CoordFormat.Meters, handler: 'urlParams'},
+    {regex: Patterns.prefixLargeNumbers, format: CoordFormat.Meters, handler: 'prefixLargeNumbers'},
     {regex: Patterns.prefixLatLong, format: CoordFormat.Degs, handler: 'prefix'},
     {regex: Patterns.compactDMS, format: CoordFormat.DegsMinsSecs, handler: 'compactDMS'},
     {regex: Patterns.veryCompactDM, format: CoordFormat.DegsMins, handler: 'veryCompactDM'},
@@ -503,6 +511,33 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet.noOfDecimals = (bestMatch[1].match(/[,.](\d+)/) || ['',''])[1].length;
         snippet._lon = lon;
         snippet._lat = lat;
+        
+    } else if (bestPattern.handler === 'urlParams') {
+        // Format: x=540000&y=6580000 or y=6580000&x=540000
+        var param1 = bestMatch[1].toLowerCase();
+        var val1 = parseFloat(bestMatch[2]);
+        var param2 = bestMatch[3].toLowerCase();
+        var val2 = parseFloat(bestMatch[4]);
+        
+        var x = param1 === 'x' ? val1 : val2;
+        var y = param1 === 'y' ? val1 : val2;
+        
+        snippet.number = y;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = 0;
+        snippet._lon = x;
+        snippet._lat = y;
+        
+    } else if (bestPattern.handler === 'prefixLargeNumbers') {
+        // Format: N: 6504089 E: 278978 or Nordlig: 6580000 Östlig: 540000
+        var val1 = parseFloat(bestMatch[1]);
+        var val2 = parseFloat(bestMatch[2]);
+        
+        snippet.number = val1;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = 0;
+        snippet._lon = val2;
+        snippet._lat = val1;
         
     } else if (bestPattern.handler === 'veryCompactDM') {
         // Format: 5830N01245E (DDMM format) - contains BOTH coordinates!
@@ -1091,7 +1126,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.3";
-CF.build = "20251225-140915"; // Timestamp-based build number
+CF.build = "20251225-142215"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
@@ -1235,12 +1270,16 @@ CF.prototype._coordsToPoints = function() {
             lonCoord.axis = CoordAxis.Easting;
             lonCoord.parsedFrom = snippet;
             
-            var point = new Point(latCoord, lonCoord, RefSys.WGS84);
-            latCoord.point = point;
-            lonCoord.point = point;
-            
-            this._points.push(point);
-            this._log("Created point from combined format: " + point.asText());
+            // Determine reference system from coordinate values
+            var refSysResult = RefSys.fromCoords(latCoord, lonCoord, true);
+            if (refSysResult) {
+                var point = new Point(refSysResult.N, refSysResult.E, refSysResult.RefSys);
+                refSysResult.N.point = point;
+                refSysResult.E.point = point;
+                
+                this._points.push(point);
+                this._log("Created point from combined format: " + point.asText() + " (" + refSysResult.RefSys.name + ")");
+            }
             continue;
         }
     }
