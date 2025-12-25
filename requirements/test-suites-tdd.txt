@@ -381,3 +381,144 @@ Input: "1. 5930.0N-01800.0E
 Expected:
 - Count: 3
 
+## Points Test: Google Maps URL med data-parametrar
+Test-ID: tdd-055
+Input: "https://www.google.se/maps/place/@50.5525407,-4.354845,13z/data=!4m5!3m4!8m2!3d50.5476715!4d-4.3148175"
+Expected:
+- Count: 1
+- Coords: 50.5525407 -4.354845
+
+## Points Test: Blandade URL:er utan falska positiva
+Test-ID: tdd-056
+Input: "URL1: maps/@59.32,18.06,15z/data=!3m4
+URL2: hitta.se/kartan!~60.12,19.54,12z/tr!i=abc123"
+Expected:
+- Count: 2
+
+## Points Test: CSV med XYZ och ID-kolumner
+Test-ID: tdd-057
+Input: "X,Y,Z,id
+18.06491,59.32894,0,1
+19.54321,60.12345,0,2"
+Expected:
+- Count: 2
+
+## Points Test: Negativa koordinater i CSV med extra kolumner
+Test-ID: tdd-058
+Input: "X,Y,Z,id
+-35.5,-5.2,0,3
+77.5,8.3,0,4"
+Expected:
+- Count: 2
+- Bounds: -6.0 -36.0 9.0 78.0
+
+## Point Test: SWEREF99 TM med svenska prefix
+Test-ID: tdd-059
+Input: "Nordlig: 6580000 Östlig: 540000"
+Expected:
+- Count: 1
+- CRS: SWEREF99TM
+
+## Point Test: SWEREF99 TM flerradigt med prefix
+Test-ID: tdd-060
+Input: "SWEREF99 TM Nordlig: 7148101
+SWEREF99 TM Östlig: 708433"
+Expected:
+- Count: 1
+- CRS: SWEREF99TM
+
+## Point Test: SWEREF99 TM med N/E prefix
+Test-ID: tdd-061
+Input: "N: 6504089 E: 278978"
+Expected:
+- Count: 1
+- CRS: SWEREF99TM
+
+## Points Test: WKT Point med SWEREF-koordinater
+Test-ID: tdd-062
+Input: "Point (313096 6353860)
+Point (311784 6355675)"
+Expected:
+- Count: 2
+- CRS: SWEREF99TM
+
+## Points Test: WKT med höga decimalvärden
+Test-ID: tdd-063
+Input: "Point (313096.356550686 6353860.684766964)
+Point (311784.981124307 6355675.992064684)"
+Expected:
+- Count: 2
+- CRS: SWEREF99TM
+
+## Points Test: QGIS attributtabell format
+Test-ID: tdd-064
+Input: "wkt_geom   Id   Area
+Point (313096 6353860)   0   865.28
+Point (311784 6355675)   1   865.28"
+Expected:
+- Count: 2
+- CRS: SWEREF99TM
+
+## Point Test: URL-parametrar med x och y (SWEREF)
+Test-ID: tdd-065
+Input: "x=540000&y=6580000"
+Expected:
+- Count: 1
+- CRS: SWEREF99TM
+
+## Point Test: URL-parametrar omvänd ordning
+Test-ID: tdd-066
+Input: "y=6580000&x=540000"
+Expected:
+- Count: 1
+- CRS: SWEREF99TM
+
+## Point Test: URL-parametrar med RT90
+Test-ID: tdd-067
+Input: "x=1540000&y=6580000"
+Expected:
+- Count: 1
+- CRS: RT90
+
+## Points Test: RT90 grundformat
+Test-ID: tdd-068
+Input: "6465364, 1259677
+6910904, 1411545"
+Expected:
+- Count: 2
+- CRS: RT90
+
+## Point Test: RT90 med Y före X
+Test-ID: tdd-069
+Input: "Y: 1570600, X: 7546077"
+Expected:
+- Count: 1
+- CRS: RT90
+
+## Points Test: RT90 med X/Y prefix och tab
+Test-ID: tdd-070
+Input: "X:6532864 Y:1375529
+X 6131381	Y 1832691"
+Expected:
+- Count: 2
+- CRS: RT90
+
+## Points Test: RT90 med decimaler
+Test-ID: tdd-071
+Input: "6405112.192, 1272031.939
+6480082.101, 1164034.843"
+Expected:
+- Count: 2
+- CRS: RT90
+
+## Points Test: RT90 efter beskrivande text
+Test-ID: tdd-072
+Input: "RT90 2.5 gon V koordinater:
+6465364, 1259677
+6910904, 1411545"
+Expected:
+- Count: 2
+- CRS: RT90
+
+
+
