@@ -683,8 +683,8 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         
         snippet.directionLetter = dirBefore || dirMiddle || dirAfter;
         
-        if (part1.length === 2 && part2.length === 2) {
-            // 58-30 format (DD-MM)
+        if ((part1.length === 2 || part1.length === 3) && part2.length === 2) {
+            // 58-30 or 014-52 format (DD-MM or DDD-MM)
             var degs = parseInt(part1, 10);
             var mins = parseInt(part2, 10);
             snippet.number = degs + mins/60;
@@ -1168,7 +1168,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.3";
-CF.build = "20251225-220353"; // Timestamp-based build number
+CF.build = "20251225-220852"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
