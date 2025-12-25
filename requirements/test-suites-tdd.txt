@@ -30,7 +30,7 @@ Expected:
 
 ## Point Test: Grader, minuter och sekunder
 Test-ID: tdd-005
-Input: "59° 19' 44.2\" N 18° 3' 53.7\" E"
+Input: 59° 19' 44.2" N 18° 3' 53.7" E
 Expected:
 - Coords: 59.32894 18.06492
 
@@ -513,12 +513,101 @@ Expected:
 
 ## Points Test: RT90 efter beskrivande text
 Test-ID: tdd-072
-Input: "RT90 2.5 gon V koordinater:
+Input: 
+RT90 2.5 gon V koordinater:
 6465364, 1259677
-6910904, 1411545"
+6910904, 1411545
 Expected:
 - Count: 2
 - CRS: RT90
 
+## Point Test: Grader och hela minuter med minustecken
+Test-ID: tdd-073
+Implements test-IDs: test-0031
+Input: 60-15N 19-30E
+Expected:
+- Coords: 60.250 19.500
+
+## Point Test: Grader-minuter som ska avrundas
+Test-ID: tdd-074
+Implements test-IDs: test-0031
+Input: 58-22N 13-47E
+Expected:
+- Coords: 58.367 13.783
+
+## Point Test: Grader-minuter med ledande nolla
+Test-ID: tdd-075
+Implements test-IDs: test-0031
+Input: 59-18N 014-52E
+Expected:
+- Coords: 59.300 14.867
+
+## Points Test: Leaflet bounds array korrekt ordning
+Test-ID: tdd-076
+Implements test-IDs: test-0045
+Input: 
+bounds = [[60.5, 18.2],[61.3, 19.8]];
+Expected:
+- Count: 2
+
+## Points Test: Google Maps @-notation ren
+Test-ID: tdd-077
+Implements test-IDs: test-0037, test-0045
+Input: 
+https://www.google.se/maps/@60.32894,19.06491,15z
+Expected:
+- Count: 1
+- Coords: 60.32894 19.06491
+
+## Points Test: Flera URL-format utan falska positiva
+Test-ID: tdd-078
+Implements test-IDs: test-0045
+Input: 
+https://www.google.se/maps/@60.5,18.5,15z
+http://www.hitta.se/kartan!~61.2,19.3,14z/tr
+Expected:
+- Count: 2
+
+## Points Test: RT90 efter beskrivande text
+Test-ID: tdd-079
+Implements test-IDs: test-0080
+Input: 
+Koordinatsystem: RT90 2.5 gon V
+6550000, 1350000
+6620000, 1420000
+Expected:
+- Count: 2
+- CRS: RT90
+
+## Point Test: RT90 Y,X ordning med decimaler
+Test-ID: tdd-080
+Implements test-IDs: test-0080
+Input: 
+1450000.5, 6700000.75
+Expected:
+- Coords: 6700000.75 1450000.5
+- CRS: RT90
+
+## Points Test: RT90 med X/Y prefix blandat
+Test-ID: tdd-081
+Implements test-IDs: test-0080
+Input: 
+X:6550000 Y:1350000
+X 6620000	Y 1420000
+Expected:
+- Count: 2
+- CRS: RT90
+
+## Points Test: RT90 med decimaler och blandad text
+Test-ID: tdd-082
+Implements test-IDs: test-0080
+Input: 
+Punkter nedan:
+6550000.25, 1350000.5
+Nästa punkt:
+6620000.75, 1420000.125
+Expected:
+- Count: 2
+- CRS: RT90
 
 
