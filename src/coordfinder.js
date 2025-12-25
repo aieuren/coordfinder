@@ -255,8 +255,9 @@ var Patterns = {
     // URL parameters: x=540000&y=6580000 or y=6580000&x=540000
     urlParams: /[?&]?([xy])\s*=\s*(-?\d+(?:\.\d+)?)\s*&\s*([xy])\s*=\s*(-?\d+(?:\.\d+)?)/gi,
     
-    // Comma-separated large numbers with decimals: 1450000.5, 6700000.75 (Y,X order for RT90/SWEREF)
-    commaSeparatedLarge: /(\d{6,}\.\d+)\s*,\s*(\d{6,}\.\d+)/gi,
+    // Large number pairs (RT90/SWEREF): 6480082.101, 1372031.843 or 6480082 1372031
+    // Accepts various separators: comma, space, semicolon, tab
+    largePairs: /(\d{6,}(?:\.\d+)?)\s*[,;\s]\s*(\d{6,}(?:\.\d+)?)/gi,
     
     // Prefix formats with large numbers: N: 6504089 E: 278978 or Y: 1570600, X: 7546077
     prefixLargeNumbers: /([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})[\s,;]+([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})/gi,
@@ -307,7 +308,7 @@ Patterns.allPatterns = [
     {regex: Patterns.verbalPair, format: CoordFormat.DegsMins, handler: 'verbalPair'},
     {regex: Patterns.urlCoords, format: CoordFormat.Degs, handler: 'url'},
     {regex: Patterns.urlParams, format: CoordFormat.Meters, handler: 'urlParams'},
-    {regex: Patterns.commaSeparatedLarge, format: CoordFormat.Meters, handler: 'commaSeparatedLarge'},
+    {regex: Patterns.largePairs, format: CoordFormat.Meters, handler: 'largePairs'},
     {regex: Patterns.prefixLargeNumbers, format: CoordFormat.Meters, handler: 'prefixLargeNumbers'},
     {regex: Patterns.singlePrefixLarge, format: CoordFormat.Meters, handler: 'singlePrefixLarge'},
     {regex: Patterns.prefixLatLong, format: CoordFormat.Degs, handler: 'prefix'},
@@ -526,7 +527,7 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet._lon = x;
         snippet._lat = y;
         
-    } else if (bestPattern.handler === 'commaSeparatedLarge') {
+    } else if (bestPattern.handler === 'largePairs') {
         // Format: Could be either X,Y or Y,X order - test both against bounding boxes
         var val1 = parseFloat(bestMatch[1]);
         var val2 = parseFloat(bestMatch[2]);
@@ -1179,7 +1180,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.3";
-CF.build = "20251225-230518"; // Timestamp-based build number
+CF.build = "20251225-230853"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
