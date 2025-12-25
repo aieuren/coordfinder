@@ -253,6 +253,9 @@ var Patterns = {
     // GML: <gml:pos>59.32894 18.06491</gml:pos>
     gml: /<gml:pos>(-?\d{1,3}\.\d+)\s+(-?\d{1,3}\.\d+)<\/gml:pos>/gi,
     
+    // GML coordinates: <gml:coordinates>18.06491,59.32894</gml:coordinates> (lon,lat order)
+    gmlCoordinates: /<gml:coordinates>(-?\d{1,3}\.\d+),(-?\d{1,3}\.\d+)<\/gml:coordinates>/gi,
+    
     // WKT: POINT(18.06491 59.32894)
     wkt: /POINT\s*\(\s*(-?\d{1,3}\.\d+)\s+(-?\d{1,3}\.\d+)\s*\)/gi,
     
@@ -267,6 +270,12 @@ var Patterns = {
     
     // Very compact: 5830N01245E
     veryCompactDM: /(\d{4})([NSEWÖV])(\d{5})([NSEWÖV])/gi,
+    
+    // Compact DDMM with decimal: 5930.5N-01815.2E or 59 30N - 018 15E
+    compactDDMM: /(\d{2})\s*(\d{2}(?:[,.]\d+)?)\s*([NSEWÖV])\s*-?\s*(\d{2,3})\s*(\d{2}(?:[,.]\d+)?)\s*([NSEWÖV])/gi,
+    
+    // Plain DDMM pairs: 5930 1815 or 6007 0530 (no direction letters)
+    plainDDMM: /\b(\d{4})\s+(\d{4})\b/gi,
     
     // Degrees, minutes, seconds: 59°19'44.2"N or 59°19'44"N (requires seconds marker)
     degsMinsSecs: /([NSEWÖV])?\s*(\d+)\s*[°º]\s*(\d+)\s*['′´`]\s*(\d+(?:[,.]?\d+)?)\s*["″]\s*([NSEWÖV])?/gi,
@@ -291,12 +300,15 @@ var Patterns = {
 Patterns.allPatterns = [
     {regex: Patterns.geoJSON, format: CoordFormat.Degs, handler: 'geoJSON'},
     {regex: Patterns.gml, format: CoordFormat.Degs, handler: 'gml'},
+    {regex: Patterns.gmlCoordinates, format: CoordFormat.Degs, handler: 'gmlCoordinates'},
     {regex: Patterns.wkt, format: CoordFormat.Degs, handler: 'wkt'},
     {regex: Patterns.verbalPair, format: CoordFormat.DegsMins, handler: 'verbalPair'},
     {regex: Patterns.urlCoords, format: CoordFormat.Degs, handler: 'url'},
     {regex: Patterns.prefixLatLong, format: CoordFormat.Degs, handler: 'prefix'},
     {regex: Patterns.compactDMS, format: CoordFormat.DegsMinsSecs, handler: 'compactDMS'},
     {regex: Patterns.veryCompactDM, format: CoordFormat.DegsMins, handler: 'veryCompactDM'},
+    {regex: Patterns.compactDDMM, format: CoordFormat.DegsMins, handler: 'compactDDMM'},
+    {regex: Patterns.plainDDMM, format: CoordFormat.DegsMins, handler: 'plainDDMM'},
     {regex: Patterns.degsMinsSecs, format: CoordFormat.DegsMinsSecs},
     {regex: Patterns.degsMinus, format: CoordFormat.DegsMins, handler: 'degsMinus'},
     {regex: Patterns.degsMins, format: CoordFormat.DegsMins},
@@ -418,6 +430,17 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet._lon = lon;
         snippet._lat = lat;
         
+    } else if (bestPattern.handler === 'gmlCoordinates') {
+        // Format: <gml:coordinates>18.06491,59.32894</gml:coordinates> - lon, lat order
+        var lon = parseFloat(bestMatch[1]);
+        var lat = parseFloat(bestMatch[2]);
+        snippet.number = lat;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = (bestMatch[2].match(/\.(\d+)/) || ['',''])[1].length;
+        snippet._isLonFirst = true;
+        snippet._lon = lon;
+        snippet._lat = lat;
+        
     } else if (bestPattern.handler === 'wkt') {
         // Format: POINT(18.06491 59.32894) - lon, lat order!
         var lon = parseFloat(bestMatch[1]);
@@ -499,6 +522,46 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         var lonMins = parseInt(lonStr.substring(3, 5), 10);
         var lon = lonDegs + lonMins/60;
         if (lonDir === 'W') lon = -lon;
+        
+        snippet.number = lat;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = 0;
+        snippet._lat = lat;
+        snippet._lon = lon;
+        
+    } else if (bestPattern.handler === 'compactDDMM') {
+        // Format: 5930.5N-01815.2E or 59 30N - 018 15E
+        var latDegs = parseInt(bestMatch[1], 10);
+        var latMins = parseFloat(bestMatch[2].replace(',', '.'));
+        var latDir = bestMatch[3];
+        var lonDegs = parseInt(bestMatch[4], 10);
+        var lonMins = parseFloat(bestMatch[5].replace(',', '.'));
+        var lonDir = bestMatch[6];
+        
+        var lat = latDegs + latMins/60;
+        if (latDir === 'S' || latDir === 'Syd' || latDir === 'Söder') lat = -lat;
+        
+        var lon = lonDegs + lonMins/60;
+        if (lonDir === 'W' || lonDir === 'V' || lonDir === 'Väst' || lonDir === 'Vest') lon = -lon;
+        
+        snippet.number = lat;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = 2;
+        snippet._lat = lat;
+        snippet._lon = lon;
+        
+    } else if (bestPattern.handler === 'plainDDMM') {
+        // Format: 5930 1815 (DDMM DDMM without direction letters)
+        var latStr = bestMatch[1]; // 5930
+        var lonStr = bestMatch[2]; // 1815
+        
+        var latDegs = parseInt(latStr.substring(0, 2), 10);
+        var latMins = parseInt(latStr.substring(2, 4), 10);
+        var lat = latDegs + latMins/60;
+        
+        var lonDegs = parseInt(lonStr.substring(0, 2), 10);
+        var lonMins = parseInt(lonStr.substring(2, 4), 10);
+        var lon = lonDegs + lonMins/60;
         
         snippet.number = lat;
         snippet.directionLetter = "";
@@ -1028,7 +1091,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.3";
-CF.build = "20251223-154014"; // Timestamp-based build number
+CF.build = "20251225-140915"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
