@@ -256,8 +256,9 @@ var Patterns = {
     urlParams: /[?&]?([xy])\s*=\s*(-?\d+(?:\.\d+)?)\s*&\s*([xy])\s*=\s*(-?\d+(?:\.\d+)?)/gi,
     
     // Large number pairs (RT90/SWEREF): 6480082.101, 1372031.843 or 6480082 1372031
-    // Accepts various separators: comma, space, semicolon, tab
-    largePairs: /(\d{6,}(?:\.\d+)?)\s*[,;\s]\s*(\d{6,}(?:\.\d+)?)/gi,
+    // Accepts comma (with optional space) or whitespace separator
+    // Leading whitespace included to match before plain pattern
+    largePairs: /\s*(\d{6,}(?:\.\d+)?)\s*(?:,\s*|;\s*|\s+)(\d{6,}(?:\.\d+)?)\b/gi,
     
     // Prefix formats with large numbers: N: 6504089 E: 278978 or Y: 1570600, X: 7546077
     prefixLargeNumbers: /([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})[\s,;]+([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})/gi,
@@ -1180,7 +1181,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.3";
-CF.build = "20251225-230853"; // Timestamp-based build number
+CF.build = "20251225-231336"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
