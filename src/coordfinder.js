@@ -265,8 +265,8 @@ var Patterns = {
     // URL parameters: x=540000&y=6580000 or y=6580000&x=540000
     urlParams: /[?&]?([xy])\s*=\s*(-?\d+(?:\.\d+)?)\s*&\s*([xy])\s*=\s*(-?\d+(?:\.\d+)?)/gi,
     
-    // Prefix formats with large numbers: N: 6504089 E: 278978 or Nordlig: 6580000 Östlig: 540000
-    prefixLargeNumbers: /(?:Nordlig|Östlig|N|E|X|Y)\s*:\s*(-?\d{5,})[\s,;]+(?:Nordlig|Östlig|N|E|X|Y)\s*:\s*(-?\d{5,})/gi,
+    // Prefix formats with large numbers: N: 6504089 E: 278978 or Y: 1570600, X: 7546077
+    prefixLargeNumbers: /([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})[\s,;]+([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})/gi,
     
     // Prefix formats: Lat: 59.32894 Long: 18.06491 or Latitude: / Longitude:
     prefixLatLong: /(?:Lat(?:itude)?|N)\s*:\s*(-?\d{1,3}[,.]\d+)[\s,;]+(?:Long(?:itude)?|E)\s*:\s*(-?\d{1,3}[,.]\d+)/gi,
@@ -529,15 +529,36 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet._lat = y;
         
     } else if (bestPattern.handler === 'prefixLargeNumbers') {
-        // Format: N: 6504089 E: 278978 or Nordlig: 6580000 Östlig: 540000
-        var val1 = parseFloat(bestMatch[1]);
-        var val2 = parseFloat(bestMatch[2]);
+        // Format: N: 6504089 E: 278978 or Y: 1570600, X: 7546077
+        var prefix1 = bestMatch[1].toUpperCase();
+        var val1 = parseFloat(bestMatch[2]);
+        var prefix2 = bestMatch[3].toUpperCase();
+        var val2 = parseFloat(bestMatch[4]);
         
-        snippet.number = val1;
+        // Determine which is N/Y (northing) and which is E/X (easting)
+        var isNorth1 = prefix1.match(/^(N|NORDLIG)$/);
+        var isEast2 = prefix2.match(/^(E|ÖSTLIG)$/);
+        var isY1 = prefix1 === 'Y';
+        var isX2 = prefix2 === 'X';
+        
+        var lat, lon;
+        if (isNorth1 && isEast2) {
+            lat = val1;
+            lon = val2;
+        } else if (isY1 && isX2) {
+            lat = val2;  // X is northing in Swedish systems
+            lon = val1;  // Y is easting in Swedish systems
+        } else {
+            // Default: first is lat, second is lon
+            lat = val1;
+            lon = val2;
+        }
+        
+        snippet.number = lat;
         snippet.directionLetter = "";
         snippet.noOfDecimals = 0;
-        snippet._lon = val2;
-        snippet._lat = val1;
+        snippet._lon = lon;
+        snippet._lat = lat;
         
     } else if (bestPattern.handler === 'veryCompactDM') {
         // Format: 5830N01245E (DDMM format) - contains BOTH coordinates!
@@ -1126,7 +1147,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.3";
-CF.build = "20251225-142215"; // Timestamp-based build number
+CF.build = "20251225-143252"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;

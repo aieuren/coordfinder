@@ -102,12 +102,25 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
         if (state === 'expected' && trimmed !== '') {
             if (currentTest.type === 'Point') {
                 // Point Test: expected format is "lat lon" or "- Coords: lat lon" or "null"
+                // Also support Count and CRS for compatibility
                 if (trimmed.toLowerCase() === 'null' || trimmed === '-') {
                     currentTest.expected = null;
+                } else if (trimmed.match(/^-?\s*Count:\s*(\d+)$/i)) {
+                    currentTest.count = parseInt(RegExp.$1, 10);
                 } else if (trimmed.match(/^-\s*Coords:\s*(.+)$/)) {
                     // Format: "- Coords: 59.32894 18.06491"
-                    currentTest.expected = RegExp.$1.trim();
-                } else {
+                    var coordStr = RegExp.$1.trim();
+                    var parts = coordStr.split(/\s+/);
+                    if (parts.length >= 2) {
+                        if (!currentTest.coords) currentTest.coords = [];
+                        currentTest.coords.push({
+                            lat: parseFloat(parts[0]),
+                            lon: parseFloat(parts[1])
+                        });
+                    }
+                } else if (trimmed.match(/^-\s*CRS:\s*(.+)$/i)) {
+                    currentTest.crs = RegExp.$1.trim();
+                } else if (!trimmed.match(/^-/)) {
                     currentTest.expected = trimmed;
                 }
             } else if (currentTest.type === 'Points') {
@@ -155,7 +168,24 @@ MarkdownTestParser.prototype._addTestToSuite = function(suite, test) {
     }
     
     if (test.type === 'Point') {
-        suite.addPointTest(test.id, test.name, test.input, test.expected);
+        // If Point Test has count/coords/crs, treat it as Points Test
+        var hasCoords = test.coords && test.coords.length > 0;
+        if (test.count !== undefined || hasCoords || test.crs) {
+            var coords = hasCoords ? test.coords : null;
+            var crs = test.crs || null;
+            // Determine count: explicit count, or coords.length, or 1
+            var count;
+            if (test.count !== undefined && test.count !== null) {
+                count = test.count;
+            } else if (coords && coords.length > 0) {
+                count = coords.length;
+            } else {
+                count = 1;
+            }
+            suite.addPointsTest(test.id, test.name, test.input, count, coords, crs);
+        } else {
+            suite.addPointTest(test.id, test.name, test.input, test.expected);
+        }
     } else if (test.type === 'Points') {
         if (test.count === null) {
             console.warn('Points test without count skipped:', test.id);
