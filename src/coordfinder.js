@@ -1854,7 +1854,20 @@ CF.prototype.points = function(opts) {
         }
     }
     
-    return filtered;
+    // Deduplicate points with same coordinates (rounded to 5 decimals)
+    var deduplicated = [];
+    var seen = {};
+    for (var i = 0; i < filtered.length; i++) {
+        var lat = filtered[i].latitude().toFixed(5);
+        var lon = filtered[i].longitude().toFixed(5);
+        var key = lat + ',' + lon;
+        if (!seen[key]) {
+            seen[key] = true;
+            deduplicated.push(filtered[i]);
+        }
+    }
+    
+    return deduplicated;
 };
 
 // Get groups of points
