@@ -346,6 +346,9 @@ var Patterns = {
     // Extremely compact with direction: N60 E19 or S35 W70
     extremelyCompact: /\b([NSEWÖV])(\d{1,3})\s+([NSEWÖV])(\d{1,3})\b/gi,
     
+    // Direction before decimal degrees: E19.5 N60.5 or N60.5 E19.5
+    directionBeforeDegs: /\b([NSEWÖV])(-?\d{1,3}[,.]\d+)\s+([NSEWÖV])(-?\d{1,3}[,.]\d+)\b/gi,
+    
     // URL parameters: x=540000&y=6580000 or y=6580000&x=540000
     urlParams: /[?&]?([xy])\s*=\s*(-?\d+(?:\.\d+)?)\s*&\s*([xy])\s*=\s*(-?\d+(?:\.\d+)?)/gi,
     
@@ -375,8 +378,8 @@ var Patterns = {
     // Plain DDMM pairs: 5930 1815 or 6007 0530 (no direction letters)
     plainDDMM: /\b(\d{4})\s+(\d{4})\b/gi,
     
-    // Degrees, minutes, seconds: 59°19'44.2"N or 59°19'44"N (requires seconds marker)
-    degsMinsSecs: /([NSEWÖV])?\s*(\d+)\s*[°º]\s*(\d+)\s*['′´`]\s*(\d+(?:[,.]?\d+)?)\s*["″]\s*([NSEWÖV])?/gi,
+    // Degrees, minutes, seconds: 59°19'44.2"N or 59°19'44"N or 60°30'45.5" (seconds marker optional at end)
+    degsMinsSecs: /([NSEWÖV])?\s*(\d+)\s*[°º]\s*(\d+)\s*['′´`]\s*(\d+(?:[,.]?\d+)?)\s*["″]?\s*([NSEWÖV])?/gi,
     
     // Grader-minuter med minustecken: 58-30 or 6230-1545 or 5820N-1145E
     degsMinus: /([NSEWÖV])?(\d{2,4})([NSEWÖV])?-(\d{2,4})([NSEWÖV])?/gi,
@@ -386,6 +389,9 @@ var Patterns = {
     
     // Degrees and minutes without degree symbol: 60 30,5 or 019 15,25 or N60 30,5
     degsMinsPlain: /\b([NSEWÖVO])?(\d{2,3})\s+(\d{1,2}[,.]\d+)\b/gi,
+    
+    // Degrees, minutes, seconds with direction letters but no symbols: N60 30 45 O19 15 30
+    degsMinsSecsWithDir: /\b([NSEWÖVO])(\d{2,3})\s+(\d{1,2})\s+(\d{1,2}(?:[,.]\d+)?)\b/gi,
     
     // Degrees, minutes, seconds without symbols: 60 30 45.5 or 019 15 30.2 or 60 30 45
     degsMinsSecsPlain: /\b(\d{2,3})\s+(\d{1,2})\s+(\d{1,2}(?:[,.]\d+)?)\b/gi,
@@ -408,6 +414,7 @@ Patterns.allPatterns = [
     {regex: Patterns.wkt, format: CoordFormat.Degs, handler: 'wkt'},
     {regex: Patterns.verbalPair, format: CoordFormat.DegsMins, handler: 'verbalPair'},
     {regex: Patterns.directionPairDM, format: CoordFormat.DegsMins, handler: 'directionPairDM'},
+    {regex: Patterns.directionBeforeDegs, format: CoordFormat.Degs, handler: 'directionBeforeDegs'},
     {regex: Patterns.extremelyCompact, format: CoordFormat.Degs, handler: 'extremelyCompact'},
     {regex: Patterns.urlCoords, format: CoordFormat.Degs, handler: 'url'},
     {regex: Patterns.urlParams, format: CoordFormat.Meters, handler: 'urlParams'},
@@ -420,6 +427,7 @@ Patterns.allPatterns = [
     {regex: Patterns.compactDDMM, format: CoordFormat.DegsMins, handler: 'compactDDMM'},
     {regex: Patterns.plainDDMM, format: CoordFormat.DegsMins, handler: 'plainDDMM'},
     {regex: Patterns.degsMinsSecs, format: CoordFormat.DegsMinsSecs},
+    {regex: Patterns.degsMinsSecsWithDir, format: CoordFormat.DegsMinsSecs, handler: 'degsMinsSecsWithDir'},
     {regex: Patterns.degsMinsSecsPlain, format: CoordFormat.DegsMinsSecs, handler: 'degsMinsSecsPlain'},
     {regex: Patterns.degsMinus, format: CoordFormat.DegsMins, handler: 'degsMinus'},
     {regex: Patterns.degsMins, format: CoordFormat.DegsMins},
@@ -641,6 +649,40 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         );
         snippet.noOfDecimals = minDecimals > 0 ? Math.ceil(2 + minDecimals * 1.778) : 3;
         
+    } else if (bestPattern.handler === 'directionBeforeDegs') {
+        // Format: E19.5 N60.5 or N60.5 E19.5
+        // Groups: [1]=dir1, [2]=deg1, [3]=dir2, [4]=deg2
+        var dir1 = bestMatch[1].toUpperCase();
+        var deg1 = parseFloat(bestMatch[2].replace(',', '.'));
+        var dir2 = bestMatch[3].toUpperCase();
+        var deg2 = parseFloat(bestMatch[4].replace(',', '.'));
+        
+        // Apply direction signs and determine which is lat/lon
+        var isNS1 = dir1.match(/^[NS]/);
+        var isEW2 = dir2.match(/^[EWVÖ]/);
+        var isEW1 = dir1.match(/^[EWVÖ]/);
+        var isNS2 = dir2.match(/^[NS]/);
+        
+        if (isNS1 && isEW2) {
+            // First is lat, second is lon
+            snippet._lat = dir1 === 'S' ? -deg1 : deg1;
+            snippet._lon = (dir2 === 'W' || dir2 === 'V') ? -deg2 : deg2;
+        } else if (isEW1 && isNS2) {
+            // First is lon, second is lat
+            snippet._lat = dir2 === 'S' ? -deg2 : deg2;
+            snippet._lon = (dir1 === 'W' || dir1 === 'V') ? -deg1 : deg1;
+        } else {
+            // Fallback: assume first is lat, second is lon
+            snippet._lat = deg1;
+            snippet._lon = deg2;
+        }
+        
+        snippet.number = snippet._lat;
+        snippet.directionLetter = "";
+        var decimals1 = (bestMatch[2].match(/[,.](\\d+)/) || ['',''])[1].length;
+        var decimals2 = (bestMatch[4].match(/[,.](\\d+)/) || ['',''])[1].length;
+        snippet.noOfDecimals = Math.max(decimals1, decimals2);
+        
     } else if (bestPattern.handler === 'extremelyCompact') {
         // Format: N60 E19 or S35 W70
         // Groups: [1]=dir1, [2]=deg1, [3]=dir2, [4]=deg2
@@ -858,6 +900,28 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         // Calculate decimals: minutes with N decimals -> DD with ~N+2 decimals
         var minDecimals = (bestMatch[3].match(/[,.](\d+)/) || ['',''])[1].length;
         snippet.noOfDecimals = minDecimals > 0 ? Math.ceil(2 + minDecimals * 1.778) : 3;
+        
+    } else if (bestPattern.handler === 'degsMinsSecsWithDir') {
+        // Format: N60 30 45 or O19 15 30 (DD MM SS with direction letter but no symbols)
+        var dir = bestMatch[1];
+        var degs = parseInt(bestMatch[2], 10);
+        var mins = parseInt(bestMatch[3], 10);
+        var secs = parseFloat(bestMatch[4].replace(',', '.'));
+        
+        // Validate minutes and seconds
+        if (mins >= 60 || secs >= 60) {
+            snippet._invalid = true; // Mark as invalid to skip entire match
+            return snippet;
+        }
+        
+        var value = degs + mins/60 + secs/3600;
+        
+        snippet.number = value;
+        snippet.directionLetter = dir;
+        
+        // Calculate decimals: seconds with N decimals -> DD with ~N+4 decimals
+        var secDecimals = (bestMatch[4].match(/[,.](\d+)/) || ['',''])[1].length;
+        snippet.noOfDecimals = secDecimals > 0 ? Math.ceil(4 + secDecimals) : 4;
         
     } else if (bestPattern.handler === 'degsMinsSecsPlain') {
         // Format: 60 30 45.5 or 019 15 30.2 or 60 30 45 (DD MM SS.S without symbols)
