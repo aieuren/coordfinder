@@ -673,3 +673,10 @@ Implements test-IDs: test-0026
 Input: S 35° 30' V 70° 40'
 Expected:
 - Coords: -35.50000 -70.66667
+
+## Point Test: DMS utan omslutande citationstecken
+Test-ID: tdd-092
+Implements test-IDs: test-0009
+Input: 60°30'45.5" 019°15'30.2"
+Expected:
+- Coords: 60.51264 19.25839
