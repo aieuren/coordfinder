@@ -680,3 +680,75 @@ Implements test-IDs: test-0009
 Input: 60°30'45.5" 019°15'30.2"
 Expected:
 - Coords: 60.51264 19.25839
+
+## Point Test: Extremt kompakt format med väderstreck
+Test-ID: tdd-093
+Implements test-IDs: test-0027
+Input: N60 E19
+Expected:
+- Coords: 60.0 19.0
+
+## Point Test: Extremt glest format med DMS
+Test-ID: tdd-094
+Implements test-IDs: test-0028
+Input: N  60  °  30'  45.5  "  E  019°  15  '  30.2"
+Expected:
+- Coords: 60.51264 19.25839
+
+## Points Test: Väderstreck före värde med E först
+Test-ID: tdd-095
+Implements test-IDs: test-0056
+Input: E60.0 N19.0
+Expected:
+- Coords: 19.0 60.0
+
+## Points Test: Blandat format med DMS och text
+Test-ID: tdd-096
+Implements test-IDs: test-0056
+Input: Koordinat WGS84 60°30'15.5"N 19°15'30.2"E
+Expected:
+- Coords: 60.50431 19.25839
+
+## Points Test: Validering av latitudgränser
+Test-ID: tdd-097
+Implements test-IDs: test-0064
+Input: N 85,5 E 19,0
+N 95,5 E 19,0
+-89,5 19,0
+Expected:
+- Count: 2
+
+## Points Test: Validering av longitudgränser  
+Test-ID: tdd-098
+Implements test-IDs: test-0064
+Input: 60,5 175,0
+60,5 185,0
+60,5 -179,0
+Expected:
+- Count: 2
+
+## Points Test: Validering av minutgränser
+Test-ID: tdd-099
+Implements test-IDs: test-0065
+Input: N60 30,5 O19 15,25
+N60 65,0 O19 15,25
+N60 30,5 O19 70,0
+Expected:
+- Count: 1
+
+## Points Test: Validering av sekundgränser
+Test-ID: tdd-100
+Implements test-IDs: test-0066
+Input: N60 30 45 O19 15 30
+N60 30 70 O19 15 30
+Expected:
+- Count: 1
+
+## Points Test: Validering gradminuter format
+Test-ID: tdd-101
+Implements test-IDs: test-0067
+Input: 6030.5N-01915.2E
+6070.0N-01915.2E
+6030.5N-01965.0E
+Expected:
+- Count: 1
