@@ -792,3 +792,46 @@ N60 30 45 O19 15 75
 Expected:
 - Count: 1
 - Coords: 60.5125 19.2583
+
+## Points Test: Negativa värden med korrekt ordning
+Test-ID: tdd-107
+Implements test-IDs: test-0064
+Input: -89.5 19.0
+56.5 12.0
+-96.5 12.0
+Expected:
+- Count: 2
+
+## Points Test: Olika precision ska accepteras
+Test-ID: tdd-108
+Implements test-IDs: test-0068
+Input: 60.404 19.013
+60.404 19.014567644
+Expected:
+- Count: 2
+
+## Points Test: För få decimaler ska avvisas
+Test-ID: tdd-109
+Implements test-IDs: test-0068
+Input: 60.4 19.1
+60.40 19.10
+Expected:
+- Count: 1
+
+## Points Test: Lat/Long prefix med löptext
+Test-ID: tdd-110
+Implements test-IDs: test-0085
+Input: 1. Lat. N 60 30,5 Long. O 19 15,25 Punkt vid fyren
+2. Lat. N 60 35,8 Long. O 19 20,4 Punkt 2,5 nautiska mil norr
+Expected:
+- Count: 2
+
+## Points Test: Numrerad lista med Lat/Long format
+Test-ID: tdd-111
+Implements test-IDs: test-0085
+Input: Enligt formen: Pkt, Latitud, Longitud, Anmärkning
+1. Lat. N 60 30,57 Long. O 19 15,10 Punkt A
+2. Lat. N 60 31,95 Long. O 19 18,51 Punkt B
+3. Lat. N 60 32,94 Long. O 19 20,51 Punkt C
+Expected:
+- Count: 3
