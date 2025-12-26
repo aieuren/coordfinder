@@ -42,6 +42,94 @@ var CoordAxis = {
     Easting: "Easting"
 };
 
+// ——————————— Geodetic Utilities ——————————— //
+var GeoUtils = {
+    // Earth radius in meters (mean radius)
+    EARTH_RADIUS: 6371000,
+    
+    /**
+     * Convert degrees to radians
+     */
+    toRadians: function(degrees) {
+        return degrees * Math.PI / 180;
+    },
+    
+    /**
+     * Convert radians to degrees
+     */
+    toDegrees: function(radians) {
+        return radians * 180 / Math.PI;
+    },
+    
+    /**
+     * Calculate distance in meters between two points using Haversine formula
+     * @param {number} lat1 - Latitude of first point in degrees
+     * @param {number} lon1 - Longitude of first point in degrees
+     * @param {number} lat2 - Latitude of second point in degrees
+     * @param {number} lon2 - Longitude of second point in degrees
+     * @returns {number} Distance in meters
+     */
+    haversineDistance: function(lat1, lon1, lat2, lon2) {
+        var dLat = this.toRadians(lat2 - lat1);
+        var dLon = this.toRadians(lon2 - lon1);
+        var lat1Rad = this.toRadians(lat1);
+        var lat2Rad = this.toRadians(lat2);
+        
+        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.sin(dLon / 2) * Math.sin(dLon / 2) * 
+                Math.cos(lat1Rad) * Math.cos(lat2Rad);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        
+        return this.EARTH_RADIUS * c;
+    },
+    
+    /**
+     * Calculate meters per degree of latitude at given latitude
+     * Latitude degrees are approximately constant: ~111,320 meters per degree
+     * @param {number} lat - Latitude in degrees
+     * @returns {number} Meters per degree of latitude
+     */
+    metersPerDegreeLat: function(lat) {
+        // Latitude degrees are nearly constant, approximately 111,320 meters per degree
+        // More precise: 111132.92 - 559.82 * cos(2 * lat) + 1.175 * cos(4 * lat)
+        var latRad = this.toRadians(lat);
+        return 111132.92 - 559.82 * Math.cos(2 * latRad) + 1.175 * Math.cos(4 * latRad);
+    },
+    
+    /**
+     * Calculate meters per degree of longitude at given latitude
+     * Longitude degrees vary with latitude: cos(lat) * 111,320 meters
+     * @param {number} lat - Latitude in degrees
+     * @returns {number} Meters per degree of longitude
+     */
+    metersPerDegreeLon: function(lat) {
+        var latRad = this.toRadians(lat);
+        // At equator: ~111,320 meters per degree
+        // At poles: 0 meters per degree
+        return Math.cos(latRad) * 111320;
+    },
+    
+    /**
+     * Convert degree uncertainty to meters for latitude
+     * @param {number} degreeError - Uncertainty in degrees
+     * @param {number} lat - Latitude in degrees
+     * @returns {number} Uncertainty in meters
+     */
+    degreeErrorToMetersLat: function(degreeError, lat) {
+        return degreeError * this.metersPerDegreeLat(lat);
+    },
+    
+    /**
+     * Convert degree uncertainty to meters for longitude
+     * @param {number} degreeError - Uncertainty in degrees
+     * @param {number} lat - Latitude in degrees (needed for longitude calculation)
+     * @returns {number} Uncertainty in meters
+     */
+    degreeErrorToMetersLon: function(degreeError, lat) {
+        return degreeError * this.metersPerDegreeLon(lat);
+    }
+};
+
 // ——————————— CoordDirection ——————————— //
 function CoordDirection(directionLetter) {
     this._directionLetter = directionLetter;
@@ -829,6 +917,10 @@ Coord.prototype.originalText = function() {
     return this.parsedFrom ? this.parsedFrom.text : "";
 };
 
+/**
+ * Get uncertainty in the original unit (degrees or meters)
+ * This is the raw uncertainty before conversion to meters
+ */
 Coord.prototype.maxError = function() {
     if (!this.parsedFrom) return 0;
     
@@ -836,14 +928,56 @@ Coord.prototype.maxError = function() {
     var format = this.parsedFrom.format;
     
     if (format === CoordFormat.Meters) {
-        return decimals > 0 ? Math.pow(10, -decimals) : 1;
+        // For meter-based systems: uncertainty is ±0.5 * 10^(-decimals)
+        return decimals > 0 ? 0.5 * Math.pow(10, -decimals) : 0.5;
     } else if (format === CoordFormat.Degs) {
-        return decimals > 0 ? Math.pow(10, -decimals) : 0.1;
+        // For decimal degrees: uncertainty is ±0.5 * 10^(-decimals) degrees
+        return decimals > 0 ? 0.5 * Math.pow(10, -decimals) : 0.05;
     } else if (format === CoordFormat.DegsMins || format === CoordFormat.Degreemins) {
-        return decimals > 0 ? Math.pow(10, -decimals) / 60 : 1/60;
+        // For degrees-minutes: uncertainty in minutes, convert to degrees
+        var minuteError = decimals > 0 ? 0.5 * Math.pow(10, -decimals) : 0.5;
+        return minuteError / 60;
     } else if (format === CoordFormat.DegsMinsSecs) {
-        return decimals > 0 ? Math.pow(10, -decimals) / 3600 : 1/3600;
+        // For degrees-minutes-seconds: uncertainty in seconds, convert to degrees
+        var secondError = decimals > 0 ? 0.5 * Math.pow(10, -decimals) : 0.5;
+        return secondError / 3600;
     }
+    return 0;
+};
+
+/**
+ * Get uncertainty in meters
+ * For meter-based systems: direct from decimals
+ * For degree-based systems: convert using geodetic calculations
+ * @param {number} refLat - Reference latitude for degree-to-meter conversion (optional)
+ * @returns {number} Uncertainty in meters
+ */
+Coord.prototype.uncertaintyMeters = function(refLat) {
+    if (!this.parsedFrom) return 0;
+    
+    var format = this.parsedFrom.format;
+    var error = this.maxError();
+    
+    if (format === CoordFormat.Meters) {
+        // Already in meters
+        return error;
+    } else if (format.unit() === CoordUnit.Degrees) {
+        // Convert degree error to meters
+        // Need reference latitude for accurate conversion
+        var lat = refLat !== undefined ? refLat : this.value;
+        
+        if (this.axis === CoordAxis.Northing) {
+            // Latitude: use metersPerDegreeLat
+            return GeoUtils.degreeErrorToMetersLat(error, lat);
+        } else if (this.axis === CoordAxis.Easting) {
+            // Longitude: use metersPerDegreeLon (depends on latitude)
+            return GeoUtils.degreeErrorToMetersLon(error, lat);
+        } else {
+            // Unknown axis: use average
+            return GeoUtils.degreeErrorToMetersLat(error, lat);
+        }
+    }
+    
     return 0;
 };
 
@@ -1118,6 +1252,9 @@ Point.prototype.reprojectTo = function(toRefSys) {
     }
 };
 
+/**
+ * Get uncertainty in original units (degrees or meters)
+ */
 Point.prototype.maxErrors = function() {
     return {
         N: this.N ? this.N.maxError() : 0,
@@ -1125,21 +1262,69 @@ Point.prototype.maxErrors = function() {
     };
 };
 
+/**
+ * Get uncertainty in meters for both dimensions
+ * Per kravspec 9.3: Report uncertainty in meters for north and east
+ */
+Point.prototype.uncertaintyMeters = function() {
+    if (!this.N || !this.E) {
+        return { north: 0, east: 0 };
+    }
+    
+    var lat = this.latitude();
+    
+    // For degree-based systems with Unknown axis, we need to handle specially
+    if (this.refsys && this.refsys.unit === CoordUnit.Degrees) {
+        var nError = this.N.maxError();
+        var eError = this.E.maxError();
+        
+        // N is latitude (north-south), E is longitude (east-west)
+        return {
+            north: GeoUtils.degreeErrorToMetersLat(nError, lat),
+            east: GeoUtils.degreeErrorToMetersLon(eError, lat)
+        };
+    } else {
+        // For meter-based systems, use the standard method
+        return {
+            north: this.N.uncertaintyMeters(lat),
+            east: this.E.uncertaintyMeters(lat)
+        };
+    }
+};
+
+/**
+ * Get bounding box representing uncertainty
+ * Uses geodetic calculations for accurate conversion
+ */
 Point.prototype.maxErrorBounds = function() {
-    var errors = this.maxErrors();
     var lat = this.latitude();
     var lng = this.longitude();
     
-    // Rough conversion: 1 degree ≈ 111km
-    var latError = errors.N / 111000;
-    var lngError = errors.E / (111000 * Math.cos(lat * Math.PI / 180));
-    
-    return new BoundingBox(
-        lat - latError,
-        lng - lngError,
-        lat + latError,
-        lng + lngError
-    );
+    if (this.refsys && this.refsys.unit === CoordUnit.Meters) {
+        // For meter-based systems, errors are already in meters
+        var errors = this.maxErrors();
+        
+        // Convert meter errors to degree errors using geodetic functions
+        var latError = errors.N / GeoUtils.metersPerDegreeLat(lat);
+        var lngError = errors.E / GeoUtils.metersPerDegreeLon(lat);
+        
+        return new BoundingBox(
+            lat - latError,
+            lng - lngError,
+            lat + latError,
+            lng + lngError
+        );
+    } else {
+        // For degree-based systems, errors are in degrees
+        var errors = this.maxErrors();
+        
+        return new BoundingBox(
+            lat - errors.N,
+            lng - errors.E,
+            lat + errors.N,
+            lng + errors.E
+        );
+    }
 };
 
 Point.prototype.clone = function() {
@@ -1180,8 +1365,8 @@ function CF(text, opts) {
 }
 
 // Metadata
-CF.version = "5.0-beta.3";
-CF.build = "20251225-231336"; // Timestamp-based build number
+CF.version = "5.0-beta.4";
+CF.build = "20251226-033530"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
@@ -1528,5 +1713,6 @@ CF.Snippet = Snippet;
 CF.Coord = Coord;
 CF.FormatOptions = FormatOptions;
 CF.Point = Point;
+CF.GeoUtils = GeoUtils;
 
 })(typeof window !== 'undefined' ? window : global);
