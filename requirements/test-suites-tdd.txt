@@ -752,3 +752,43 @@ Input: 6030.5N-01915.2E
 6030.5N-01965.0E
 Expected:
 - Count: 1
+
+## Point Test: DMS utan avslutande sekundtecken
+Test-ID: tdd-102
+Implements test-IDs: test-0009, test-0028
+Input: 60°30'45.5" 019°15'30.2
+Expected:
+- Coords: 60.51264 19.25839
+
+## Points Test: URL utan koordinater i data-parametrar
+Test-ID: tdd-103
+Implements test-IDs: test-0045
+Input: https://www.google.se/maps/@60.5,19.5,15z/data=!4m5!3m4!1s0xabc123
+Expected:
+- Count: 1
+- Coords: 60.5 19.5
+
+## Point Test: Väderstreck före värde ENordning
+Test-ID: tdd-104
+Implements test-IDs: test-0056
+Input: E19.5 N60.5
+Expected:
+- Coords: 60.5 19.5
+
+## Points Test: Validering negativa latitudgränser
+Test-ID: tdd-105
+Implements test-IDs: test-0064
+Input: -89.5 19.0
+-96.5 19.0
+Expected:
+- Count: 1
+
+## Points Test: DMS validering utan citationstecken
+Test-ID: tdd-106
+Implements test-IDs: test-0066
+Input: N60 30 45 O19 15 30
+N60 30 70 O19 15 30
+N60 30 45 O19 15 75
+Expected:
+- Count: 1
+- Coords: 60.5125 19.2583
