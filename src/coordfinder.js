@@ -340,6 +340,9 @@ var Patterns = {
     // Verbal pair: "Norr 59 grader 19,8 minuter Öst 18 grader 3,9 minuter"
     verbalPair: /(Norr?|Nord|Syd|Söder|South|Väst|Vest|West|Öst|Øst|East|N|S|E|W|V|Ö)\s+(\d{1,3})\s+grader?\s+(\d{1,2}[,.]?\d*)\s+min[iu]tt?e?r?[.,]?\s+(Norr?|Nord|Syd|Söder|South|Väst|Vest|West|Öst|Øst|East|N|S|E|W|V|Ö)\s+(\d{1,3})\s+grader?\s+(\d{1,2}[,.]?\d*)\s+min[iu]tt?e?r?[.,]?/gi,
     
+    // Direction pair with symbols: N 60° 30,5' V 019° 15,25' or S 35° 30' V 70° 40'
+    directionPairDM: /([NSEWÖV])\s+(\d{1,3})\s*[°º]\s*(\d{1,2}(?:[,.]?\d+)?)\s*['′´`]?\s+([NSEWÖV])\s+(\d{1,3})\s*[°º]\s*(\d{1,2}(?:[,.]?\d+)?)\s*['′´`]?/gi,
+    
     // URL parameters: x=540000&y=6580000 or y=6580000&x=540000
     urlParams: /[?&]?([xy])\s*=\s*(-?\d+(?:\.\d+)?)\s*&\s*([xy])\s*=\s*(-?\d+(?:\.\d+)?)/gi,
     
@@ -376,14 +379,20 @@ var Patterns = {
     degsMinus: /([NSEWÖV])?(\d{2,4})([NSEWÖV])?-(\d{2,4})([NSEWÖV])?/gi,
     
     // Degrees and minutes: 59°19.736'N or 59°19,736'N
-    degsMins: /([NSEWÖV])?\s*(\d+)\s*[°º]\s*(\d+(?:[,.]?\d+)?)\s*['′´`]?\s*([NSEWÖV])?/gi,
+    degsMins: /([NSEWÖV])?\s*(\d+)\s*[°º\u030A]\s*(\d+(?:[,.]?\d+)?)\s*['′´`]?\s*([NSEWÖV])?/gi,
+    
+    // Degrees and minutes without degree symbol: 60 30,5 or 019 15,25
+    degsMinsPlain: /\b(\d{2,3})\s+(\d{1,2}[,.]\d+)\b/gi,
+    
+    // Degrees, minutes, seconds without symbols: 60 30 45.5 or 019 15 30.2
+    degsMinsSecsPlain: /\b(\d{2,3})\s+(\d{1,2})\s+(\d{1,2}[,.]\d+)\b/gi,
     
     // Decimal degrees with semicolon: 59.32894; 18.06491
     degsSemicolon: /([NSEWÖV])?\s*(\d{1,3}[,.]\d+)\s*[;]\s*([NSEWÖV])?/gi,
     
-    // Decimal degrees: 59.32894 or 59,32894
+    // Decimal degrees: 59.32894 or 59,32894 or -35.5 (negative for south/west)
     // Negative lookahead for ) to avoid matching list numbers like "2)"
-    degs: /([NSEWÖV])?\s*(\d{1,3}[,.]\d+)(?!\s*\))(?:\s+([NSEWÖV])(?!\s*\d))?/gi,
+    degs: /([NSEWÖV])?\s*(-?\d{1,3}[,.]\d+)(?!\s*\))(?:\s+([NSEWÖV])(?!\s*\d))?/gi,
     
     // Plain number (meters or large coordinates)
     plain: /([NSEWÖV])?\s*(\d{5,})\s*([NSEWÖV])?/gi
@@ -395,6 +404,7 @@ Patterns.allPatterns = [
     {regex: Patterns.gmlCoordinates, format: CoordFormat.Degs, handler: 'gmlCoordinates'},
     {regex: Patterns.wkt, format: CoordFormat.Degs, handler: 'wkt'},
     {regex: Patterns.verbalPair, format: CoordFormat.DegsMins, handler: 'verbalPair'},
+    {regex: Patterns.directionPairDM, format: CoordFormat.DegsMins, handler: 'directionPairDM'},
     {regex: Patterns.urlCoords, format: CoordFormat.Degs, handler: 'url'},
     {regex: Patterns.urlParams, format: CoordFormat.Meters, handler: 'urlParams'},
     {regex: Patterns.largePairs, format: CoordFormat.Meters, handler: 'largePairs'},
@@ -406,8 +416,10 @@ Patterns.allPatterns = [
     {regex: Patterns.compactDDMM, format: CoordFormat.DegsMins, handler: 'compactDDMM'},
     {regex: Patterns.plainDDMM, format: CoordFormat.DegsMins, handler: 'plainDDMM'},
     {regex: Patterns.degsMinsSecs, format: CoordFormat.DegsMinsSecs},
+    {regex: Patterns.degsMinsSecsPlain, format: CoordFormat.DegsMinsSecs, handler: 'degsMinsSecsPlain'},
     {regex: Patterns.degsMinus, format: CoordFormat.DegsMins, handler: 'degsMinus'},
     {regex: Patterns.degsMins, format: CoordFormat.DegsMins},
+    {regex: Patterns.degsMinsPlain, format: CoordFormat.DegsMins, handler: 'degsMinsPlain'},
     {regex: Patterns.degsSemicolon, format: CoordFormat.Degs, handler: 'semicolon'},
     {regex: Patterns.degs, format: CoordFormat.Degs},
     {regex: Patterns.plain, format: CoordFormat.Meters}
@@ -580,6 +592,44 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet.directionLetter = "";
         snippet.noOfDecimals = 5;
         
+    } else if (bestPattern.handler === 'directionPairDM') {
+        // Format: N 60° 30,5' V 019° 15,25' or S 35° 30' V 70° 40'
+        // Groups: [1]=dir1, [2]=deg1, [3]=min1, [4]=dir2, [5]=deg2, [6]=min2
+        var dir1 = bestMatch[1].toUpperCase();
+        var deg1 = parseInt(bestMatch[2], 10);
+        var min1 = parseFloat(bestMatch[3].replace(',', '.'));
+        var dir2 = bestMatch[4].toUpperCase();
+        var deg2 = parseInt(bestMatch[5], 10);
+        var min2 = parseFloat(bestMatch[6].replace(',', '.'));
+        
+        // Convert to decimal degrees
+        var val1 = deg1 + min1 / 60;
+        var val2 = deg2 + min2 / 60;
+        
+        // Apply direction signs
+        var isNS1 = dir1.match(/^[NS]/);
+        var isEW2 = dir2.match(/^[EWVÖ]/);
+        
+        if (isNS1 && isEW2) {
+            // First is lat, second is lon
+            snippet._lat = dir1 === 'S' ? -val1 : val1;
+            snippet._lon = (dir2 === 'W' || dir2 === 'V') ? -val2 : val2;
+        } else {
+            // Fallback: assume first is lat, second is lon
+            snippet._lat = val1;
+            snippet._lon = val2;
+        }
+        
+        snippet.number = snippet._lat;
+        snippet.directionLetter = "";
+        
+        // Calculate decimals from minutes
+        var minDecimals = Math.max(
+            (bestMatch[3].match(/[,.](\d+)/) || ['',''])[1].length,
+            (bestMatch[6].match(/[,.](\d+)/) || ['',''])[1].length
+        );
+        snippet.noOfDecimals = minDecimals > 0 ? Math.ceil(2 + minDecimals * 1.778) : 3;
+        
     } else if (bestPattern.handler === 'url') {
         // Format: @59.32894,18.06491 or /59.329440/18.064510
         var lat = parseFloat(bestMatch[1]);
@@ -744,6 +794,33 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet.noOfDecimals = 0;
         snippet._lat = lat;
         snippet._lon = lon;
+        
+    } else if (bestPattern.handler === 'degsMinsPlain') {
+        // Format: 60 30,5 or 019 15,25 (DD MM.M without direction letters)
+        var degs = parseInt(bestMatch[1], 10);
+        var mins = parseFloat(bestMatch[2].replace(',', '.'));
+        var value = degs + mins/60;
+        
+        snippet.number = value;
+        snippet.directionLetter = "";
+        
+        // Calculate decimals: minutes with N decimals -> DD with ~N+2 decimals
+        var minDecimals = (bestMatch[2].match(/[,.](\d+)/) || ['',''])[1].length;
+        snippet.noOfDecimals = minDecimals > 0 ? Math.ceil(2 + minDecimals * 1.778) : 3;
+        
+    } else if (bestPattern.handler === 'degsMinsSecsPlain') {
+        // Format: 60 30 45.5 or 019 15 30.2 (DD MM SS.S without symbols)
+        var degs = parseInt(bestMatch[1], 10);
+        var mins = parseInt(bestMatch[2], 10);
+        var secs = parseFloat(bestMatch[3].replace(',', '.'));
+        var value = degs + mins/60 + secs/3600;
+        
+        snippet.number = value;
+        snippet.directionLetter = "";
+        
+        // Calculate decimals: seconds with N decimals -> DD with ~N+4 decimals
+        var secDecimals = (bestMatch[3].match(/[,.](\d+)/) || ['',''])[1].length;
+        snippet.noOfDecimals = Math.ceil(4 + secDecimals);
         
     } else if (bestPattern.handler === 'compactDMS') {
         // Format: 591944N0180354E - contains BOTH coordinates!
@@ -1366,7 +1443,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.4";
-CF.build = "20251226-042611"; // Timestamp-based build number
+CF.build = "20251226-050534"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
