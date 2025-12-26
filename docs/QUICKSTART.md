@@ -1,165 +1,144 @@
-# CoordFinder Quick Start
+# CoordFinder Quickstart Guide
 
 ## Installation
 
-Simply include the `coordfinder.js` file in your HTML:
+```bash
+npm install coordfinder
+```
+
+Or include directly in HTML:
 
 ```html
-<script src="coordfinder.js"></script>
+<script src="src/coordfinder.js"></script>
 ```
 
-Or in Node.js:
+## Basic Usage
+
+### Find a Single Coordinate
 
 ```javascript
-require('./coordfinder.js');
+var point = CF.pointIn("59.32894 18.06491");
+console.log(point.latitude());  // 59.32894
+console.log(point.longitude()); // 18.06491
+console.log(point.crs.name);    // "WGS84"
 ```
 
-## 5-Minute Tutorial
-
-### 1. Find First Coordinate
+### Find Multiple Coordinates
 
 ```javascript
-var text = "The location is at 58.8 and 10,9";
-var point = CF.pointIn(text);
-
-console.log(point.latitude());   // 58.8
-console.log(point.longitude());  // 10.9
+var points = CF.pointsIn("First: 59.32894 18.06491, Second: 62.39113 17.30654");
+console.log(points.length); // 2
+points.forEach(function(p) {
+    console.log(p.latitude(), p.longitude());
+});
 ```
 
-### 2. Find All Coordinates
+### Get Uncertainty Information
 
 ```javascript
-var text = "First point: 58.8, 10.9. Second point: 59°N, 11°E";
-var points = CF.pointsIn(text);
-
-console.log("Found " + points.length + " points");
-// Output: Found 2 points
+var point = CF.pointIn("59.32894 18.06491");
+var uncertainty = point.uncertaintyMeters();
+console.log(uncertainty.north); // Uncertainty in meters (north)
+console.log(uncertainty.east);  // Uncertainty in meters (east)
 ```
 
-### 3. Format Output
+## Supported Formats
+
+### WGS84 Coordinates
 
 ```javascript
-var point = CF.pointIn("Location: 58°54'N, 11°00'E");
-
-// Different formats
-point.asText({format: 'plain'});
-// Output: "58,9, 11,0"
-
-point.asText({format: 'degrees', directionLetter: 'after'});
-// Output: "58,9 N, 11,0 E"
-
-point.asText({localized: false});
-// Output: "58.9, 11.0"
+CF.pointIn("59.32894 18.06491")           // Decimal degrees
+CF.pointIn("59° 19.736' N 18° 3.895' E")  // Degrees-minutes
+CF.pointIn("59° 19' 44\" N 18° 3' 54\" E") // Degrees-minutes-seconds
+CF.pointIn("N 59.32894 E 18.06491")       // With compass directions
 ```
 
-### 4. Get Context
+### Swedish Grid Systems
 
 ```javascript
-var text = "The ship was at 58.8 and 10,9 near the island";
-var point = CF.pointIn(text);
-
-console.log(point.context({maxChars: 20}));
-// Output: "...was at [58.8 and 10,9] near..."
+CF.pointIn("6580000, 674000")             // SWEREF99 TM
+CF.pointIn("6480082, 1372031")            // RT90 2.5 gon V
+CF.pointIn("N: 6580000 E: 674000")        // With prefixes
 ```
 
-### 5. Filter by Confidence
+### URL Formats
+
+```javascript
+CF.pointIn("https://www.google.com/maps/@59.32894,18.06491")
+CF.pointIn("map/59.329440/18.064510")
+```
+
+### Data Formats
+
+```javascript
+CF.pointIn('{"coordinates": [18.06491, 59.32894]}')  // GeoJSON
+CF.pointIn('<gml:pos>59.32894 18.06491</gml:pos>')   // GML
+CF.pointIn('POINT(18.06491 59.32894)')               // WKT
+```
+
+## Running Tests
+
+### Command Line
+
+```bash
+npm test
+```
+
+### Browser
+
+Open `tests/test-runner-md.html` in your browser.
+
+## Advanced Usage
+
+### Custom Parsing Options
 
 ```javascript
 var cf = new CF();
-cf.parse(text);
-
-// Get only high-confidence coordinates
-var goodPoints = cf.points({rating: 0.8});
-
-// Check rating
-goodPoints.forEach(function(p) {
-    console.log("Rating: " + p.rating());
+cf.parse("Your text with coordinates", {
+    grouping: true  // Group nearby coordinates
 });
+
+var points = cf.points();
+var groups = cf.groups();
 ```
 
-## Common Patterns
-
-### Parse Maritime Report
+### Access Raw Snippets
 
 ```javascript
-var report = `
-Position report:
-Ship A: 58°54'N, 011°00'E
-Ship B: 59.1, 10.8
-`;
+var cf = new CF();
+cf.parse("59.32894 18.06491");
 
-var points = CF.pointsIn(report);
-points.forEach(function(p, i) {
-    console.log("Ship " + (i+1) + ": " + 
-                p.latitude() + ", " + 
-                p.longitude());
-});
+var snippets = cf._snippets;  // Raw parsed snippets
+var coords = cf._coords;      // Individual coordinates
 ```
 
-### Handle Multiple Formats
+## API Reference
 
-```javascript
-var mixed = `
-Decimal: 58.8, 10.9
-Degrees: 58°54'N, 11°00'E
-DMS: 58°54'30"N, 11°00'15"E
-`;
+### Main Functions
 
-var points = CF.pointsIn(mixed);
-// All formats are automatically detected
-```
+- `CF.pointIn(text)` - Find first coordinate in text
+- `CF.pointsIn(text)` - Find all coordinates in text
+- `CF.groupsIn(text)` - Find grouped coordinates
 
-### Group Coordinates
+### Point Object
 
-```javascript
-var text = `
-Group 1:
-Point A: 58.8, 10.9
-Point B: 58.9, 11.0
+- `point.latitude()` - Get latitude
+- `point.longitude()` - Get longitude
+- `point.crs` - Coordinate reference system
+- `point.uncertaintyMeters()` - Get uncertainty in meters
+- `point.asText()` - Format as text
 
-Group 2:
-Point C: 59.0, 11.1
-`;
+## Examples
 
-var groups = CF.groupsIn(text);
-console.log("Found " + groups.length + " groups");
-// Output: Found 2 groups
-```
+See `examples/demo.html` for interactive examples.
 
-## Testing Your Implementation
+## Documentation
 
-Open `test-coordfinder.html` in your browser to see a complete test suite with:
-- Multiple coordinate formats
-- Rating system demonstration
-- Context extraction
-- Different output formats
-- Parse logging
-
-## Next Steps
-
-- Read `README.md` for complete API documentation
-- Check `example-output.md` for expected behavior
-- Review `IMPLEMENTATION.md` for technical details
-
-## Common Issues
-
-**Q: Coordinates not found?**
-- Check if format is supported (see README.md)
-- Verify coordinates are within valid ranges
-- Use `cf.log()` to see parse details
-
-**Q: Wrong coordinate pairs?**
-- Check ratings with `point.rating()`
-- Use higher rating threshold: `cf.points({rating: 0.8})`
-- Review context with `point.context()`
-
-**Q: Need to reproject coordinates?**
-- Include proj4js library
-- Use `point.reprojectTo(CF.RefSys.SWEREF99TM)`
+- [Full Documentation](README.md)
+- [Test Framework](TEST_FRAMEWORK.md)
+- [Implementation Details](IMPLEMENTATION.md)
 
 ## Support
 
-For issues or questions, review the implementation files:
-- `coordfinder.js` - Source code
-- `README.md` - API reference
-- `IMPLEMENTATION.md` - Technical details
+- GitHub: https://github.com/aieuren/coordfinder
+- Issues: https://github.com/aieuren/coordfinder/issues

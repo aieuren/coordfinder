@@ -19,34 +19,38 @@ A JavaScript library for extracting and parsing geographic coordinates from text
 ```
 coordfinder/
 ├── src/                    # Source code
-│   ├── coordfinder.js      # Main library
+│   ├── coordfinder.js      # Main library (1718 lines)
 │   ├── test-framework.js   # Test framework
 │   └── test-parser.js      # Markdown test parser
 ├── tests/                  # Test files and runners
-│   ├── test-runner.html    # Main test runner
-│   ├── tdd-runner.html     # TDD test runner
-│   ├── verification-test-runner.html  # Large test suite runner
-│   └── ...
+│   ├── test-runner-md.html # Main test runner (Markdown-based)
+│   └── verification-test-runner.html  # Verification runner
 ├── examples/               # Examples and demos
 │   ├── demo.html           # Interactive demo
 │   └── demo-simple.js      # Simple usage example
 ├── docs/                   # Documentation
-│   ├── README.md           # Full documentation
+│   ├── START_HERE.md       # Start here!
 │   ├── QUICKSTART.md       # Quick start guide
-│   └── ...
+│   ├── IMPLEMENTATION.md   # Technical details
+│   ├── TEST_FRAMEWORK.md   # Testing guide
+│   └── MARKDOWN_TESTS.md   # Test format
 ├── requirements/           # Requirements and specifications
 │   ├── kravspecifikation.md
-│   └── test-suites-tdd.txt
-└── README.md              # This file
+│   └── test-suites-tdd.txt # 80 TDD tests
+├── index.html              # Demo page
+├── TESTING_STATUS.md       # Current test status (100% pass)
+└── README.md               # This file
 ```
 
 ## 🧪 Testing
 
-Run the complete TDD test suite (30 tests):
+Run the complete TDD test suite (80 tests):
 
 ```bash
 npm test
 ```
+
+**Current status:** ✅ 80/80 tests passing (100%)
 
 This runs all tests from `requirements/test-suites-tdd.txt` and must pass before any commit.
 

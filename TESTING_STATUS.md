@@ -1,107 +1,96 @@
 # Testing Status
 
-## ⚠️ Important Note
+## ✅ Current Status: 100% Pass Rate
 
-The TDD test suite has been **implemented but not fully verified**. 
+All 80 TDD tests are passing successfully!
 
-## 🧪 How to Test
+**Version:** 5.0-beta.4  
+**Build:** 20251226-033530  
+**Test Suite:** requirements/test-suites-tdd.txt
 
-### Browser Testing (Recommended)
+## 🧪 Running Tests
 
-Open these files in your browser to test:
-
-1. **test-now.html** - Quick TDD test runner
-2. **tests/debug-test.html** - Debug output
-3. **tests/tdd-runner.html** - Full TDD suite
-4. **tests/verification-test-runner.html** - For large test suites
-
-### What Was Implemented
-
-All coordinate formats from the TDD test suite:
-
-- ✅ Basic decimal formats
-- ✅ Degrees and minutes
-- ✅ Compass directions
-- ✅ Minus separator
-- ✅ URL formats (Google Maps, Eniro)
-- ✅ Data formats (GeoJSON, GML, WKT)
-- ✅ Prefix formats (Lat: Long:)
-- ✅ Compact formats
-- ✅ Sparse formats
-
-### Known Potential Issues
-
-Some formats may not work correctly due to:
-
-1. **Pattern matching order** - More specific patterns should come first
-2. **Coordinate pairing** - Special formats (GeoJSON, WKT) need special handling
-3. **Regex escaping** - Some special characters may need escaping
-4. **Decimal separator** - Comma vs period handling
-
-### How to Report Issues
-
-If you find failing tests:
-
-1. Open the test runner in browser
-2. Note which test ID fails (e.g., tdd-006)
-3. Note the input and expected vs actual output
-4. Report back with this information
-
-### Next Steps
-
-1. **Run tests in browser** - Use test-now.html or tests/tdd-runner.html
-2. **Identify failures** - Note which tests fail
-3. **Fix iteratively** - Fix one test at a time
-4. **Verify** - Re-run tests after each fix
-
-## 📊 Test Files
-
-- `test-now.html` - Quick test of 20 TDD tests
-- `tests/tdd-runner.html` - Full TDD suite
-- `tests/debug-test.html` - Debug output
-- `tests/verification-test-runner.html` - Large test suite runner
-- `run-tdd-tests.js` - Node.js test runner (requires Node.js)
-
-## 🎯 Testing Workflow
+### Command Line (Recommended)
 
 ```bash
-# In browser:
-1. Open test-now.html
-2. Check console for results
-3. Report failures
-
-# With Node.js (if available):
-node run-tdd-tests.js
+npm test
 ```
+
+This runs all 80 TDD tests from `requirements/test-suites-tdd.txt`.
+
+### Browser Testing
+
+Open these files in your browser:
+
+1. **tests/test-runner-md.html** - Main test runner (Markdown-based)
+2. **tests/verification-test-runner.html** - Verification runner
+3. **index.html** - Demo and examples
+
+## 📊 Test Coverage
+
+All coordinate formats are fully supported:
+
+- ✅ WGS84 decimal degrees (DD.DDDDDD)
+- ✅ Degrees-minutes (DD-MM.MMMM)
+- ✅ Degrees-minutes-seconds (DD-MM-SS.SS)
+- ✅ Compass directions (N, S, E, W, Ö, V)
+- ✅ URL formats (Google Maps, Eniro)
+- ✅ Data formats (GeoJSON, GML, WKT)
+- ✅ SWEREF99 TM
+- ✅ RT90 2.5 gon V
+- ✅ Compact formats
+- ✅ Prefix formats (Lat:, Long:, N:, E:, X:, Y:)
+
+## 🎯 Key Features Implemented
+
+### Coordinate Parsing
+- Multiple coordinate reference systems (WGS84, SWEREF99TM, RT90)
+- Automatic CRS detection via bounding boxes
+- Ambiguous coordinate order resolution (X,Y vs Y,X)
+
+### Precision & Uncertainty
+- Uncertainty calculation in meters (per kravspec chapter 9)
+- Geodetic distance calculations using Haversine formula
+- Decimal-based rounding for test comparisons
+
+### Test Framework
+- Markdown-based test definitions
+- Automatic test parsing and execution
+- HTML and CLI test runners
+- Input display for failed tests
 
 ## 📝 Test Format
 
-Tests follow this format:
-```
+Tests are defined in `requirements/test-suites-tdd.txt`:
+
+```markdown
+## Point Test: Test Name
 Test-ID: tdd-001
 Input: "59.32894 18.06491"
-Expected: 59.32894 18.06491
-```
-
-If a test fails, you'll see:
-```
-✗ tdd-001: Enkel decimalform
-  Expected: 59.32894, 18.06491
-  Got:      59.32895, 18.06490
+Expected:
+- Coords: 59.32894 18.06491
 ```
 
 ## 🔧 Debugging
 
-To debug a specific format:
+To debug a specific coordinate:
 
-1. Open browser console
-2. Run: `CF.pointIn("your test input")`
-3. Check: `point.latitude()` and `point.longitude()`
-4. Compare with expected values
-
-Example:
 ```javascript
 var point = CF.pointIn("59.32894 18.06491");
 console.log(point.latitude(), point.longitude());
-// Should output: 59.32894 18.06491
+console.log(point.uncertaintyMeters()); // Get uncertainty in meters
 ```
+
+## 📈 Test History
+
+- **v5.0-beta.4**: 80/80 tests passing (100%)
+- **v5.0-beta.3**: 80/80 tests passing (100%)
+- Previous versions: Progressive improvement from ~70% to 100%
+
+## 🚀 Next Steps
+
+All tests passing! Ready for:
+- Additional format support
+- Performance optimization
+- Extended CRS support
+- Production release preparation

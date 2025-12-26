@@ -59,11 +59,11 @@ console.log(cf.log()); // See parse details
 
 | File | Purpose | Read Time |
 |------|---------|-----------|
-| **INDEX.md** | Complete overview | 5 min |
+| **START_HERE.md** | Complete overview | 5 min |
 | **QUICKSTART.md** | 5-minute tutorial | 5 min |
-| **README.md** | Full API reference | 15 min |
+| **QUICKSTART.md** | Full API reference | 15 min |
 | **IMPLEMENTATION.md** | Technical details | 20 min |
-| **example-output.md** | Expected behavior | 5 min |
+| **TESTING_STATUS.md** | Expected behavior | 5 min |
 
 ---
 
@@ -131,11 +131,11 @@ coordfinder.js              ← Main library (include this in your project)
 ├── test-coordfinder.html   ← Full test suite
 ├── demo-simple.js          ← CLI demo
 │
-├── INDEX.md                ← Complete overview
+├── START_HERE.md                ← Complete overview
 ├── QUICKSTART.md           ← 5-minute tutorial
-├── README.md               ← API reference
+├── QUICKSTART.md               ← API reference
 ├── IMPLEMENTATION.md       ← Technical details
-└── example-output.md       ← Expected results
+└── TESTING_STATUS.md       ← Expected results
 ```
 
 ---
@@ -146,7 +146,7 @@ coordfinder.js              ← Main library (include this in your project)
 5 min  → Open demo.html in browser
 10 min → Read QUICKSTART.md
 20 min → Try your own examples
-30 min → Read README.md for full API
+30 min → Read QUICKSTART.md for full API
 1 hour → Integrate into your project
 ```
 
@@ -188,7 +188,7 @@ var trusted = cf.points({rating: 0.8}); // Only high confidence
 
 - **Can't find coordinates?** → Use `cf.log()` to see parse details
 - **Wrong pairings?** → Check `point.rating()` and use higher threshold
-- **Need different format?** → See `point.asText()` options in README.md
+- **Need different format?** → See `point.asText()` options in QUICKSTART.md
 - **Want technical details?** → Read IMPLEMENTATION.md
 
 ---
