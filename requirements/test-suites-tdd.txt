@@ -248,7 +248,8 @@ Expected:
 
 ## Points Test: Olika antal decimaler
 Test-ID: tdd-034
-Input: |
+Input: 
+  59 18
   59.3 18.1
   59.32 18.06
   59.329 18.065
