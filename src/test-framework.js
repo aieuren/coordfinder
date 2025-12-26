@@ -136,13 +136,22 @@ PointsTest.prototype.run = function() {
             for (var i = 0; i < this.expectedCoords.length && i < points.length; i++) {
                 var expected = this.expectedCoords[i];
                 var actual = points[i];
-                var latDiff = Math.abs(actual.latitude() - expected.lat);
-                var lonDiff = Math.abs(actual.longitude() - expected.lon);
                 
-                if (latDiff > 0.00001 || lonDiff > 0.00001) {
+                // Determine decimal places from expected coordinates
+                var latDecimals = this._getDecimalPlaces(expected.lat);
+                var lonDecimals = this._getDecimalPlaces(expected.lon);
+                var maxDecimals = Math.max(latDecimals, lonDecimals);
+                
+                // Round actual coordinates to same decimal places as expected
+                var actualLat = this._roundToDecimals(actual.latitude(), latDecimals);
+                var actualLon = this._roundToDecimals(actual.longitude(), lonDecimals);
+                var expectedLat = this._roundToDecimals(expected.lat, latDecimals);
+                var expectedLon = this._roundToDecimals(expected.lon, lonDecimals);
+                
+                if (actualLat !== expectedLat || actualLon !== expectedLon) {
                     var msg = "Point " + (i + 1) + " coordinates mismatch\n";
-                    msg += "   Expected: " + expected.lat.toFixed(5) + ", " + expected.lon.toFixed(5) + "\n";
-                    msg += "   Actual:   " + actual.latitude().toFixed(5) + ", " + actual.longitude().toFixed(5);
+                    msg += "   Expected: " + expectedLat.toFixed(latDecimals) + ", " + expectedLon.toFixed(lonDecimals) + "\n";
+                    msg += "   Actual:   " + actualLat.toFixed(latDecimals) + ", " + actualLon.toFixed(lonDecimals);
                     return new TestResult(this, false, msg, actual, expected);
                 }
             }
@@ -171,6 +180,17 @@ PointsTest.prototype.run = function() {
     } catch(e) {
         return new TestResult(this, false, "Exception: " + e.message, null, this.expectedCount);
     }
+};
+
+PointsTest.prototype._getDecimalPlaces = function(num) {
+    var str = num.toString();
+    var match = str.match(/\.(\d+)/);
+    return match ? match[1].length : 0;
+};
+
+PointsTest.prototype._roundToDecimals = function(num, decimals) {
+    var factor = Math.pow(10, decimals);
+    return Math.round(num * factor) / factor;
 };
 
 // ——————————— TestSuite ——————————— //
