@@ -298,6 +298,10 @@ TestSuiteResult.prototype.toHTML = function() {
         }
         
         if (!r.passed) {
+            // Show input for failed tests
+            if (r.test.input) {
+                html += '<div class="test-input"><strong>Input:</strong> ' + this._escapeHtml(r.test.input) + '</div>';
+            }
             html += '<div class="test-message">' + this._escapeHtml(r.message) + '</div>';
         }
         
