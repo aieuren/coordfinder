@@ -343,6 +343,9 @@ var Patterns = {
     // Direction pair with symbols: N 60° 30,5' V 019° 15,25' or S 35° 30' V 70° 40'
     directionPairDM: /([NSEWÖV])\s+(\d{1,3})\s*[°º]\s*(\d{1,2}(?:[,.]?\d+)?)\s*['′´`]?\s+([NSEWÖV])\s+(\d{1,3})\s*[°º]\s*(\d{1,2}(?:[,.]?\d+)?)\s*['′´`]?/gi,
     
+    // Extremely compact with direction: N60 E19 or S35 W70
+    extremelyCompact: /\b([NSEWÖV])(\d{1,3})\s+([NSEWÖV])(\d{1,3})\b/gi,
+    
     // URL parameters: x=540000&y=6580000 or y=6580000&x=540000
     urlParams: /[?&]?([xy])\s*=\s*(-?\d+(?:\.\d+)?)\s*&\s*([xy])\s*=\s*(-?\d+(?:\.\d+)?)/gi,
     
@@ -381,11 +384,11 @@ var Patterns = {
     // Degrees and minutes: 59°19.736'N or 59°19,736'N
     degsMins: /([NSEWÖV])?\s*(\d+)\s*[°º\u030A]\s*(\d+(?:[,.]?\d+)?)\s*['′´`]?\s*([NSEWÖV])?/gi,
     
-    // Degrees and minutes without degree symbol: 60 30,5 or 019 15,25
-    degsMinsPlain: /\b(\d{2,3})\s+(\d{1,2}[,.]\d+)\b/gi,
+    // Degrees and minutes without degree symbol: 60 30,5 or 019 15,25 or N60 30,5
+    degsMinsPlain: /\b([NSEWÖVO])?(\d{2,3})\s+(\d{1,2}[,.]\d+)\b/gi,
     
-    // Degrees, minutes, seconds without symbols: 60 30 45.5 or 019 15 30.2
-    degsMinsSecsPlain: /\b(\d{2,3})\s+(\d{1,2})\s+(\d{1,2}[,.]\d+)\b/gi,
+    // Degrees, minutes, seconds without symbols: 60 30 45.5 or 019 15 30.2 or 60 30 45
+    degsMinsSecsPlain: /\b(\d{2,3})\s+(\d{1,2})\s+(\d{1,2}(?:[,.]\d+)?)\b/gi,
     
     // Decimal degrees with semicolon: 59.32894; 18.06491
     degsSemicolon: /([NSEWÖV])?\s*(\d{1,3}[,.]\d+)\s*[;]\s*([NSEWÖV])?/gi,
@@ -405,6 +408,7 @@ Patterns.allPatterns = [
     {regex: Patterns.wkt, format: CoordFormat.Degs, handler: 'wkt'},
     {regex: Patterns.verbalPair, format: CoordFormat.DegsMins, handler: 'verbalPair'},
     {regex: Patterns.directionPairDM, format: CoordFormat.DegsMins, handler: 'directionPairDM'},
+    {regex: Patterns.extremelyCompact, format: CoordFormat.Degs, handler: 'extremelyCompact'},
     {regex: Patterns.urlCoords, format: CoordFormat.Degs, handler: 'url'},
     {regex: Patterns.urlParams, format: CoordFormat.Meters, handler: 'urlParams'},
     {regex: Patterns.largePairs, format: CoordFormat.Meters, handler: 'largePairs'},
@@ -514,6 +518,7 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
     snippet.encodedText = bestMatch[0];
     snippet.format = bestPattern.format;
     snippet.index = originalTextPosition + bestMatch.index;
+    snippet._skipLength = bestMatch[0].length; // Store match length for skipping invalid matches
     snippet.lineNo = parser ? parser.lineNoFromIndex(snippet.index) : 0;
     
     // Handle special patterns
@@ -602,6 +607,12 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         var deg2 = parseInt(bestMatch[5], 10);
         var min2 = parseFloat(bestMatch[6].replace(',', '.'));
         
+        // Validate minutes
+        if (min1 >= 60 || min2 >= 60) {
+            snippet._invalid = true; // Mark as invalid to skip entire match
+            return snippet;
+        }
+        
         // Convert to decimal degrees
         var val1 = deg1 + min1 / 60;
         var val2 = deg2 + min2 / 60;
@@ -629,6 +640,32 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
             (bestMatch[6].match(/[,.](\d+)/) || ['',''])[1].length
         );
         snippet.noOfDecimals = minDecimals > 0 ? Math.ceil(2 + minDecimals * 1.778) : 3;
+        
+    } else if (bestPattern.handler === 'extremelyCompact') {
+        // Format: N60 E19 or S35 W70
+        // Groups: [1]=dir1, [2]=deg1, [3]=dir2, [4]=deg2
+        var dir1 = bestMatch[1].toUpperCase();
+        var deg1 = parseInt(bestMatch[2], 10);
+        var dir2 = bestMatch[3].toUpperCase();
+        var deg2 = parseInt(bestMatch[4], 10);
+        
+        // Apply direction signs
+        var isNS1 = dir1.match(/^[NS]/);
+        var isEW2 = dir2.match(/^[EWVÖ]/);
+        
+        if (isNS1 && isEW2) {
+            // First is lat, second is lon
+            snippet._lat = dir1 === 'S' ? -deg1 : deg1;
+            snippet._lon = (dir2 === 'W' || dir2 === 'V') ? -deg2 : deg2;
+        } else {
+            // Fallback: assume first is lat, second is lon
+            snippet._lat = deg1;
+            snippet._lon = deg2;
+        }
+        
+        snippet.number = snippet._lat;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = 0;
         
     } else if (bestPattern.handler === 'url') {
         // Format: @59.32894,18.06491 or /59.329440/18.064510
@@ -764,6 +801,12 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         var lonMins = parseFloat(bestMatch[5].replace(',', '.'));
         var lonDir = bestMatch[6];
         
+        // Validate minutes
+        if (latMins >= 60 || lonMins >= 60) {
+            snippet._invalid = true; // Mark as invalid to skip entire match
+            return snippet;
+        }
+        
         var lat = latDegs + latMins/60;
         if (latDir === 'S' || latDir === 'Syd' || latDir === 'Söder') lat = -lat;
         
@@ -796,23 +839,38 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet._lon = lon;
         
     } else if (bestPattern.handler === 'degsMinsPlain') {
-        // Format: 60 30,5 or 019 15,25 (DD MM.M without direction letters)
-        var degs = parseInt(bestMatch[1], 10);
-        var mins = parseFloat(bestMatch[2].replace(',', '.'));
+        // Format: 60 30,5 or 019 15,25 or N60 30,5 (DD MM.M with optional direction)
+        var dir = bestMatch[1] || "";
+        var degs = parseInt(bestMatch[2], 10);
+        var mins = parseFloat(bestMatch[3].replace(',', '.'));
+        
+        // Validate minutes
+        if (mins >= 60) {
+            snippet._invalid = true; // Mark as invalid to skip entire match
+            return snippet;
+        }
+        
         var value = degs + mins/60;
         
         snippet.number = value;
-        snippet.directionLetter = "";
+        snippet.directionLetter = dir;
         
         // Calculate decimals: minutes with N decimals -> DD with ~N+2 decimals
-        var minDecimals = (bestMatch[2].match(/[,.](\d+)/) || ['',''])[1].length;
+        var minDecimals = (bestMatch[3].match(/[,.](\d+)/) || ['',''])[1].length;
         snippet.noOfDecimals = minDecimals > 0 ? Math.ceil(2 + minDecimals * 1.778) : 3;
         
     } else if (bestPattern.handler === 'degsMinsSecsPlain') {
-        // Format: 60 30 45.5 or 019 15 30.2 (DD MM SS.S without symbols)
+        // Format: 60 30 45.5 or 019 15 30.2 or 60 30 45 (DD MM SS.S without symbols)
         var degs = parseInt(bestMatch[1], 10);
         var mins = parseInt(bestMatch[2], 10);
         var secs = parseFloat(bestMatch[3].replace(',', '.'));
+        
+        // Validate minutes and seconds
+        if (mins >= 60 || secs >= 60) {
+            snippet._invalid = true; // Mark as invalid to skip entire match
+            return snippet;
+        }
+        
         var value = degs + mins/60 + secs/3600;
         
         snippet.number = value;
@@ -820,7 +878,7 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         
         // Calculate decimals: seconds with N decimals -> DD with ~N+4 decimals
         var secDecimals = (bestMatch[3].match(/[,.](\d+)/) || ['',''])[1].length;
-        snippet.noOfDecimals = Math.ceil(4 + secDecimals);
+        snippet.noOfDecimals = secDecimals > 0 ? Math.ceil(4 + secDecimals) : 4;
         
     } else if (bestPattern.handler === 'compactDMS') {
         // Format: 591944N0180354E - contains BOTH coordinates!
@@ -924,12 +982,26 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
             var degs = parseFloat(bestMatch[2]);
             var mins = parseFloat(bestMatch[3]);
             var secs = parseFloat(bestMatch[4].replace(',', '.'));
+            
+            // Validate minutes and seconds
+            if (mins >= 60 || secs >= 60) {
+                snippet._invalid = true; // Mark as invalid to skip entire match
+                return snippet;
+            }
+            
             snippet.number = degs + mins/60 + secs/3600;
             var secDecimals = (bestMatch[4].match(/[,.](\d+)/) || ['',''])[1].length;
             snippet.noOfDecimals = secDecimals;
         } else if (bestPattern.format === CoordFormat.DegsMins) {
             var degs = parseFloat(bestMatch[2]);
             var mins = parseFloat(bestMatch[3].replace(',', '.'));
+            
+            // Validate minutes
+            if (mins >= 60) {
+                snippet._invalid = true; // Mark as invalid to skip entire match
+                return snippet;
+            }
+            
             snippet.number = degs + mins/60;
             var minDecimals = (bestMatch[3].match(/[,.](\d+)/) || ['',''])[1].length;
             snippet.noOfDecimals = minDecimals;
@@ -1443,7 +1515,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.4";
-CF.build = "20251226-091737"; // Timestamp-based build number
+CF.build = "20251226-122241"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
@@ -1531,11 +1603,18 @@ CF.prototype._findSnippets = function() {
         var snippet = Snippet.parseFromText(remaining, pos, this._parser);
         
         if (snippet) {
-            this._snippets.push(snippet);
-            this._log("Found snippet: " + snippet.text + " at position " + snippet.index);
-            // Move past this snippet
-            var relativeEnd = snippet.index - pos + snippet.text.length;
-            pos += relativeEnd;
+            if (snippet._invalid) {
+                // Skip invalid match entirely
+                this._log("Skipped invalid snippet: " + snippet.text + " at position " + snippet.index);
+                var relativeEnd = snippet.index - pos + snippet._skipLength;
+                pos += relativeEnd;
+            } else {
+                this._snippets.push(snippet);
+                this._log("Found snippet: " + snippet.text + " at position " + snippet.index);
+                // Move past this snippet
+                var relativeEnd = snippet.index - pos + snippet.text.length;
+                pos += relativeEnd;
+            }
         } else {
             pos++;
         }
