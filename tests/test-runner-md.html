@@ -302,7 +302,7 @@
     <div class="container">
         <header>
             <h1>🗺️ CoordFinder Test Runner</h1>
-            <p>Markdown-baserad testning</p>
+            <p>Markdown-baserad testning • <span id="cfVersion">...</span> • Build: <span id="cfBuild">...</span></p>
         </header>
         
         <div class="controls">
@@ -336,6 +336,10 @@
     <script src="../src/test-framework.js"></script>
     <script src="../src/test-parser.js"></script>
     <script>
+        // Update version and build from CF object
+        document.getElementById('cfVersion').textContent = 'v' + (CF.version || 'unknown');
+        document.getElementById('cfBuild').textContent = CF.build || 'unknown';
+        
         var loadedSuites = [];
         
         function loadTestFile(event) {

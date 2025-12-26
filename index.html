@@ -198,7 +198,7 @@
         <header>
             <h1>🗺️ CoordFinder</h1>
             <p class="subtitle">JavaScript library for parsing geographic coordinates from text</p>
-            <span class="version">v5.0-beta.2</span>
+            <span class="version" id="cfVersion">...</span>
         </header>
         
         <div class="hero">
@@ -288,15 +288,26 @@
         </div>
         
         <footer>
-            <p><strong>CoordFinder v5.0-beta.2</strong></p>
+            <p><strong>CoordFinder <span id="cfVersionFooter">...</span></strong></p>
+            <p>Build: <span id="cfBuild">...</span></p>
             <p>Open source under MIT License</p>
-            <p>Author: Bernt Rane</p>
+            <p>Author: <span id="cfAuthor">...</span></p>
             <p style="margin-top: 20px;">
                 <a href="https://github.com/aieuren/coordfinder">GitHub</a> • 
-                <a href="docs/README.md">Documentation</a> • 
+                <a href="docs/START_HERE.md">Documentation</a> • 
                 <a href="examples/demo.html">Demo</a>
             </p>
         </footer>
     </div>
+    
+    <script src="src/coordfinder.js"></script>
+    <script>
+        // Update version, build, and author from CF object
+        var versionText = 'v' + (CF.version || 'unknown');
+        document.getElementById('cfVersion').textContent = versionText;
+        document.getElementById('cfVersionFooter').textContent = versionText;
+        document.getElementById('cfBuild').textContent = CF.build || 'unknown';
+        document.getElementById('cfAuthor').textContent = CF.author || 'Unknown';
+    </script>
 </body>
 </html>
