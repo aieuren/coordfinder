@@ -132,40 +132,40 @@
         }
         
         .link-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #4b5563;
             color: white;
-            padding: 30px;
-            border-radius: 8px;
+            padding: 20px;
+            border-radius: 4px;
             text-decoration: none;
-            transition: transform 0.3s, box-shadow 0.3s;
             display: block;
+            border: 1px solid #6b7280;
         }
         
-        .link-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        .link-card:active {
+            background: #374151;
         }
         
         .link-card h3 {
-            font-size: 1.5em;
-            margin-bottom: 10px;
+            font-size: 1.125em;
+            margin-bottom: 8px;
         }
         
         .link-card p {
             opacity: 0.9;
-            font-size: 0.95em;
+            font-size: 0.875em;
         }
         
         .link-card .icon {
-            font-size: 2em;
-            margin-bottom: 10px;
+            font-size: 1.5em;
+            margin-bottom: 8px;
         }
         
         footer {
-            background: #1e3c72;
+            background: #374151;
             color: white;
-            padding: 30px;
+            padding: 20px;
             text-align: center;
+            font-size: 0.875em;
         }
         
         footer a {
@@ -261,16 +261,16 @@
                     <p>Run comprehensive test suites and verify functionality</p>
                 </a>
                 
-                <a href="tests/debug-test.html" class="link-card">
-                    <div class="icon">🔍</div>
-                    <h3>Debug Tests</h3>
-                    <p>Quick test of all coordinate formats</p>
+                <a href="tests/test-runner-md.html" class="link-card">
+                    <div class="icon">📋</div>
+                    <h3>Markdown Test Runner</h3>
+                    <p>Run tests from Markdown files</p>
                 </a>
                 
-                <a href="docs/README.md" class="link-card">
+                <a href="docs/START_HERE.md" class="link-card">
                     <div class="icon">📖</div>
                     <h3>Documentation</h3>
-                    <p>Complete API reference and usage guide</p>
+                    <p>Complete guide and API reference</p>
                 </a>
                 
                 <a href="docs/QUICKSTART.md" class="link-card">
