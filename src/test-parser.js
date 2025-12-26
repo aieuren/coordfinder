@@ -79,8 +79,13 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
             state = 'input';
             var inputValue = RegExp.$1.trim();
             if (inputValue) {
-                // Input on same line - remove outer quotes and unescape inner quotes
-                var inputLine = inputValue.replace(/^["']|["']$/g, '');
+                // Input on same line - remove only outer quotes (first and last)
+                var inputLine = inputValue;
+                if ((inputLine[0] === '"' && inputLine[inputLine.length - 1] === '"') ||
+                    (inputLine[0] === "'" && inputLine[inputLine.length - 1] === "'")) {
+                    inputLine = inputLine.substring(1, inputLine.length - 1);
+                }
+                // Unescape inner quotes
                 inputLine = inputLine.replace(/\\"/g, '"').replace(/\\'/g, "'");
                 currentTest.input = inputLine;
             }
