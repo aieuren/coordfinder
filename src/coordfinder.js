@@ -1073,6 +1073,12 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
             snippet.number = parseFloat(bestMatch[2].replace(',', '.'));
             var decimals = (bestMatch[2].match(/[,.](\d+)/) || ['',''])[1].length;
             snippet.noOfDecimals = decimals;
+            
+            // Validate minimum 1 decimal for decimal degrees (not for meters/RT90/SWEREF)
+            if (bestPattern.format === CoordFormat.Degs && decimals < 1) {
+                snippet._invalid = true;
+                return snippet;
+            }
         }
     }
     
@@ -1854,20 +1860,7 @@ CF.prototype.points = function(opts) {
         }
     }
     
-    // Deduplicate points with same coordinates (rounded to 5 decimals)
-    var deduplicated = [];
-    var seen = {};
-    for (var i = 0; i < filtered.length; i++) {
-        var lat = filtered[i].latitude().toFixed(5);
-        var lon = filtered[i].longitude().toFixed(5);
-        var key = lat + ',' + lon;
-        if (!seen[key]) {
-            seen[key] = true;
-            deduplicated.push(filtered[i]);
-        }
-    }
-    
-    return deduplicated;
+    return filtered;
 };
 
 // Get groups of points
