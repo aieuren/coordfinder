@@ -401,7 +401,8 @@ var Patterns = {
     
     // Decimal degrees: 59.32894 or 59,32894 or -35.5 (negative for south/west)
     // Negative lookahead for ) to avoid matching list numbers like "2)"
-    degs: /([NSEWÖV])?\s*(-?\d{1,3}[,.]\d+)(?!\s*\))(?:\s+([NSEWÖV])(?!\s*\d))?/gi,
+    // Negative lookahead for ' to avoid matching distance measurements like "2,5'"
+    degs: /([NSEWÖV])?\s*(-?\d{1,3}[,.]\d+)(?!\s*[)'])(?:\s+([NSEWÖV])(?!\s*\d))?/gi,
     
     // Plain number (meters or large coordinates)
     plain: /([NSEWÖV])?\s*(\d{5,})\s*([NSEWÖV])?/gi
