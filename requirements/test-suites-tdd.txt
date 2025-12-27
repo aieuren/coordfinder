@@ -814,10 +814,12 @@ Expected:
 ## Points Test: För få decimaler ska avvisas
 Test-ID: tdd-109
 Implements test-IDs: test-0068
-Input: 60.4 19.1
+Input: 
+60 19
+60.4 19.1
 60.40 19.10
 Expected:
-- Count: 1
+- Count: 2
 
 ## Points Test: Lat/Long prefix med löptext
 Test-ID: tdd-110
