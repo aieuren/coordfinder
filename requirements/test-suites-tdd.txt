@@ -222,7 +222,7 @@ Expected:
 
 ## Points Test: För stora latitudvärden
 Test-ID: tdd-030
-Input: "95.0 18.0"
+Input: "N95.0 E18.0"
 Expected:
 - Count: 0
 
@@ -908,6 +908,7 @@ Input: 1. Lat. N 60 30,5 Long. O 19 15,25 Punkt, 4' V Revet
 2. Lat. N 60 35,8 Long. O 19 20,4 Punkt, 2´ V udde
 Expected:
 - Count: 2
+
 
 
 
