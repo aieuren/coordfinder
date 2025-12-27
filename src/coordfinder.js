@@ -346,8 +346,8 @@ var Patterns = {
     // Extremely compact with direction: N60 E19 or S35 W70
     extremelyCompact: /\b([NSEWÖV])(\d{1,3})\s+([NSEWÖV])(\d{1,3})\b/gi,
     
-    // Direction before decimal degrees: E19.5 N60.5 or N60.5 E19.5
-    directionBeforeDegs: /\b([NSEWÖV])(-?\d{1,3}[,.]\d+)\s+([NSEWÖV])(-?\d{1,3}[,.]\d+)\b/gi,
+    // Direction before decimal degrees: E19.5 N60.5 or N60.5 E19.5 or N 56.5 E 12.0
+    directionBeforeDegs: /\b([NSEWÖV])\s*(-?\d{1,3}[,.]\d+)\s+([NSEWÖV])\s*(-?\d{1,3}[,.]\d+)\b/gi,
     
     // URL parameters: x=540000&y=6580000 or y=6580000&x=540000
     urlParams: /[?&]?([xy])\s*=\s*(-?\d+(?:\.\d+)?)\s*&\s*([xy])\s*=\s*(-?\d+(?:\.\d+)?)/gi,
@@ -680,6 +680,7 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         
         snippet.number = snippet._lat;
         snippet.directionLetter = "";
+        snippet._hasExplicitDirections = true; // Mark as having explicit direction letters
         var decimals1 = (bestMatch[2].match(/[,.](\\d+)/) || ['',''])[1].length;
         var decimals2 = (bestMatch[4].match(/[,.](\\d+)/) || ['',''])[1].length;
         snippet.noOfDecimals = Math.max(decimals1, decimals2);
@@ -708,6 +709,7 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         
         snippet.number = snippet._lat;
         snippet.directionLetter = "";
+        snippet._hasExplicitDirections = true; // Mark as having explicit direction letters
         snippet.noOfDecimals = 0;
         
     } else if (bestPattern.handler === 'url') {
@@ -1736,8 +1738,8 @@ CF.prototype._coordsToPoints = function() {
             var lon = snippet._lon;
             
             // Auto-correct if values are swapped (lat out of range or lon out of range)
-            // Only for WGS84-like coordinates
-            if (Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+            // Only for WGS84-like coordinates without explicit direction letters
+            if (!snippet._hasExplicitDirections && (Math.abs(lat) > 90 || Math.abs(lon) > 180)) {
                 if (Math.abs(lon) <= 90 && Math.abs(lat) <= 180) {
                     // Swap them
                     var temp = lat;
@@ -1786,8 +1788,13 @@ CF.prototype._coordsToPoints = function() {
             if (!c1 || !c2) continue;
             
             // Try to find a reference system that contains both coords
-            // Use ordered=true to prevent auto-swapping (only swap for explicit formats like WKT)
-            var result = RefSys.fromCoords(c1, c2, true);
+            // Allow auto-swapping only if:
+            // - Neither coordinate has explicit axis (no direction letters)
+            // - Both coordinates are positive (negative values suggest explicit sign)
+            var hasExplicitAxis = (c1.axis !== CoordAxis.Unknown) || (c2.axis !== CoordAxis.Unknown);
+            var hasNegativeValues = (c1.value < 0) || (c2.value < 0);
+            var ordered = hasExplicitAxis || hasNegativeValues;
+            var result = RefSys.fromCoords(c1, c2, ordered);
             
             if (result) {
                 var point = new Point(result.N, result.E, result.RefSys);
