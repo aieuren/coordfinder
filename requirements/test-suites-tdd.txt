@@ -850,6 +850,64 @@ Input: Pkt Lat. N Long. O Anmärkning
 Expected:
 - Count: 4
 
+## Points Test: Hitta.se URL med zoom-parameter
+Test-ID: tdd-113
+Implements test-IDs: test-0045
+Input: http://www.hitta.se/kartan!~60.12345,19.54321,12.345678z/tr!i=abc
+Expected:
+- Count: 1
+- Coords: 60.12345 19.54321
+
+## Points Test: Leaflet bounds utan extra koordinater
+Test-ID: tdd-114
+Implements test-IDs: test-0045
+Input: imageBounds = [[60.5, 19.2],[61.3, 19.8]];
+Expected:
+- Count: 2
+
+## Points Test: Blandade URL-format
+Test-ID: tdd-115
+Implements test-IDs: test-0045
+Input: maps/@60.5,19.2,15z
+hitta.se/kartan!~61.3,19.8,12.5z/tr
+bounds = [[62.1, 20.5],[63.2, 21.6]];
+Expected:
+- Count: 4
+
+## Points Test: Validering med tydligt ogiltiga värden
+Test-ID: tdd-116
+Implements test-IDs: test-0064
+Input: 56.5 12.0
+-96.5 200.0
+98.2 15.0
+Expected:
+- Count: 2
+
+## Points Test: Validering med väderstreck och negativa
+Test-ID: tdd-117
+Implements test-IDs: test-0064
+Input: N 56.5 E 12.0
+N 96.5 E 12.0
+-56.5 -175.0
+-96.5 12.0
+Expected:
+- Count: 2
+
+## Points Test: Enbart avståndsmarkeringar ska inte hittas
+Test-ID: tdd-118
+Implements test-IDs: test-0085, test-0086
+Input: Punkt A är belägen 2,6' SSO fyren
+Punkt B ligger 3,7' NNO grundet
+Expected:
+- Count: 0
+
+## Points Test: Lat/Long med avståndsmarkering i anmärkning
+Test-ID: tdd-119
+Implements test-IDs: test-0085, test-0086
+Input: 1. Lat. N 60 30,5 Long. O 19 15,25 Punkt, 4' V Revet
+2. Lat. N 60 35,8 Long. O 19 20,4 Punkt, 2´ V udde
+Expected:
+- Count: 2
 
 
 
