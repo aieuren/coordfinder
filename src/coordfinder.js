@@ -1788,13 +1788,9 @@ CF.prototype._coordsToPoints = function() {
             if (!c1 || !c2) continue;
             
             // Try to find a reference system that contains both coords
-            // Allow auto-swapping only if:
-            // - Neither coordinate has explicit axis (no direction letters)
-            // - Both coordinates are positive (negative values suggest explicit sign)
+            // Allow auto-swapping only if neither coordinate has explicit axis (no direction letters)
             var hasExplicitAxis = (c1.axis !== CoordAxis.Unknown) || (c2.axis !== CoordAxis.Unknown);
-            var hasNegativeValues = (c1.value < 0) || (c2.value < 0);
-            var ordered = hasExplicitAxis || hasNegativeValues;
-            var result = RefSys.fromCoords(c1, c2, ordered);
+            var result = RefSys.fromCoords(c1, c2, hasExplicitAxis);
             
             if (result) {
                 var point = new Point(result.N, result.E, result.RefSys);
