@@ -342,13 +342,14 @@ var Patterns = {
     verbalPair: /(Norr?|Nord|Syd|Söder|South|Väst|Vest|West|Öst|Øst|East|N|S|E|W|V|Ö)\s+(\d{1,3})\s+grader?\s+(\d{1,2}[,.]?\d*)\s+min[iu]tt?e?r?[.,]?\s+(Norr?|Nord|Syd|Söder|South|Väst|Vest|West|Öst|Øst|East|N|S|E|W|V|Ö)\s+(\d{1,3})\s+grader?\s+(\d{1,2}[,.]?\d*)\s+min[iu]tt?e?r?[.,]?/gi,
     
     // Direction pair with symbols: N 60° 30,5' V 019° 15,25' or S 35° 30' V 70° 40'
-    directionPairDM: /([NSEWÖV])\s+(\d{1,3})\s*[°º]\s*(\d{1,2}(?:[,.]?\d+)?)\s*['′´`]?\s+([NSEWÖV])\s+(\d{1,3})\s*[°º]\s*(\d{1,2}(?:[,.]?\d+)?)\s*['′´`]?/gi,
+    directionPairDM: /([NSEWÖV])[ \t]+(\d{1,3})[ \t]*[°º][ \t]*(\d{1,2}(?:[,.]?\d+)?)[ \t]*['′´`]?[ \t]+([NSEWÖV])[ \t]+(\d{1,3})[ \t]*[°º][ \t]*(\d{1,2}(?:[,.]?\d+)?)[ \t]*['′´`]?/gi,
     
     // Extremely compact with direction: N60 E19 or S35 W70
-    extremelyCompact: /\b([NSEWÖV])(\d{1,3})\s+([NSEWÖV])(\d{1,3})\b/gi,
+    extremelyCompact: /\b([NSEWÖV])(\d{1,3})[ \t]+([NSEWÖV])(\d{1,3})\b/gi,
     
     // Direction before decimal degrees: E19.5 N60.5 or N60.5 E19.5 or N 56.5 E 12.0
-    directionBeforeDegs: /\b([NSEWÖV])\s*(-?\d{1,3}[,.]\d+)\s+([NSEWÖV])\s*(-?\d{1,3}[,.]\d+)\b/gi,
+    // Use [ \t] to avoid matching across newlines
+    directionBeforeDegs: /\b([NSEWÖV])[ \t]*(-?\d{1,3}[,.]\d+)[ \t]+([NSEWÖV])[ \t]*(-?\d{1,3}[,.]\d+)\b/gi,
     
     // URL parameters: x=540000&y=6580000 or y=6580000&x=540000
     urlParams: /[?&]?([xy])\s*=\s*(-?\d+(?:\.\d+)?)\s*&\s*([xy])\s*=\s*(-?\d+(?:\.\d+)?)/gi,
@@ -380,16 +381,18 @@ var Patterns = {
     plainDDMM: /\b(\d{4})\s+(\d{4})\b/gi,
     
     // Degrees, minutes, seconds: 59°19'44.2"N or 59°19'44"N or 60°30'45.5" (seconds marker optional at end)
-    degsMinsSecs: /([NSEWÖV])?\s*(\d+)\s*[°º]\s*(\d+)\s*['′´`]\s*(\d+(?:[,.]?\d+)?)\s*["″]?\s*([NSEWÖV])?/gi,
+    // Use [ \t] to avoid matching across newlines
+    degsMinsSecs: /([NSEWÖV])?[ \t]*(\d+)[ \t]*[°º][ \t]*(\d+)[ \t]*['′´`][ \t]*(\d+(?:[,.]?\d+)?)[ \t]*["″]?[ \t]*([NSEWÖV])?/gi,
     
     // Grader-minuter med minustecken: 58-30 or 6230-1545 or 5820N-1145E
     degsMinus: /([NSEWÖV])?(\d{2,4})([NSEWÖV])?-(\d{2,4})([NSEWÖV])?/gi,
     
     // Degrees and minutes: 59°19.736'N or 59°19,736'N
-    degsMins: /([NSEWÖV])?\s*(\d+)\s*[°º\u030A]\s*(\d+(?:[,.]?\d+)?)\s*['′´`]?\s*([NSEWÖV])?/gi,
+    // Use [ \t] to avoid matching across newlines
+    degsMins: /([NSEWÖV])?[ \t]*(\d+)[ \t]*[°º\u030A][ \t]*(\d+(?:[,.]?\d+)?)[ \t]*['′´`]?[ \t]*([NSEWÖV])?/gi,
     
     // Degrees and minutes without degree symbol: 60 30,5 or 019 15,25 or N60 30,5
-    degsMinsPlain: /\b([NSEWÖVO])?(\d{2,3})\s+(\d{1,2}[,.]\d+)\b/gi,
+    degsMinsPlain: /\b([NSEWÖVO])?(\d{2,3})[ \t]+(\d{1,2}[,.]\d+)\b/gi,
     
     // Degrees, minutes, seconds with direction letters but no symbols: N60 30 45 O19 15 30
     degsMinsSecsWithDir: /\b([NSEWÖVO])(\d{2,3})\s+(\d{1,2})\s+(\d{1,2}(?:[,.]\d+)?)\b/gi,
@@ -405,7 +408,8 @@ var Patterns = {
     // Negative lookahead for ) to avoid matching list numbers like "2)"
     // Negative lookahead for ' ´ ′ to avoid matching distance measurements like "2,5'" or "2,6´"
     // Negative lookahead for z to avoid matching zoom parameters like "13.3z"
-    degs: /([NSEWÖV])?\s*(-?\d{1,3}[,.]\d+)(?!\s*[)'´′z])(?:\s+([NSEWÖV])(?!\s*\d))?/gi,
+    // Use [ \t] to avoid matching across newlines
+    degs: /([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′z])(?:[ \t]+([NSEWÖV])(?![ \t]*\d))?/gi,
     
     // Plain number (meters or large coordinates)
     plain: /([NSEWÖV])?\s*(\d{5,})\s*([NSEWÖV])?/gi
@@ -1792,6 +1796,17 @@ CF.prototype._coordsToPoints = function() {
             var c2 = this._coords[j];
             
             if (!c1 || !c2) continue;
+            
+            // Only pair coordinates that are adjacent (no other coords between them)
+            // This prevents pairing coords that are far apart in the text
+            var hasCoordsBetween = false;
+            for (var k = i + 1; k < j; k++) {
+                if (!usedCoords[k] && this._coords[k]) {
+                    hasCoordsBetween = true;
+                    break;
+                }
+            }
+            if (hasCoordsBetween) continue;
             
             // Try to find a reference system that contains both coords
             // Allow auto-swapping only if neither coordinate has explicit axis (no direction letters)
