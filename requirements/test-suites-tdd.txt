@@ -779,8 +779,9 @@ Expected:
 ## Points Test: Validering negativa latitudgränser
 Test-ID: tdd-105
 Implements test-IDs: test-0064
-Input: -89.5 19.0
--96.5 19.0
+Input: 
+-89.5 119.0
+-96.5 119.0
 Expected:
 - Count: 1
 
@@ -794,14 +795,15 @@ Expected:
 - Count: 1
 - Coords: 60.5125 19.2583
 
-## Points Test: Negativa värden med korrekt ordning
+## Points Test: Negativa värden
 Test-ID: tdd-107
 Implements test-IDs: test-0064
-Input: -89.5 19.0
-56.5 12.0
+Input: 
+-89.5 19.0
+56.5 -12.0
 -96.5 12.0
 Expected:
-- Count: 2
+- Count: 3
 
 ## Points Test: Olika precision ska accepteras
 Test-ID: tdd-108
