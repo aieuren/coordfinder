@@ -928,6 +928,22 @@ Input: 1. Lat. N 60 30,5 Long. O 19 15,25 Punkt, 2,6´ SSO Holmudden
 Expected:
 - Count: 3
 
+## Points Test: Kompletta rader med avståndsmarkeringar
+Test-ID: tdd-122
+Implements test-IDs: test-0086
+Input: Pkt Lat. N Long. O Anmärkning
+1 60 22,38 19 23,03 Udde, OSO Spaken
+2 60 34,97 19 35,42 Punkt, 1,8' O Rissnäset
+3 60 36,07 19 33,27 Punkt, 0,7' VNV grund
+4 60 37,10 19 34,20 Punkt
+5 60 37,58 19 33,80 Udde, 0,25' SSO sundet
+Expected:
+- Count: 5
 
-
-
+## Points Test: Lurigt med olika sifferserier i urler 
+Test-ID: tdd-123
+https://www.google.se/maps/place/Rain+Charm+House,+Kyl+Cober+Parc,+Stoke+Climsland,+Callington+PL17+8PH,+Storbritannien/@50.5525407,-4.354845,13.3z/data=!4m5!3m4!1s0x486c88e2d3431b97:0xc30d623287cb4600!8m2!3d50.5476715!4d-4.3148175
+https://www.google.se/maps/place/J%C3%B6nk%C3%B6ping/@57.7561026,14.0478267,11z/data=xxx
+http://www.hitta.se/kartan!~58.04208,12.52948,11.385523692999612z/tr!i=15aS1OGB
+Expected:
+- Count: 3
