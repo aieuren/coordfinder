@@ -955,20 +955,17 @@ Expected:
 ## Points Test: Koordinatkomponenter får inte brytas över rader
 Test-ID: tdd-123
 Implements test-IDs: test-0087
-Input: 60.5
-19.3
-N 61
-E 20
-62° 30.5'
-21° 15.2'
-63 30,5
-22 15,2
+Input: 
+62° 
+30.5'
+21° 
+15.2'
 N
 64.5
 E
 23.3
-Lat. N 65 30,5
-Long. O 24 15,2
+N 65 30,5
+O 24 15,2
 Expected:
 - Count: 1
 - Coords: 65.50833 24.25333
