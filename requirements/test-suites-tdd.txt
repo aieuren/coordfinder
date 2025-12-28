@@ -911,6 +911,23 @@ Input: 1. Lat. N 60 30,5 Long. O 19 15,25 Punkt, 4' V Revet
 Expected:
 - Count: 2
 
+## Points Test: Hitta.se URL med lång zoom-parameter
+Test-ID: tdd-120
+Implements test-IDs: test-0045
+Input: http://www.hitta.se/kartan!~58.04208,12.52948,11.385523692999612z/tr!i=15aS1OGB
+Expected:
+- Count: 1
+- Coords: 58.04208 12.52948
+
+## Points Test: Avståndsmarkering direkt efter koordinat
+Test-ID: tdd-121
+Implements test-IDs: test-0085, test-0086
+Input: 1. Lat. N 60 30,5 Long. O 19 15,25 Punkt, 2,6´ SSO Holmudden
+2. Lat. N 60 35,8 Long. O 19 20,4 Punkt, 0,7' VNV grund
+3. Lat. N 60 40,2 Long. O 19 25,3 Punkt, 0,25' O fyr
+Expected:
+- Count: 3
+
 
 
 
