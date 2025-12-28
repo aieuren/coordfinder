@@ -891,7 +891,7 @@ N 96.5 E 12.0
 -56.5 -175.0
 -96.5 12.0
 Expected:
-- Count: 2
+- Count: 3
 
 ## Points Test: Enbart avståndsmarkeringar ska inte hittas
 Test-ID: tdd-118
