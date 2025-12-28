@@ -100,8 +100,12 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
         
         // Collect input
         if (state === 'input' && trimmed !== '') {
-            // Remove quotes if present
-            var inputLine = trimmed.replace(/^["']|["']$/g, '');
+            // Remove quotes only if they wrap the entire line (both start and end)
+            var inputLine = trimmed;
+            if ((inputLine[0] === '"' && inputLine[inputLine.length - 1] === '"') ||
+                (inputLine[0] === "'" && inputLine[inputLine.length - 1] === "'")) {
+                inputLine = inputLine.substring(1, inputLine.length - 1);
+            }
             if (currentTest.input) {
                 currentTest.input += '\n' + inputLine;
             } else {

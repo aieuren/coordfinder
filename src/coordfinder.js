@@ -406,10 +406,10 @@ var Patterns = {
     
     // Decimal degrees: 59.32894 or 59,32894 or -35.5 (negative for south/west)
     // Negative lookahead for ) to avoid matching list numbers like "2)"
-    // Negative lookahead for ' ´ ′ to avoid matching distance measurements like "2,5'" or "2,6´"
+    // Negative lookahead for ' ´ ′ " ″ to avoid matching DM/DMS like "30.5'" or "18.3""
     // Negative lookahead for z to avoid matching zoom parameters like "13.3z"
     // Use [ \t] to avoid matching across newlines
-    degs: /([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′z])(?:[ \t]+([NSEWÖV])(?![ \t]*\d))?/gi,
+    degs: /([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″z])(?:[ \t]+([NSEWÖV])(?![ \t]*\d))?/gi,
     
     // Plain number (meters or large coordinates)
     plain: /([NSEWÖV])?\s*(\d{5,})\s*([NSEWÖV])?/gi
