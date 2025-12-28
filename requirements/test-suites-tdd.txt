@@ -953,7 +953,7 @@ Expected:
 - Count: 3
 
 ## Points Test: Koordinatkomponenter får inte brytas över rader
-Test-ID: tdd-123
+Test-ID: tdd-124
 Implements test-IDs: test-0087
 Input: 
 62° 
