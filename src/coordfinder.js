@@ -293,8 +293,9 @@ function TextParser(text) {
 }
 
 TextParser.prototype._encode = function(text) {
-    // Normalize whitespace and preserve structure for parsing
-    return text.replace(/\s+/g, ' ');
+    // Normalize whitespace but preserve newlines for coordinate separation
+    // Replace multiple spaces/tabs with single space, but keep newlines
+    return text.replace(/[ \t]+/g, ' ').replace(/\n+/g, '\n');
 };
 
 TextParser.prototype.log = function(msg) {
@@ -394,7 +395,8 @@ var Patterns = {
     degsMinsSecsWithDir: /\b([NSEWÖVO])(\d{2,3})\s+(\d{1,2})\s+(\d{1,2}(?:[,.]\d+)?)\b/gi,
     
     // Degrees, minutes, seconds without symbols: 60 30 45.5 or 019 15 30.2 or 60 30 45
-    degsMinsSecsPlain: /\b(\d{2,3})\s+(\d{1,2})\s+(\d{1,2}(?:[,.]\d+)?)\b/gi,
+    // Use [ \t] instead of \s to avoid matching across newlines
+    degsMinsSecsPlain: /\b(\d{2,3})[ \t]+(\d{1,2})[ \t]+(\d{1,2}(?:[,.]\d+)?)\b/gi,
     
     // Decimal degrees with semicolon: 59.32894; 18.06491
     degsSemicolon: /([NSEWÖV])?\s*(\d{1,3}[,.]\d+)\s*[;]\s*([NSEWÖV])?/gi,
@@ -935,7 +937,10 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         
         // Validate minutes and seconds
         if (mins >= 60 || secs >= 60) {
-            snippet._invalid = true; // Mark as invalid to skip entire match
+            snippet._invalid = true;
+            // Skip past first number to allow finding other patterns
+            // For "60 19 60.4", skip to after "60 " (length of first group + space)
+            snippet._skipLength = bestMatch[1].length + 1;
             return snippet;
         }
         
@@ -1678,10 +1683,10 @@ CF.prototype._findSnippets = function() {
         
         if (snippet) {
             if (snippet._invalid) {
-                // Skip invalid match entirely
+                // Skip invalid match - use _skipLength if set, otherwise skip 1 character
                 this._log("Skipped invalid snippet: " + snippet.text + " at position " + snippet.index);
-                var relativeEnd = snippet.index - pos + snippet._skipLength;
-                pos += relativeEnd;
+                var skipAmount = snippet._skipLength || 1;
+                pos += skipAmount;
             } else {
                 this._snippets.push(snippet);
                 this._log("Found snippet: " + snippet.text + " at position " + snippet.index);
