@@ -412,7 +412,8 @@ var Patterns = {
     degs: /([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![ \t]*\d))?/gi,
     
     // Plain number (meters or large coordinates)
-    plain: /([NSEWÖV])?\s*(\d{5,})\s*([NSEWÖV])?/gi
+    // Use [ \t] to avoid matching across newlines
+    plain: /([NSEWÖV])?[ \t]*(\d{5,})[ \t]*([NSEWÖV])?/gi
 };
 
 Patterns.allPatterns = [
