@@ -8,6 +8,10 @@ Baserad på: 118 TDD-tester och implementation
 
 CoordFinder ska extrahera geografiska koordinater från text i olika format och koordinatsystem. Systemet ska hantera både strukturerad och ostrukturerad text, samt identifiera koordinater i URLs, dataformat och löpande text.
 
+**Se även:**
+- [API.md](API.md) - Programmeringsgränssnitt och användning
+- [kravspecifikation.md](kravspecifikation.md) - Historiskt dokument med framtida funktioner
+
 ## Koordinatsystem
 
 ### WGS84 (EPSG:4326)
@@ -228,35 +232,25 @@ Pkt  Lat. N    Long. O
 ### INTE tillåtet
 - Newline (`\n`) mellan koordinatkomponenter
 - Koordinater får inte brytas över rader
-- Regex använder `[ \t]` istället för `\s`
 
 ### Normalisering
-- Flera mellanslag/tabs → ett mellanslag
+- Flera mellanslag/tabs normaliseras till ett mellanslag
 - Newlines bevaras för att separera koordinatpar
-- Encoding: `text.replace(/[ \t]+/g, ' ').replace(/\n+/g, '\n')`
 
 ## Prioritetsordning
 
-Patterns matchas i följande ordning (högst prioritet först):
+Format ska matchas i ordning från mest specifik till minst specifik:
 
-1. **GeoJSON** - Strukturerad data
-2. **GML** - XML-format
-3. **WKT** - Well-Known Text
-4. **Verbal pair** - Utskriven form
-5. **Direction pair DM** - Väderstreck med DM
-6. **Direction before degs** - Väderstreck före decimalgrader
-7. **Extremely compact** - N60 E19
-8. **URL coords** - URLs med koordinater
-9. **URL params** - x/y parametrar
-10. **Large pairs** - SWEREF/RT90 par
-11. **Prefix formats** - Lat:/Long:, N:/E:
-12. **Compact DMS** - 591944N0180354E
-13. **Compact DM** - 5830N01245E
-14. **DMS formats** - Grader, minuter, sekunder
-15. **DM formats** - Grader och minuter
-16. **Degrees with semicolon** - Semikolon-separerad
-17. **Decimal degrees** - Grundformat
-18. **Plain numbers** - Stora tal (meter)
+1. **Strukturerad data** - GeoJSON, GML, WKT
+2. **Verbal beskrivning** - "Norr X grader Y minuter..."
+3. **Väderstreck med koordinater** - Explicita riktningar
+4. **URL-format** - Koordinater i URLs
+5. **Prefix-format** - Lat:/Long:, N:/E:, X:/Y:
+6. **Kompakta format** - DDMMSSN, DDMMN
+7. **DMS-format** - Grader, minuter, sekunder
+8. **DM-format** - Grader och minuter
+9. **Decimalgrader** - Grundformat
+10. **Stora tal** - Meter-koordinater (SWEREF/RT90)
 
 ## Specialfall
 
@@ -284,30 +278,27 @@ Patterns matchas i följande ordning (högst prioritet först):
 - Extra mellanslag accepteras: `58  °  30  '  N`
 - Normaliseras internt
 
-## Implementation
+## Koordinatparning
 
-### Regex-patterns
-- Använd `[ \t]` för whitespace (inte `\s`)
-- Negative lookahead för distance markers: `(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])`
-- Case-insensitive matching där relevant
+Individuella koordinatkomponenter ska paras ihop till kompletta koordinater:
 
-### Koordinatparning
-- Samla individuella komponenter (lat/lon)
-- Para ihop baserat på:
-  - Väderstreck (N/S med E/W/Ö/V)
-  - Position i text
-  - Samma rad
-  - Validering av värden
+- **Väderstreck:** N/S paras med E/W/Ö/V
+- **Position:** Komponenter på samma rad prioriteras
+- **Validering:** Värden måste vara inom giltiga intervall
+- **Radbrytning:** Komponenter på olika rader ska inte paras ihop
 
-### Deduplicering
-- Samma koordinat kan matchas av flera patterns
+## Deduplicering
+
+Samma koordinat kan identifieras i flera format:
 - Behåll endast unika koordinater
-- Jämför med epsilon för flyttal (0.00001)
+- Jämför med tolerans för flyttalsaritmetik
 
-### Felhantering
-- Ogiltiga värden ignoreras
-- Partiella matchningar ignoreras
-- Fortsätt söka efter nästa koordinat
+## Felhantering
+
+- Ogiltiga värden ska ignoreras
+- Partiella matchningar ska ignoreras
+- Fortsätt söka efter nästa koordinat vid fel
+- Inga exceptions ska kastas
 
 ## Testning
 
@@ -322,34 +313,30 @@ Systemet verifieras mot 118 TDD-tester som täcker:
 
 Alla tester måste passera för godkänd implementation.
 
-## AI-vänliga riktlinjer
+## Output
 
-### För att implementera CoordFinder:
+### Koordinatpunkt
 
-1. **Börja med patterns** - Definiera regex för varje format enligt prioritetsordning
-2. **Använd rätt whitespace** - `[ \t]` inte `\s` för att undvika newline-matchning
-3. **Implementera negative lookaheads** - För distance markers och zoom-parametrar
-4. **Bygg koordinatparning** - Logik för att para ihop lat/lon korrekt
-5. **Validera värden** - Kontrollera att koordinater är inom giltiga intervall
-6. **Hantera swap** - Automatisk swap för GeoJSON, GML, WKT och ogiltiga värden
-7. **Testa inkrementellt** - Kör TDD-testerna efter varje implementation
-8. **Deduplicera** - Ta bort dubbletter med epsilon-jämförelse
+Varje extraherad koordinat ska innehålla:
+- **Nordvärde/Latitud:** Första komponenten
+- **Östvärde/Longitud:** Andra komponenten
+- **Koordinatsystem:** Identifierat system (WGS84, SWEREF99TM, RT90)
+- **Kvalitetsrating:** 0.0-1.0 (trovärdighet)
+- **Kontext:** Text före och efter koordinaten
 
-### Vanliga fallgropar:
+### Konvertering
 
-- **Newline-matchning** - Använd `[ \t]` inte `\s`
-- **Distance markers** - Lägg till alla Unicode-varianter i negative lookahead
-- **Koordinatordning** - GeoJSON/GML/WKT har longitud först
-- **Swap-logik** - Endast när inga explicita väderstreck finns
-- **Precision** - Minst 1 decimal för decimalgrader
-- **Parning** - Koordinater på olika rader ska inte paras ihop
+Koordinater ska kunna:
+- Konverteras mellan koordinatsystem
+- Formateras i olika notationer (DD, DM, DMS)
+- Returneras som WGS84 lat/lon oavsett ursprungligt system
 
-### Debugging:
+### Gruppering
 
-- Kör enskilda tester: `node run-full-tdd.js` och filtrera på Test-ID
-- Kontrollera vilka patterns som matchar
-- Verifiera att koordinater inte bryts över rader
-- Testa med faktiska Unicode-tecken, inte escape-sekvenser
+Närliggande koordinater kan grupperas:
+- Baserat på geografisk närhet
+- Baserat på textkontext
+- Med bounding box för gruppen
 
 ## Versionshistorik
 
