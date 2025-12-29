@@ -970,4 +970,27 @@ Expected:
 - Count: 1
 - Coords: 65.375 24.703
 
+## Points Test: RT90 efter varandra 
+Test-ID: tdd-125
+Implements test-IDs: test-0080
+Input: 
+RT90 2,5 gonW
+6843765, 1412486 
+6486235, 1218436
+Expected:
+- Count: 2
 
+## Points Test: Tabulärt format med avståndsmarkeringar
+Test-ID: tdd-126
+Implements test-IDs: test-0086
+Input: Pkt Lat. N Long. O Anmärkning
+1 60 22,38 19 23,03 Udde, OSO Spaken
+2 60 22,38 19 29,93 Punkt, SO Flisen
+3 60 34,97 19 35,42 Punkt, 1,8' O Rissnäset
+4 60 36,07 19 33,27 Punkt, 0,7' VNV grund
+5 60 37,24 19 33,57 Punkt, 0,7' OSO vik
+6 60 37,10 19 34,20 Punkt
+7 60 37,25 19 34,20 Ombo öar
+8 60 37,58 19 33,80 Udde, 0,25' SSO sundet
+Expected:
+- Count: 8
