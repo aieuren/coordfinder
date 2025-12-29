@@ -1,5 +1,12 @@
 # Kravspecifikation - Koordinatparser
 
+> **⚠️ HISTORISKT DOKUMENT**  
+> Detta är den ursprungliga kravspecifikationen. För aktuell implementation, se [REQUIREMENTS.md](REQUIREMENTS.md).  
+> Detta dokument innehåller framtida funktioner som ännu inte är implementerade:
+> - Onoggrannhetsberäkning
+> - Kvalitetsrating
+> - Ytterligare koordinatsystem (ETRS89, ETRS-LAEA, ETRS-LCC)
+
 ## 1. Översikt
 
 Mjukvaran ska kunna extrahera geografiska koordinater från text i olika format och koordinatreferenssystem (CRS).
