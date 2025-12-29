@@ -854,6 +854,18 @@ Input: Pkt Lat. N Long. O Anmärkning
 Expected:
 - Count: 4
 
+## Points Test: Avståndsangivelser med minuttecken ska inte tolkas, alt minuttecken
+Test-ID: tdd-112b
+Implements test-IDs: test-0085, test-0086
+Input: Pkt Lat. N Long. O Anmärkning
+1 60 30,5 19 15,25 Punkt 2,5’ norr
+2 60 35,8 19 20,4 Punkt 1,8’ O udde
+3 60 40,2 19 25,3 Punkt 0,7’ VNV grund
+4 60 45,5 19 30,1 Punkt 0,25’ SSO fyr
+Expected:
+- Count: 4
+
+
 ## Points Test: Hitta.se URL med zoom-parameter
 Test-ID: tdd-113
 Implements test-IDs: test-0045
@@ -897,22 +909,6 @@ N 96.5 E 12.0
 Expected:
 - Count: 3
 
-## Points Test: Enbart avståndsmarkeringar ska inte hittas
-Test-ID: tdd-118
-Implements test-IDs: test-0085, test-0086
-Input: Punkt A är belägen 2,6' SSO fyren
-Punkt B ligger 3,7' NNO grundet
-Expected:
-- Count: 0
-
-## Points Test: Lat/Long med avståndsmarkering i anmärkning
-Test-ID: tdd-119
-Implements test-IDs: test-0085, test-0086
-Input: 1. Lat. N 60 30,5 Long. O 19 15,25 Punkt, 4' V Revet
-2. Lat. N 60 35,8 Long. O 19 20,4 Punkt, 2´ V udde
-Expected:
-- Count: 2
-
 ## Points Test: Hitta.se URL med lång zoom-parameter
 Test-ID: tdd-120
 Implements test-IDs: test-0045
@@ -921,30 +917,9 @@ Expected:
 - Count: 1
 - Coords: 58.04208 12.52948
 
-## Points Test: Avståndsmarkering direkt efter koordinat
-Test-ID: tdd-121
-Implements test-IDs: test-0085, test-0086
-Input: 1. Lat. N 60 30,5 Long. O 19 15,25 Punkt, 2,6´ SSO Holmudden
-2. Lat. N 60 35,8 Long. O 19 20,4 Punkt, 0,7' VNV grund
-3. Lat. N 60 40,2 Long. O 19 25,3 Punkt, 0,25' O fyr
-Expected:
-- Count: 3
-
-## Points Test: Kompletta rader med avståndsmarkeringar
-Test-ID: tdd-122
-Implements test-IDs: test-0045
-Input: Pkt Lat. N Long. O Anmärkning
-1 60 22,38 19 23,03 Udde, OSO Spaken
-2 60 34,97 19 35,42 Punkt, 1,8' O Rissnäset
-3 60 36,07 19 33,27 Punkt, 0,7' VNV grund
-4 60 37,10 19 34,20 Punkt
-5 60 37,58 19 33,80 Udde, 0,25' SSO sundet
-Expected:
-- Count: 5
-
 ## Points Test: Lurigt med olika sifferserier i urler 
 Test-ID: tdd-123
-Implements test-IDs: test-0086
+Implements test-IDs: test-0045
 Input: 
 https://www.google.se/maps/place/Rain+Charm+House,+Kyl+Cober+Parc,+Stoke+Climsland,+Callington+PL17+8PH,+Storbritannien/@50.5525407,-4.354845,13.3z/data=!4m5!3m4!1s0x486c88e2d3431b97:0xc30d623287cb4600!8m2!3d50.5476715!4d-4.3148175
 https://www.google.se/maps/place/J%C3%B6nk%C3%B6ping/@57.7561026,14.0478267,11z/data=xxx
@@ -979,18 +954,3 @@ RT90 2,5 gonW
 6486235, 1218436
 Expected:
 - Count: 2
-
-## Points Test: Tabulärt format med avståndsmarkeringar
-Test-ID: tdd-126
-Implements test-IDs: test-0086
-Input: Pkt Lat. N Long. O Anmärkning
-1 60 22,38 19 23,03 Udde, OSO Spaken
-2 60 22,38 19 29,93 Punkt, SO Flisen
-3 60 34,97 19 35,42 Punkt, 1,8' O Rissnäset
-4 60 36,07 19 33,27 Punkt, 0,7' VNV grund
-5 60 37,24 19 33,57 Punkt, 0,7' OSO vik
-6 60 37,10 19 34,20 Punkt
-7 60 37,25 19 34,20 Ombo öar
-8 60 37,58 19 33,80 Udde, 0,25' SSO sundet
-Expected:
-- Count: 8
