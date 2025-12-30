@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CoordFinder - Documentation</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+
+<script src="proj4.js"></script>
+<script src="coordfinder.js?v=1"></script>
+
+
+<script>
+// Catch all uncaught errors
+window.onerror = function(message, url, lineNumber) { 
+  var errMsg = "Internal Error:\n";
+  errMsg += message + "\n\n";
+  errMsg += "On line " + lineNumber + " in " + url + "\n";
+  errMsg += navigator.userAgent + " " + navigator.language + " cookieEnabled: " + navigator.cookieEnabled + "\n";
+
+  alert(errMsg);
+
+  return true;
+};  
+
+
+var text = "";
+
+// New input, uppdate all output, to be called with for exampel oninput, onpaste and onpropertychange on a source field
+coordInputUpdated = function() {
+  document.getElementById("version")
+    .innerHTML = CoordFinder.version;
+
+  text = document.getElementById("demodata").value;
+
+  basicDemo(text); document.getElementById("demodata_hits")
+    .innerHTML = CoordFinder.pointsIn(text).length;
+  pointIn(text);
+  pointsIn(text);
+  grouping(text);
+  parsingInfo(text);
+  demoParseGroups(text);
+  demoRating(text);
+  pointAsText(text);
+  reprojectTo(text);
+  context(text);
+  pointLogs(text);
+}
+
+divText = function(divId, theText) {
+  if ( theText === undefined ) {
+    return document.getElementById(divId)
+      .innerHTML;
+  } else {
+    document.getElementById(divId)
+      .innerHTML = theText;
+  }
+}
+</script>
+
+
+<style>
+.demo {
+  white-space: pre-wrap;
+  background-color: lavender; 
+  border: 1px solid gray;
+  margin: 10px;
+  padding-left: 5px;
+  padding-right: 15px;
+  padding-top: 0px;
+  padding-bottom: 15px;
+}
+textarea {
+  margin-left: 5px;
+  box-sizing: border-box;
+  width: 100%;
+}
+[ readonly ] {
+  background-color: lavender; 
+}
+</style>
+
+</head>
+
+
+<body onload="coordInputUpdated()">
+
+<h1>CoordFinder Documentation</h1>
+<p><i>For CoordFinder version <span id="version"></span></i></p>
+
+<p>Parse a text and extract as many coordinate pairs as possible irrespective of the format of the coordinates. These points can be retreived as numbers, reprojected, formatted as text output, grouped by line breaks etc.</p>
+<p>Basic demo:
+<div class="demo">
+point = <a href="#coordfinderpointin">CoordFinder.pointIn</a>(<a href="#testdata">Testdata</a>)
+<span id="basicdemo_result"></span></div>
+</p>
+
+<script>
+basicDemo = function(text) {
+  var point = CoordFinder.pointIn(text);
+  var result = "point = null (no valid coordinate pair found)";
+  if ( point ) {
+    result = "point.asText() = " + point.asText();
+  }
+  divText("basicdemo_result", result);
+}
+</script>
+
+
+<h3>Contents</h3>
+<ul>
+  <li><a href="#usage">Usage</a></li>
+  <li><a href="#testdata">Testdata</a></li>
+  <li><a href="#coordfinder">CoordFinder</a>
+    <ul>
+      <li><a href="#coordfinderpointin">CoordFinder.pointIn (Static)</a></li>
+      <li><a href="#coordfinderpointsin">CoordFinder.pointsIn (Static) </a></li>
+      <li><a href="#coordfindergroupsin">CoordFinder.groupsIn (Static) </a></li>
+      <li><a href="#coordfindergrouping">.parse with group option</a></li>
+      <li><a href="#coordfinderratings">.points with rating option</a></li>
+      <li><a href="#coordfinderlog"> .log</a></li>
+    </ul>
+  </li>
+
+  <li><a href="#point">Point</a>
+    <ul>
+      <li><a href="#pointastext">.asText</a></li>
+      <li><a href="#pointreprojectto">.reprojectTo</a></li>
+      <li><a href="#pointcontext">.textBefore, .originalText, .textAfter, .context</a></li>
+      <li><a href="#pointlogs">.log, .asDebugText</a></li>
+    </ul>
+  </li>
+
+ </ul>
+<hr/>
+
+<h2 id="usage">Usage</h2>
+<p>Include coordfinder.js. Also include <a href="http://proj4js.org" target ="_ blank">proj4js</a> if support for any other reference systems than WGS84 (latitude/longitude) is needed.<br/>
+Then call one of the CoordFinder static methods pointIn, pointsIn or groupsIn with a text. </p>
+
+<div class="demo">
+  &lt;script src="path/to/proj4.js"&gt;&lt;/script&gt;
+  &lt;script src="path/to/coordfinder.js"&gt;&lt;/script&gt;
+  ...
+  var point = CoordFinder.pointIn(<i>text</i>);
+  var points = CoordFinder.pointsIn(<i>text</i>);
+  var groups = CoordFinder.groups(<i>text</i>);
+</div>
+
+<p>Production site using CoordFinder wrapped in a Leaflet map application: <a href="https://www.havochvatten.se/visakoordinater.html">https://www.havochvatten.se/visakoordinater.html</a></p>
+
+<hr/>
+
+
+<!-- Testdata -->
+<h2 id="testdata">Testdata</h2>
+Data used in the live code examples below. Change to experiment with different inputs.
+
+<div class="demo">
+<textarea id="demodata" rows="10" cols="100" oninput="coordInputUpdated()" onpaste="coordInputUpdated()" onpropertychange="coordInputUpdated()" ></textarea>
+  No of found coordinate pairs: <span id="demodata_hits"></span>
+</div>
+<hr/>
+
+
+
+<!-- CoordFinder -->
+<h2 id="coordfinder">Class: CoordFinder</h2>
+<p>Main class for the coordinate lookup, returns are mainly one or many Point objects.</p>
+<p>For most uses the three static functions will do all that is needed. To get log info, tweak parsing sensitivity etc create an instance of CoordFinder instead.</p>
+
+
+<h3> CoordFinder Methods</h3>
+Main "class" for finding coordinate pairs (points) in a text.
+
+<!-- CoordFinder.pointIn -->
+<h3 id="coordfinderpointin">Static CoordFinder.pointIn(<i>text</i>): Get First Point</h3>
+Simple static call to just find and return first possible point.
+
+<div class="demo">
+  var point = CoordFinder.pointIn(text);
+  if ( point ) {
+    var lat = point.latitude();
+    var long = point.longitude();
+    var latlong = point.asText();
+  }
+
+  <i>Results when used on <a href="#testdata">Testdata</a>:</i>
+  lat: <span id="pointIn_latitude"></span>
+  long: <span id="pointIn_longitude"></span>
+  latlong: <span id="pointIn_latlong"></span>
+</div>
+
+<script>
+pointIn = function(text) {
+
+  var point = CoordFinder.pointIn(text);
+  if ( point ) {
+    var lat = point.latitude();
+    var long = point.longitude();
+    var latlong = point.asText();
+  }
+
+  divText("pointIn_latitude", "");
+  divText("pointIn_longitude", "");
+  divText("pointIn_latlong", "");
+  if ( point ) {
+    divText("pointIn_latitude", lat);
+    divText("pointIn_longitude", long);
+    divText("pointIn_latlong", latlong);
+  }
+
+}
+</script>
+<hr/>
+
+
+
+<!-- CoordFinder.pointsIn -->
+<h3 id="coordfinderpointsin">Static CoordFinder.pointsIn(<i>text</i>): Get All Points</h3>
+<p>Static call to find and return all possible points.</p>
+
+<div class="demo">
+  var points = CoordFinder.pointsIn(text);
+  var noOfPoints = points.length;
+  var latlongs = "";
+  for ( var i = 0; i < noOfPoints; i++ ) {
+    // Using options on asText to format output
+    latlongs += points[i].asText({format: 'degreesandminutes'}) + "\n";
+  }
+
+  <i>Results when used on <a href="#testdata">Testdata</a>:</i>
+  noOfPoints: <span id="pointsIn_noOfPoints"></span>
+  latlongs:  <textarea id="pointsIn_latlongs" rows="8" cols="40" readonly></textarea>
+</div>
+
+<script>
+pointsIn = function(text) {
+
+  var points = CoordFinder.pointsIn(text);
+  var noOfPoints = points.length;
+  var latlongs = "";
+  for ( var i = 0; i < noOfPoints; i++ ) {
+    // Using options on asText to format output
+    latlongs += points[i].asText({format: 'degreesandminutes'}) + "\n";
+  }
+
+  divText("pointsIn_noOfPoints", "");
+  divText("pointsIn_latlongs", "");
+  if ( point ) {
+    divText("pointsIn_noOfPoints", noOfPoints);
+    divText("pointsIn_latlongs", latlongs);
+  }
+
+}
+</script>
+<hr/>
+
+
+
+<!-- Grouping -->
+<h3 id="coordfindergroupsin">Static CoordFinder.groupsIn(<i>text</i>): Get All Points in Groups</h3>
+<p>Static call to find and return all possible points as an Array of Point Arrays. The Points are grouped by text lines without points. Empty lines is one example of such group delimiters. Useful for extracting separate polylines or polygons from the input text.</p>
+<p>Note: this may return a different number of points than .pointsIn.</p>
+
+<div class="demo">
+  var groups = CoordFinder.groupsIn(text);
+  var noOfGroups = groups.length;
+  var latlongs = "";
+  for ( i = 0; i < groups.length; i++ ) { 
+    var points = groups[i];
+    latlongs += "Group " + i + ": \n";
+    for ( j = 0; j < points.length; j++ ) { 
+      latlongs += points[j].asText() + "\n";
+    }
+  }
+  <i>Results when used on <a href="#testdata">Testdata</a>:</i>
+  noOfGroups: <span id="grouping_groups"></span>
+  latlongs: <textarea id="grouping_output" rows="8" cols="40" readonly></textarea>
+</div>
+
+<script>
+grouping = function(text) {
+
+  var groups = CoordFinder.groupsIn(text);
+  var noOfGroups = groups.length;
+  var latlongs = "";
+  for ( i = 0; i < groups.length; i++ ) { 
+    var points = groups[i];
+    latlongs += "Group " + i + ": \n";
+    for ( j = 0; j < points.length; j++ ) { 
+      latlongs += points[j].asText() + "\n";
+    }
+  }
+
+  divText("grouping_groups", "");
+  divText("grouping_output", "");
+  if ( point ) {
+    divText("grouping_groups", noOfGroups);
+    divText("grouping_output", latlongs);
+  }
+
+}
+</script>
+<hr/>
+
+
+
+<h2>CoordFinder Instance Methods</h2>
+
+
+<!-- Grouping -->
+<h3 id="coordfindergrouping">.parse(<i>text</i>, {grouping: true}): Group Hits</h3>
+<p>The instance method implementation of the Static CoordFinder.groupsIn() above, which gives access to more options.
+</p>
+
+<div class="demo">
+  var groups = new CoordFinder().parse(text , {grouping: true}).groups(); 
+  var noOfGroups = groups.length;
+  var latlongs = "";
+  for ( i = 0; i < groups.length; i++ ) { 
+    var points = groups[i];
+    latlongs += "Group " + i + ": \n";
+    for ( j = 0; j < points.length; j++ ) { 
+      latlongs += points[j].asText() + "\n";
+    }
+  }
+
+  <i>Results when used on <a href="#testdata">Testdata</a>:</i>
+  noOfGroups: <span id="parsegroups_groups"></span>
+  latlongs: <textarea id="parsegroups_output" rows="8" cols="40" readonly></textarea>
+</div>
+
+<script>
+demoParseGroups = function(text) {
+
+  var groups = new CoordFinder().parse(text , {grouping: true}).groups(); 
+  var noOfGroups = groups.length;
+  var latlongs = "";
+  for ( i = 0; i < groups.length; i++ ) { 
+    var points = groups[i];
+    latlongs += "Group " + i + ": \n";
+    for ( j = 0; j < points.length; j++ ) { 
+      latlongs += points[j].asText() + "\n";
+    }
+  }
+
+  divText("parsegroups_groups", "");
+  divText("parsegroups_output", "");
+  if ( point ) {
+    divText("parsegroups_groups", noOfGroups);
+    divText("parsegroups_output", latlongs);
+  }
+
+}
+</script>
+<hr/>
+
+
+
+<!-- Ratings -->
+<h3 id="coordfinderratings">.points({rating: <i>level</i>}): Selecting points using a rating threshold</h3>
+<p>To select the number of points returned use the rating option for .points or .groups. This can be used for creating a dropdown or slider for showing less or more points. 
+<br/>
+The rating of a point is a decimal value between 0.0 and 1.0 indicating some sort of probability that a point found by parsing in fact is a valid point. Lower values gives a more forgiving approach and thus potentially more points. 
+<br/>
+Default rating level for .points() is 0.5. 
+<br/>
+To get an array of all rating levels found in all points after .parse() call .foundRatings(). 
+</p>
+
+<div class="demo">
+  var coordFinder = new CoordFinder(text);
+  var ratings = coordFinder.foundRatings();
+  var points = coordFinder.points({rating: <span id="ratings_select_span"><select id="ratings_select" onchange="ratings_updateOutput()">
+</select></span>});
+  ...use points...
+
+  <i>Results when used on <a href="#testdata">Testdata</a>:</i>
+  ratings[]: <span id="ratings_ratings"></span>
+  Found <span id="ratings_result"></span>
+<textarea id="ratings_points" rows="8" cols="40" readonly></textarea>
+</div>
+
+<script>
+
+addSelectOption = function(elemId, optionValue) {
+//alert("addSelectOption start");
+  var option = document.createElement("option");
+  option.setAttribute("value", optionValue);
+  option.text = optionValue;
+    document.getElementById(elemId).add(option);
+}
+
+ratings_updateOutput = function() {
+  //alert("ratings_updateOutput");
+  divText("ratings_ratings", "");
+  divText("ratings_result", "no points.");
+  divText("ratings_points", ""); 
+
+  var ratingSelect = document.getElementById("ratings_select");
+  if ( ratingSelect.options.length == 0 ) {
+    return;
+  }
+
+  // Get selected rating
+  var selectedIndex = ratingSelect.selectedIndex;
+  if ( selectedIndex < 0 ) {
+    selectedIndex = 0;
+  }
+  var rating = ratingSelect.options[selectedIndex].value;
+  var cf = new CoordFinder(text);
+  var pts = cf.points({rating: rating});
+
+  // ...and use that for point selection
+  var coordFinder = new CoordFinder(text);
+  var points = coordFinder.points({rating: rating});
+  var pointList = "";
+  if ( points ) {
+    for ( var i = 0; i < points.length; i++ ) {
+      pointList += points[i].asText() + " with rating " + points[i].rating() + " from \"" + points[i].context({html: false}) + "\"\n";
+    }
+  }
+
+  // Put output on page
+  if ( points ) {
+    divText("ratings_ratings", coordFinder.foundRatings().toString());
+/*
+Found <span id="ratings_noOfPoints"></span> points with rating <span id="ratings_rating"></span> or higher:
+    */
+
+    divText("ratings_result", points.length + " points with rating " + rating + " or higher:");
+    divText("ratings_points", pointList);
+  }
+
+}
+
+demoRating = function() {
+//alert("update ratings");
+  // Remove old select dom element
+  var ratingsSelect = document.getElementById("ratings_select");
+  if ( ratingsSelect ) {
+    ratingsSelect.remove();
+  }
+  // ...and create a new
+  var selectElem = document
+    .createElement("select");
+  selectElem
+    .setAttribute("id", "ratings_select");
+  selectElem
+    .setAttribute("onchange", "ratings_updateOutput()");
+  document
+    .getElementById("ratings_select_span")
+    .appendChild(selectElem);
+
+  // Add all found ratings as options to the select
+  var coordFinder = new CoordFinder(text);
+  var ratings = coordFinder.foundRatings();
+  if ( ratings && ratings.length > 0 ) {
+    for ( var i = 0; i < ratings.length; i++ ) {
+      addSelectOption("ratings_select", ratings[i]);
+    }
+    // And on top of that an impossibly high rating to provoce zero hit result
+    addSelectOption("ratings_select", 1.1);
+  
+    // Set the default as the selected value
+ document
+    .getElementById("ratings_select")
+    .selectedIndex = coordFinder.ratingIndex();
+  }
+
+  // Update the values
+  ratings_updateOutput();
+}
+</script>
+<hr/>
+
+
+<!-- Parsing info -->
+<h3 id="coordfinderlog">.log(): Get Log Info</h3>
+<p>To get a parse log create an instance of CoordFinder and call the parse() method instead if the static methods above.
+</p>
+
+<div class="demo">
+  var log = new CoordFinder().parse(text).log(); 
+
+  <i>Results when used on <a href="#testdata">Testdata</a>:</i>
+  log: <textarea id="parseinfo_log" rows="13" cols="40" readonly></textarea>
+</div>
+
+<script>
+parsingInfo = function(text) {
+
+  var log = new CoordFinder().parse(text).log(); 
+
+  divText("parseinfo_log", log);
+
+}
+</script>
+<hr/>
+
+
+
+<!-- CoordFinder.Point -->
+<h2 id="point">Class: CoordFinder.Point</h2>
+<p>Consists mainly of two Coordinate objects, N and E, and a number of methods</p>
+<hr/>
+
+
+<!-- asText() Output options -->
+<h3 id="pointastext">.asText() Output Options</h3>
+The asText() result can be tweaked if necessary using more options:
+<div class="demo">
+  // options (with defaults first):
+  // {
+  //   format:'', 'degrees', 'degreesandminutes', 'degreesminutesandseconds'
+  //   directionLetter: 'none', 'before', 'after': Where to place N, E etc
+  //   compact: false To remove spacing between N, E etc and coordinate values for more compact layout
+  //   decimals: 'default', 'auto', 0 to 10
+  //     Number of characters used for the decimal part, through rounding or zero padding
+  //     'default' to get enough decimals to keep maximum error in coordinates to roughly a meter
+  //     'auto' to use number of decimals enough to keep below the maximum error from the parsed coordinate input text
+  //   localized:true, false: Control decimal separator (point or comma)
+  //  }
+
+  var point = CoordFinder.pointIn(text);
+  if ( point ) { 
+    var defaultFormat = point.asText();
+    var inDegrees = point.asText({format: 'degrees'});
+    var inDegreesAndMinutes = point.asText({format: 'degreesandminutes'});
+    var inDegreesMinutesAndSeconds = point.asText({format: 'degreesminutesandseconds'});
+    var inCustomFormat = point.asText({directionLetter: 'before', symbols: false, compact: false, decimals: 4, localized: false});
+  }
+
+  <i>Results when used on <a href="#testdata">Testdata</a>:</i>
+  defaultFormat: <span id="format_default"></span>
+  inDegrees: <span id="format_degs"></span>
+  inDegreesAndMinutes: <span id="format_degsandmins"></span>
+  inDegreesMinutesAndSeconds: <span id="format_degsminsandsecs"></span>
+  inCustomFormat: <span id="format_custom"></span>
+</div>
+
+<script>
+pointAsText = function(text) {
+  var point = CoordFinder.pointIn(text);
+  if ( point ) { 
+    var defaultFormat = point.asText();
+    var inDegrees = point.asText({format: 'degrees'});
+    var inDegreesAndMinutes = point.asText({format: 'degreesandminutes'});
+    var inDegreesMinutesAndSeconds = point.asText({format: 'degreesminutesandseconds'});
+    var inCustomFormat = point.asText({directionLetter: 'after', symbols: false, compact: false, decimals: 2});
+  }
+
+  divText("format_default", "");
+  divText("format_degs", "");
+  divText("format_degsandmins", "");
+  divText("format_degsminsandsecs", "");
+  divText("format_custom", "");
+  if ( point ) {
+    divText("format_default", defaultFormat);
+    divText("format_degs", inDegrees);
+    divText("format_degsandmins", inDegreesAndMinutes);
+    divText("format_degsminsandsecs", inDegreesMinutesAndSeconds);
+    divText("format_custom", inCustomFormat);
+  }
+}
+</script>
+<hr/>
+
+
+
+<!-- Point.reprojectTo -->
+<h3 id="pointreprojectto">.reprojectTo: Project Found Coordinates to other Coordinate Reference Systems</h3>
+<p>Reproject a found coordinate pair to one using refsys constants in namespace CoordFinder.RefSys.</p>
+
+<div class="demo">
+  var refsys = <select id="reprojectTo_refsysSelect" onchange="reprojectTo_changeRefsys()">
+  <option value="4326">CoordFinder.RefSys.WGS84</option>
+  <option selected value="3035">CoordFinder.RefSys.ETRSLAEA</option>
+  <option value="3034">CoordFinder.RefSys.ETRSLCC</option>
+  <option value="4258">CoordFinder.RefSys.ETRS89</option>
+  <option value="3006">CoordFinder.RefSys.SWEREF99TM</option>
+  <option value="2400">CoordFinder.RefSys.RT90_25gonV</option>
+</select>
+  var refsysName = refsys.name;
+  var refsysEPSGCode = refsys.code;
+  var points = CoordFinder.pointsIn(text);
+  var coordinatePairs = "";
+  for ( var i = 0; i < points.length; i++ ) {
+    var reprojectedPoint = points[i].reprojectTo(refsys);
+    if (reprojectedPoint)
+      coordinatePairs += reprojectedPoint.asText() + "\n";
+    else 
+      coordinatePairs += "-\n";
+  }
+
+  <i>Results when used on <a href="#testdata">Testdata</a>:</i>
+  refsysName: <span id="reprojectTo_refsysName"></span>
+  refsysEPSGCode: <span id="reprojectTo_refsysCode"></span>
+  coordinatePairs:  <textarea id="reprojectTo_output" rows="8" cols="40" readonly></textarea>
+</div>
+
+<script>
+refsys = CoordFinder.RefSys.ETRSLAEA;
+
+reprojectTo_changeRefsys = function(text) {
+  var refsysSelect = document.getElementById("reprojectTo_refsysSelect");
+  var selectedRefsys = refsysSelect.options[refsysSelect.selectedIndex].value;
+  switch(selectedRefsys) {
+    case "4326": 
+      refsys = CoordFinder.RefSys.WGS84; 
+      break;
+    case "3035": 
+      refsys = CoordFinder.RefSys.ETRSLAEA; 
+      break;
+    case "3034": 
+      refsys = CoordFinder.RefSys.ETRSLCC; 
+      break;
+    case "4258": 
+      refsys = CoordFinder.RefSys.ETRS89; 
+      break;
+    case "3006": 
+      refsys = CoordFinder.RefSys.SWEREF99TM; 
+      break;
+    case "2400": 
+      refsys = CoordFinder.RefSys.RT90_25gonV; 
+      break;
+    default:
+      refsys = CoordFinder.RefSys.ETRSLAEA; 
+  }
+  reprojectTo();
+}
+
+reprojectTo = function() {
+  // var refsys = <select id=....
+  var refsysName = refsys.name;
+  var refsysEPSGCode = refsys.code;
+  var points = CoordFinder.pointsIn(text);
+  var coordinatePairs = "";
+  for ( var i = 0; i < points.length; i++ ) {
+    var reprojectedPoint = points[i].reprojectTo(refsys);
+    if (reprojectedPoint)
+      coordinatePairs += reprojectedPoint.asText() + "\n";
+    else 
+      coordinatePairs += "-\n";
+  }
+
+
+  divText("reprojectTo_refsysName", "");
+  divText("reprojectTo_refsysCode", "");
+  divText("reprojectTo_output", "");
+  if ( point ) {
+    divText("reprojectTo_refsysName", refsysName);
+    divText("reprojectTo_refsysCode", refsysEPSGCode);
+    divText("reprojectTo_output", coordinatePairs);
+  }
+
+}
+</script>
+<hr/>
+
+
+
+<!-- Context etc -->
+<h3 id="pointcontext">.textBefore, .originalText, .textAfter, .context: Get the context and its sub parts of where the Point was found</h3>
+
+<div class="demo">
+  var point = CoordFinder.pointIn(text);
+  if ( point ) { 
+    var textBefore = point.textBefore();
+    var originalText = point.originalText();
+    var textAfter = point.textAfter();
+    var context = point.context();
+  }
+
+  <i>Results when used on <a href="#testdata">Testdata</a>:</i>
+  textBefore: <span id="context_textBefore"></span>
+  originalText: <span id="context_originalText"></span>
+  textAfter: <span id="context_textAfter"></span>
+  context: <span id="context_context"></span>
+</div>
+
+<script>
+// Catch all uncaught errors
+window.onerror = function(message, url, lineNumber) { 
+  var errMsg = "Internal Error:\n";
+  errMsg += message + "\n\n";
+  errMsg += "On line " + lineNumber + " in " + url + "\n";
+  errMsg += navigator.userAgent + " " + navigator.language + " cookieEnabled: " + navigator.cookieEnabled + "\n";
+
+  document.getElementById("testresults").innerHTML = errMsg;
+
+  return true;
+};  
+
+context = function(text) {
+
+  var point = CoordFinder.pointIn(text);
+  if ( point ) { 
+    var textBefore = point.textBefore();
+    var originalText = point.originalText();
+    var textAfter = point.textAfter();
+    var context = point.context();
+  }
+
+  divText("context_textBefore", "");
+  divText("context_originalText", "");
+  divText("context_textAfter", "");
+  divText("context_context", "");
+  if ( point ) {
+    divText("context_textBefore", textBefore);
+    divText("context_originalText", originalText);
+    divText("context_textAfter", textAfter);
+    divText("context_context", context);
+  }
+
+}
+</script>
+<hr/>
+
+
+<!-- Point logs -->
+<h3 id="pointlogs">.log, .asDebugText: Logs on how a Point was found</h3>
+
+<div class="demo">
+  var point = CoordFinder.pointIn(text);
+  if ( point ) { 
+    var log = point.log();
+    var asDebugText = point.asDebugText();
+  }
+
+  <i>Results when used on <a href="#testdata">Testdata</a>:</i>
+  log: <span id="pointlogs_log"></span>
+
+  asDebugText: 
+<span id="pointlogs_debug"></span>
+</div>
+
+<script>
+pointLogs = function(text) {
+  var point = CoordFinder.pointIn(text);
+  if ( point ) { 
+    var log = point.log();
+    var asDebugText = point.asDebugText();
+  }
+
+  divText("pointlogs_log", "");
+  divText("pointlogs_debug", "");
+  if ( point ) {
+    divText("pointlogs_log", log);
+    divText("pointlogs_debug", asDebugText);
+  }
+}
+</script>
+<hr/>
+
+
+
+<!-- Versions -->
+
+<h1>Versions Info</h1>
+<p>4.3 - Better handling of WKT and csv export from QGIS. 
+</p>
+<p>4.2 - asText options for decimals remade, implemented: "auto", "meter". 
+Renamed threshold to rating, changed rating algorithm, .groups function accepts rating option, added found ratings call and rating log. Documentation page updated mainly for rating.
+Bugs corrected: Several smaller. 
+Added asDebugText and new test case handling.
+Explicit use of prototyping for all classes and some internal restructuring.
+</p>
+<p>4.1.1 - Added a semi-fix for erroneous RT90 reprojection from proj4.js</p>
+<p>4.1 - Improved documentation. Get unused text snippets. Added test suite.</p>
+<p>4.0 - All classes in namespace CoordFinder. Some classes changed names. Supports AMD/requirejs and CommonJS. Grouping of coordinate pairs. Better handling when no N/E signs, supports some coords without decimals. Total rewrite of documentation.</p>
+<p>3.0 - 
+Total rewrite of Encode/Decode and regexp to support more formats and non destructive normalization. Quoted text supported. Adjusted bboxes for SWEREF99 TM and RT90 2,5 gon V and supporting Coordinates just outside these bboxes. </p>
+<p>2.0 - Major internal restructions, max errors supported for all refsys, more output reference systems,  better control of output formatting</p>
+<p>1.1 - Point.format restructured, small bugs fixed</p>
+<p>1.0 - Extracted as a separate, selfcontaining js file</p>
+
+<script> 
+  // Start by adding default demo data
+  var demoData = "";
+//demoData = "6 rätta punkter, 1 felaktiga koordinater Från FIFS 36 med dubbel angivelse av en koordinat (med N-tecken dock), ska ge en överbliven koordinat och en lyckad punkt. därifrån västerut längs latituden 65 10,00N till en punkt i farleden, latitud 65 10,00 N, longitud  21 50,73 O, xxxxx";
+
+//demoData = "E57.0 N12.0 Ligger i öster om Afrika";
+  demoData += "Report: \n";
+  demoData += "The ship was seen drifting about 200 meters west of the island at 58.8 and 10,9. Nothing seen around it.\n";
+  demoData += "\n";
+  demoData += "Observation made at 10 minutes past 14 from the lighthouse at 58°54,0'N, 011 00,0 E.";
+
+
+
+//demoData += "Luringar, ser ut som decimaltal men är SWEREF99TM 6381754,340228 6381111.312328";
+
+  //demoData += "Från HaVs loggböcker\n6007 0530";
+  //demoData += "Från HaVs loggböcker\n6007";
+
+/*
+  demoData += "\n\n57°07,121’N, 011°09,456’E\n\n";
+
+  demoData += "57°07,121’N, 011°09,456’E and N57.33 E12.55 and S4 50, E9 45  and N 58° 57' 3.54, E 13° 34' 28.11\n";
+  demoData += "Google maps url: https://www.google.se/maps/@57.6418125,12.052394,12z\n";
+  demoData += "hitta.se url: http://www.hitta.se/kartan!~58.04208,12.52948,11.385523692999612z/tr!i=15aS1OGB\n";
+  demoData += "Valid WGS84 point (but far outside SWEREF99) N60.0 W90.0\n";
+  demoData += "SWEREF99TM coords: N 6162870 E 254646\n";
+  demoData += "Some non valid coord texts: 57.1 180.1 (max value on long is +/-180), N 6162870 E 104646 (off bounds for SWEREF99), 57 12 (bara heltal för latitud och longitud är för tvetydigt och grovt att bli en punkt, men skulle kunna vara grader och minuter)\n";
+*/
+
+  document.getElementById("demodata").innerHTML = demoData;
+
+</script>
+
+</body>
+</html>
