@@ -5,24 +5,12 @@
  * This is not actual code but a description of the interface that
  * the implementation should expose to users.
  * 
- * @version 5.0-beta.2
- * @author Bernt Rane, Claude & Ona
+ * @version 4.3
+ * @author Bernt Rane
  * @license MIT
  */
 
-// Module loading mechanism that supports AMD, CommonJS, and global variable
-(function(definition) {
-    if (typeof define == 'function' && typeof define.amd == 'object') {
-        // Support AMD (e.g. requireJS)
-        define(['proj4'], definition);
-    } else if (typeof module != 'undefined') {
-        // commonJS (e.g. nodeJS)
-        module.exports = definition(require('proj4'));
-    } else {
-        // Global name usage
-        this['CoordFinder'] = definition(this.proj4);
-    }
-}(function(proj4) {
+{
     
     /**
      * Main class for searching coordinates in text
@@ -40,7 +28,7 @@
      * Version number for the module
      * @type {string}
      */
-    CoordFinder.version = "5.0-beta.2";
+    CoordFinder.version = "4.3";
     
     /**
      * Default value for point rating
@@ -527,56 +515,6 @@
         "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
     );
     
-    // --------------------------------------------------------
-    // STR - Utility methods for text formatting
-    // --------------------------------------------------------
-    
-    CoordFinder.STR = {
-        /**
-         * Format a float value with proper decimals
-         * @param {number} value - Value to format
-         * @param {number} decimals - Number of decimals
-         * @param {boolean} [localized] - Whether to use localized format (comma)
-         * @returns {string} Formatted value
-         */
-        prettyFloat: function(value, decimals, localized) {
-            // Implementation details...
-        },
-        
-        /**
-         * Format an integer with proper digits
-         * @param {number} value - Value to format
-         * @param {number} [digits] - Minimum number of digits
-         * @returns {string} Formatted value
-         */
-        prettyInteger: function(value, digits) {
-            // Implementation details...
-        }
-    };
-    
-    // --------------------------------------------------------
-    // TextParser - For encoding/decoding text
-    // --------------------------------------------------------
-    
-    CoordFinder.TextParser = {
-        /**
-         * Encode text for internal processing
-         * @param {string} text - Text to encode
-         * @returns {string} Encoded text
-         */
-        Encode: function(text) {
-            // Implementation details...
-        },
-        
-        /**
-         * Decode processed text back to original form
-         * @param {string} text - Text to decode
-         * @returns {string} Decoded text
-         */
-        Decode: function(text) {
-            // Implementation details...
-        }
-    };
     
     return CoordFinder;
 }));
