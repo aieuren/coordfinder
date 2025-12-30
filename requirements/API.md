@@ -6,6 +6,11 @@ Version: 5.0-beta.4
 
 CoordFinder provides a JavaScript API for extracting geographic coordinates from text. The library can be used in both browser and Node.js environments.
 
+**Related Documentation:**
+- [INTERFACE-COMPATIBILITY.md](INTERFACE-COMPATIBILITY.md) - Interface compatibility test results
+- [REQUIREMENTS.md](REQUIREMENTS.md) - Functional requirements
+- [coordfinder-interface.js](coordfinder-interface.js) - Interface definition
+
 ## Static Methods
 
 ### CF.pointIn(text)

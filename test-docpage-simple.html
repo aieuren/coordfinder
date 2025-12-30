@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>DocPage Compatibility Test</title>
+    <script src="src/coordfinder.js"></script>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .pass { color: green; }
+        .fail { color: red; }
+        .section { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>DocPage Compatibility Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        var results = [];
+        
+        function test(name, fn) {
+            try {
+                fn();
+                results.push('<div class="pass">✓ ' + name + '</div>');
+            } catch(e) {
+                results.push('<div class="fail">✗ ' + name + ': ' + e.message + '</div>');
+            }
+        }
+        
+        // Test 1: CoordFinder.version
+        test('CoordFinder.version exists', function() {
+            if (!CoordFinder.version) throw new Error('version not found');
+        });
+        
+        // Test 2: CoordFinder.pointIn
+        test('CoordFinder.pointIn works', function() {
+            var text = "59.32894 18.06491";
+            var point = CoordFinder.pointIn(text);
+            if (!point) throw new Error('pointIn returned null');
+            if (typeof point.latitude !== 'function') throw new Error('point.latitude is not a function');
+            if (typeof point.longitude !== 'function') throw new Error('point.longitude is not a function');
+        });
+        
+        // Test 3: CoordFinder.pointsIn
+        test('CoordFinder.pointsIn works', function() {
+            var text = "Point 1: 59.32894 18.06491, Point 2: 60.5 19.2";
+            var points = CoordFinder.pointsIn(text);
+            if (!Array.isArray(points)) throw new Error('pointsIn did not return array');
+            if (points.length === 0) throw new Error('pointsIn found no points');
+        });
+        
+        // Test 4: CoordFinder.groupsIn
+        test('CoordFinder.groupsIn works', function() {
+            var text = "Line 1: 59.32894 18.06491\nLine 2: 60.5 19.2";
+            var groups = CoordFinder.groupsIn(text);
+            if (!Array.isArray(groups)) throw new Error('groupsIn did not return array');
+        });
+        
+        // Test 5: Instance usage
+        test('Instance usage works', function() {
+            var cf = new CoordFinder();
+            cf.parse("59.32894 18.06491");
+            var points = cf.points();
+            if (!Array.isArray(points)) throw new Error('cf.points() did not return array');
+            if (points.length === 0) throw new Error('cf.points() found no points');
+        });
+        
+        // Test 6: Point.asText with options
+        test('Point.asText with options works', function() {
+            var point = CoordFinder.pointIn("59.32894 18.06491");
+            var plain = point.asText({format: 'plain'});
+            var degrees = point.asText({format: 'degrees'});
+            var degreesandminutes = point.asText({format: 'degreesandminutes'});
+            if (!plain || !degrees || !degreesandminutes) {
+                throw new Error('asText returned empty string');
+            }
+        });
+        
+        // Test 7: Point context methods
+        test('Point context methods work', function() {
+            var text = "Ship at 59.32894 18.06491 position";
+            var point = CoordFinder.pointIn(text);
+            var before = point.textBefore();
+            var after = point.textAfter();
+            var original = point.originalText();
+            var context = point.context();
+            if (typeof before !== 'string') throw new Error('textBefore not string');
+            if (typeof after !== 'string') throw new Error('textAfter not string');
+            if (typeof original !== 'string') throw new Error('originalText not string');
+            if (typeof context !== 'string') throw new Error('context not string');
+        });
+        
+        // Test 8: Point rating
+        test('Point rating works', function() {
+            var point = CoordFinder.pointIn("59.32894 18.06491");
+            var rating = point.rating();
+            if (typeof rating !== 'number') throw new Error('rating not a number');
+            if (rating < 0 || rating > 1) throw new Error('rating out of range');
+        });
+        
+        // Test 9: RefSys constants
+        test('RefSys constants exist', function() {
+            if (!CoordFinder.RefSys.WGS84) throw new Error('WGS84 not found');
+            if (!CoordFinder.RefSys.SWEREF99TM) throw new Error('SWEREF99TM not found');
+            if (!CoordFinder.RefSys.RT90_25gonV) throw new Error('RT90_25gonV not found');
+        });
+        
+        // Test 10: Parse log
+        test('Parse log works', function() {
+            var cf = new CoordFinder();
+            cf.parse("59.32894 18.06491");
+            cf.points();
+            var log = cf.log();
+            if (typeof log !== 'string') throw new Error('log not a string');
+        });
+        
+        // Test 11: Point.log and asDebugText
+        test('Point.log and asDebugText work', function() {
+            var point = CoordFinder.pointIn("59.32894 18.06491");
+            var log = point.log();
+            var debug = point.asDebugText();
+            if (typeof log !== 'string') throw new Error('point.log not string');
+            if (typeof debug !== 'string') throw new Error('point.asDebugText not string');
+        });
+        
+        // Test 12: Docpage example
+        test('Docpage example works', function() {
+            var text = "The ship was at 58.8 and 10,9. Lighthouse at 58°54,0'N, 011 00,0 E.";
+            var points = CoordFinder.pointsIn(text);
+            if (points.length === 0) throw new Error('No points found in docpage example');
+            
+            var point = points[0];
+            var lat = point.latitude();
+            var lon = point.longitude();
+            var formatted = point.asText();
+            
+            if (typeof lat !== 'number') throw new Error('latitude not a number');
+            if (typeof lon !== 'number') throw new Error('longitude not a number');
+            if (typeof formatted !== 'string') throw new Error('asText not a string');
+        });
+        
+        // Display results
+        document.getElementById('results').innerHTML = results.join('');
+        
+        var passed = results.filter(function(r) { return r.indexOf('pass') > -1; }).length;
+        var failed = results.filter(function(r) { return r.indexOf('fail') > -1; }).length;
+        
+        document.getElementById('results').innerHTML += 
+            '<div class="section"><strong>Summary:</strong> ' + 
+            passed + ' passed, ' + failed + ' failed</div>';
+        
+        if (failed === 0) {
+            document.getElementById('results').innerHTML += 
+                '<div class="section pass"><strong>✅ All tests passed! DocPage should work.</strong></div>';
+        }
+    </script>
+</body>
+</html>
