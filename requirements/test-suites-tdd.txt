@@ -965,5 +965,5 @@ Pkt Lat. N Long. O Anmärkning
 13 58 45,22 10 51,32 Punkt på trålgränsen
 Expected:
 - Count: 13
-- Bounds: 59 10 59 11
+- Bounds: 58 10 59 11
 
