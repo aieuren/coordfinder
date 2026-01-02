@@ -482,7 +482,7 @@ Input: "x=1540000&y=6580000"
 Expected:
 - N.value: 6580000
 - E.value: 1540000
-- refsys: SWEREF99TM
+- refsys: RT90_25gonV
 
 ## Points Test: RT90 grundformat
 Test-ID: tdd-068
