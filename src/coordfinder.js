@@ -1651,7 +1651,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.4";
-CF.build = "20260102-084011"; // Timestamp-based build number
+CF.build = "20260102-214644"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
