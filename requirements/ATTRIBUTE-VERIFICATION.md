@@ -15,19 +15,20 @@ Verification that all Expected attributes in test files are actually validated b
 $ grep "^- " requirements/test-suites-tdd.txt | sed 's/^- //' | cut -d: -f1 | sort -u
 Bounds
 CRS
-Coords
 Count
 E.value
 N.value
 refsys
 ```
 
+**Note:** `Coords` attribute has been removed from test files. Direct coordinate format is now used instead (e.g., `Expected: 59.32894 18.06491`).
+
 ## Verification Status
 
 | Attribute | Parsed? | Validated? | Location | Notes |
 |-----------|---------|------------|----------|-------|
 | `Count` | ✅ | ✅ | test-framework.js:122 | Number of points expected |
-| `Coords` | ✅ | ✅ | test-framework.js:136 | Coordinate values (lat/lon) |
+| Direct coords | ✅ | ✅ | test-framework.js:136 | Format: `Expected: lat lon` |
 | `N.value` | ✅ | ✅ | test-framework.js:142 | Northing value (meters) |
 | `E.value` | ✅ | ✅ | test-framework.js:142 | Easting value (meters) |
 | `CRS` | ✅ | ✅ | test-framework.js:185 | Coordinate reference system |
@@ -58,14 +59,17 @@ if (actualCount !== this.expectedCount) {
 
 ---
 
-### 2. Coords ✅
+### 2. Direct Coordinates ✅
+
+**Format:** `Expected: lat lon` (no attribute prefix)
 
 **Parser:** test-parser.js
 ```javascript
-} else if (trimmed.match(/^-\s*Coords:\s*(.+)$/)) {
-    var coordStr = RegExp.$1.trim();
-    var parts = coordStr.split(/\s+/);
+} else if (!trimmed.match(/^-/)) {
+    // Direct format: "59.50 18.25"
+    var parts = trimmed.split(/\s+/);
     if (parts.length >= 2) {
+        if (!currentTest.coords) currentTest.coords = [];
         currentTest.coords.push({
             lat: parseFloat(parts[0]),
             lon: parseFloat(parts[1])
@@ -247,6 +251,10 @@ Every attribute that appears in Expected sections is:
 1. **Parsed** by test-parser.js
 2. **Validated** by test-framework.js
 3. **Reported** on mismatch with clear error messages
+
+**Note:** The `Coords:` attribute has been removed. Direct coordinate format is now used:
+- Old: `Expected:\n- Coords: 59.32894 18.06491`
+- New: `Expected: 59.32894 18.06491`
 
 ### Validation Features
 

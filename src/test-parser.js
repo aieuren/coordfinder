@@ -135,24 +135,12 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
         // Collect expected
         if (state === 'expected' && trimmed !== '') {
             if (currentTest.type === 'Point') {
-                // Point Test: expected format is "lat lon" or "- Coords: lat lon" or "null"
-                // Also support Count and CRS for compatibility
-                // NEW: Also support direct "lat lon" without "Coords:" prefix
+                // Point Test: expected format is "lat lon" or "null"
+                // Also support Count, CRS, N.value, E.value, refsys, Bounds
                 if (trimmed.toLowerCase() === 'null' || trimmed === '-') {
                     currentTest.expected = null;
                 } else if (trimmed.match(/^-?\s*Count:\s*(\d+)$/i)) {
                     currentTest.count = parseInt(RegExp.$1, 10);
-                } else if (trimmed.match(/^-\s*Coords:\s*(.+)$/)) {
-                    // Format: "- Coords: 59.32894 18.06491"
-                    var coordStr = RegExp.$1.trim();
-                    var parts = coordStr.split(/\s+/);
-                    if (parts.length >= 2) {
-                        if (!currentTest.coords) currentTest.coords = [];
-                        currentTest.coords.push({
-                            lat: parseFloat(parts[0]),
-                            lon: parseFloat(parts[1])
-                        });
-                    }
                 } else if (trimmed.match(/^-\s*CRS:\s*(.+)$/i)) {
                     currentTest.crs = RegExp.$1.trim();
                 } else if (trimmed.match(/^-\s*N\.value:\s*(.+)$/i)) {
@@ -194,19 +182,9 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
                     }
                 }
             } else if (currentTest.type === 'Points') {
-                // Points Test: expected format is "- Count: N", "- Coords: lat lon", "- CRS: name"
+                // Points Test: expected format is "- Count: N", "- CRS: name", "- Bounds: ..."
                 if (trimmed.match(/^-?\s*Count:\s*(\d+)$/i)) {
                     currentTest.count = parseInt(RegExp.$1, 10);
-                } else if (trimmed.match(/^-\s*Coords:\s*(.+)$/)) {
-                    // Format: "- Coords: 59.32894 18.06491"
-                    var coordStr = RegExp.$1.trim();
-                    var parts = coordStr.split(/\s+/);
-                    if (parts.length >= 2) {
-                        currentTest.coords.push({
-                            lat: parseFloat(parts[0]),
-                            lon: parseFloat(parts[1])
-                        });
-                    }
                 } else if (trimmed.match(/^-\s*CRS:\s*(.+)$/i)) {
                     // Format: "- CRS: SWEREF99TM"
                     currentTest.crs = RegExp.$1.trim();
