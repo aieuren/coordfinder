@@ -464,24 +464,24 @@ Expected:
 Test-ID: tdd-065
 Input: "x=540000&y=6580000"
 Expected:
-- N.value: 540000
-- E.value: 6580000
+- N.value: 6580000
+- E.value: 540000
 - refsys: SWEREF99TM
 
 ## Point Test: URL-parametrar omvänd ordning
 Test-ID: tdd-066
 Input: "y=6580000&x=540000"
 Expected:
-- N.value: 540000
-- E.value: 6580000
+- N.value: 6580000
+- E.value: 540000
 - refsys: SWEREF99TM
 
 ## Point Test: URL-parametrar med RT90
 Test-ID: tdd-067
 Input: "x=1540000&y=6580000"
 Expected:
-- N.value: 1540000
-- E.value: 6580000
+- N.value: 6580000
+- E.value: 1540000
 - refsys: SWEREF99TM
 
 ## Points Test: RT90 grundformat
