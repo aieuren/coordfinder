@@ -928,3 +928,15 @@ RT90 2,5 gonW
 6486235, 1218436
 Expected:
 - Count: 2
+
+## Points Test: Text efter koordinater får inte felanvändas som väderstreck
+Test-ID: tdd-130
+Implements test-IDs: test-0068
+Input: 
+60.404 19.013 Ska hittas
+61.534 20.435 Viktig punkt
+60.634 Snygg koordinat men 20.734 är fin
+61.745 Vanlig text och 19.765 är också vanlig text
+Expected:
+- Count: 4
+- Bounds: 60.0 19.0 62.0 21.0
