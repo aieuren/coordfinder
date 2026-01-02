@@ -31,6 +31,12 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
         // Test suite header (# Title)
         if (trimmed.match(/^#\s+(.+)$/)) {
             var suiteName = RegExp.$1;
+            
+            // Finalize previous test if exists
+            if (currentTest && currentTest.id && currentSuite) {
+                this._addTestToSuite(currentSuite, currentTest);
+            }
+            
             currentSuite = new TestSuite(suiteName);
             this.suites.push(currentSuite);
             currentTest = null;
@@ -45,6 +51,11 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
             
             if (!currentSuite) {
                 throw new Error('Test found without test suite at line ' + (i + 1));
+            }
+            
+            // Finalize previous test if exists
+            if (currentTest && currentTest.id) {
+                this._addTestToSuite(currentSuite, currentTest);
             }
             
             currentTest = {
@@ -205,11 +216,10 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
             continue;
         }
         
-        // Empty line or new section - finalize current test
-        if (trimmed === '' && currentTest && currentTest.id) {
-            this._addTestToSuite(currentSuite, currentTest);
-            currentTest = null;
-            state = 'none';
+        // Empty line - don't finalize test, just skip
+        // Tests are finalized when we see a new test header or end of file
+        if (trimmed === '') {
+            continue;
         }
     }
     

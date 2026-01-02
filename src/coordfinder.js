@@ -296,7 +296,23 @@ function TextParser(text) {
 TextParser.prototype._encode = function(text) {
     // Normalize whitespace but preserve newlines for coordinate separation
     // Replace multiple spaces/tabs with single space, but keep newlines
-    return text.replace(/[ \t]+/g, ' ').replace(/\n+/g, '\n');
+    text = text.replace(/[ \t]+/g, ' ').replace(/\n+/g, '\n');
+    
+    // Remove numbered list prefixes that could be confused with coordinates
+    // Pattern: line starts with 1-99 followed by space and coordinate-like pattern
+    // Example: "10 58 45,15" -> " 58 45,15" (remove "10")
+    // Match at start of string or after newline
+    text = text.replace(/(^|\n)(\d{1,2})\s+(\d{2,3}\s+\d+[,.]\d+)/g, function(match, prefix, num, coords) {
+        var listNum = parseInt(num, 10);
+        var coordStart = parseInt(coords.split(/\s+/)[0], 10);
+        // Only remove if list number is smaller than coordinate start
+        if (listNum < 100 && coordStart > listNum) {
+            return prefix + coords;
+        }
+        return match;
+    });
+    
+    return text;
 };
 
 TextParser.prototype._detectCSVHeader = function() {
