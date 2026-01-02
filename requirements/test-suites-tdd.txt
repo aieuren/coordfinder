@@ -945,22 +945,25 @@ Expected:
 Test-ID: tdd-131
 Implements test-IDs: test-00zz
 Input: 
-Vattenområdet innanför räta linjer mellan punkterna 1-2, 3-6, 7-8, och 9-13..
+
+Trålfiskeområdets yttre (västra) gräns sammanfaller med trål-
+gränsen enligt 1 kap. 5 § och bilaga 4. Området avgränsas i
+norr, öster och söder av räta linjer mellan följande punkter.
 Pkt Lat. N Long. O Anmärkning
-1. 60 47,552 17 17,459 Tärnsharen
-2. 60 47,545 17 17,493 Nordvästra Gräsharen
-3. 60 47,302 17 17,862 Sydöstra Gräsharen
-4. 60 47,243 17 17,868 Ö nordöst om Gräsharen
-5. 60 47,173 17 17,873 Ö norr om Jutteharen
-6. 60 47,096 17 17,904 Norra Jutteharen
-7. 60 46,814 17 17,782 Södra Jutteharen
-8. 60 46,738 17 17,639 Gubbuddarna
-9. 60 46,547 17 16,588 Nordvästra Gossanäsharen
-10. 60 46,553 17 16,595
-11. 60 46,566 17 16,653
-12. 60 46,604 17 16,832
-13. 60 46,627 17 16,844 Södra Gåsvik
+1 58 54,05 10 50,10 Punkt på trålgränsen
+2 58 53,95 10 51,51
+3 58 51,94 10 51,51
+4 58 51,96 10 54,03
+5 58 50,37 10 54,64
+6 58 48,97 10 54,37
+7 58 48,59 10 56,47
+8 58 45,16 10 56,98
+9 58 44,64 10 56,38
+10 58 45,15 10 54,64
+11 58 45,99 10 53,97
+12 58 45,42 10 53,15
+13 58 45,22 10 51,32 Punkt på trålgränsen
 Expected:
 - Count: 13
-- Bounds: 60 17 61 18
+- Bounds: 59 10 59 11
 
