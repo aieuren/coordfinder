@@ -6,19 +6,19 @@
 Test-ID: tdd-001
 Input: "59.32894 18.06491"
 Expected:
-- Coords: 59.32894 18.06491
+59.32894 18.06491
 
 ## Point Test: Decimalkomma
 Test-ID: tdd-002
 Input: "59,32894 18,06491"
 Expected:
-- Coords: 59.32894 18.06491
+59.32894 18.06491
 
 ## Point Test: Semikolon som separator
 Test-ID: tdd-003
 Input: "59.32894; 18.06491"
 Expected:
-- Coords: 59.32894 18.06491
+59.32894 18.06491
 
 # GRADER OCH MINUTER
 
@@ -26,19 +26,19 @@ Expected:
 Test-ID: tdd-004
 Input: "59° 19.736' N 18° 3.895' E"
 Expected:
-- Coords: 59.32893 18.06492
+59.32893 18.06492
 
 ## Point Test: Grader, minuter och sekunder
 Test-ID: tdd-005
 Input: 59° 19' 44.2" N 18° 3' 53.7" E
 Expected:
-- Coords: 59.32894 18.06492
+59.32894 18.06492
 
 ## Point Test: Kompakt DMS format
 Test-ID: tdd-006
 Input: "591944N0180354E"
 Expected:
-- Coords: 59.32889 18.06500
+59.32889 18.06500
 
 # VÄDERSTRECK OCH KVADRANTER
 
@@ -46,19 +46,19 @@ Expected:
 Test-ID: tdd-007
 Input: "N 62.45 E 17.38"
 Expected:
-- Coords: 62.45 17.38
+62.45 17.38
 
 ## Point Test: Sydvästra kvadranten
 Test-ID: tdd-008
 Input: "S 33.92 W 18.42"
 Expected:
-- Coords: -33.92 -18.42
+-33.92 -18.42
 
 ## Point Test: Svenska väderstreck
 Test-ID: tdd-009
 Input: "N 65.58 Ö 22.14"
 Expected:
-- Coords: 65.58 22.14
+65.58 22.14
 
 # MINUSTECKEN SOM SEPARATOR
 
@@ -66,13 +66,13 @@ Expected:
 Test-ID: tdd-010
 Input: "58-30 16-45"
 Expected:
-- Coords: 58.50 16.75
+58.50 16.75
 
 ## Point Test: Kompakt gradminut
 Test-ID: tdd-011
 Input: "6230-1545"
 Expected:
-- Coords: 62.50 15.75
+62.50 15.75
 
 # URL-FORMAT
 
@@ -80,13 +80,13 @@ Expected:
 Test-ID: tdd-012
 Input: "https://www.google.com/maps/place/59.32894,18.06491"
 Expected:
-- Coords: 59.32894 18.06491
+59.32894 18.06491
 
 ## Point Test: Eniro-stil
 Test-ID: tdd-013
 Input: "map/59.329440/18.064510"
 Expected:
-- Coords: 59.32944 18.06451
+59.32944 18.06451
 
 # DATAFORMAT
 
@@ -94,13 +94,13 @@ Expected:
 Test-ID: tdd-014
 Input: '{"coordinates": [18.06491, 59.32894]}'
 Expected:
-- Coords: 59.32894 18.06491
+59.32894 18.06491
 
 ## Point Test: GML format
 Test-ID: tdd-015
 Input: "<gml:pos>59.32894 18.06491</gml:pos>"
 Expected:
-- Coords: 59.32894 18.06491
+59.32894 18.06491
 
 # FLERRADIGA OCH LISTOR
 
@@ -153,14 +153,14 @@ Test-ID: tdd-021
 Input: "6580000 1540000"
 Expected:
 - Count: 1
-- CRS: RT90
+- CRS: RT90_25gonV
 
 ## Points Test: RT90 med kommaseparering
 Test-ID: tdd-022
 Input: "X: 6580000, Y: 1540000"
 Expected:
 - Count: 1
-- CRS: RT90
+- CRS: RT90_25gonV
 
 # SPECIALFALL OCH KANTFALL
 
@@ -277,37 +277,37 @@ Expected:
 Test-ID: tdd-037
 Input: "Norr 59 grader 19,8 minuter Öst 18 grader 3,9 minuter"
 Expected:
-- Coords: 59.33000 18.06500
+59.33000 18.06500
 
 ## Point Test: Verbalt format - grader och minuter
 Test-ID: tdd-038
 Input: "Nord 65 grader 30 minutter Øst 015 grader 45 minutter"
 Expected:
-- Coords: 65.50000 15.75000
+65.50000 15.75000
 
 ## Point Test: Verbalt format med decimalminuter
 Test-ID: tdd-039
 Input: "N 58 grader 45,5 minutter E 012 grader 30,2 minutter"
 Expected:
-- Coords: 58.75833 12.50333
+58.75833 12.50333
 
 ## Point Test: Verbalt format med extremt whitespace och punktavslut
 Test-ID: tdd-041
 Input: "Nord 69 grader 29,2   minutter.  Øst 018 grader 20,0  minutter."
 Expected:
-- Coords: 69.48667 18.33333
+69.48667 18.33333
 
 ## Point Test: GML format med koordinatordning lon,lat
 Test-ID: tdd-042
 Input: "<gml:coordinates>18.06491,59.32894</gml:coordinates>"
 Expected:
-- Coords: 59.32894 18.06491
+59.32894 18.06491
 
 ## Point Test: GML Point med namespace
 Test-ID: tdd-043
 Input: "<gml:Point><gml:coordinates>15.5,62.5</gml:coordinates></gml:Point>"
 Expected:
-- Coords: 62.5 15.5
+62.5 15.5
 
 ## Points Test: Google Maps @-notation
 Test-ID: tdd-044
@@ -339,8 +339,7 @@ Expected:
 ## Point Test: Kompakt DDMM format utan väderstreck
 Test-ID: tdd-048
 Input: "5930 1815"
-Expected:
-- Coords: 59.50 18.25
+Expected: 59.50 18.25
 
 ## Points Test: Fiskeriloggbok DDMM-lista
 Test-ID: tdd-049
@@ -353,26 +352,22 @@ Expected:
 ## Point Test: DDMM med ledande nolla i longitud
 Test-ID: tdd-050
 Input: "6007 0530"
-Expected:
-- Coords: 60.11667 5.50000
+Expected: 60.11667 5.50000
 
 ## Point Test: DDMM.M med minustecken och väderstreck
 Test-ID: tdd-051
 Input: "5930.5N-01815.2E"
-Expected:
-- Coords: 59.50833 18.25333
+Expected: 59.50833 18.25333
 
 ## Point Test: DD MM med minustecken som separator
 Test-ID: tdd-052
 Input: "59 30N - 018 15E"
-Expected:
-- Coords: 59.50 18.25
+Expected: 59.50 18.25
 
 ## Point Test: Kompakt DDMM.M utan separator
 Test-ID: tdd-053
 Input: "5930.5N-01815.2E"
-Expected:
-- Coords: 59.50833 18.25333
+Expected: 59.50833 18.25333
 
 ## Points Test: Numrerad lista med olika format
 Test-ID: tdd-054
@@ -417,27 +412,31 @@ Expected:
 Test-ID: tdd-059
 Input: "Nordlig: 6580000 Östlig: 540000"
 Expected:
-- Count: 1
-- CRS: SWEREF99TM
+- N.value: 6580000
+- E.value: 540000
+- refsys: SWEREF99TM
 
 ## Point Test: SWEREF99 TM flerradigt med prefix
 Test-ID: tdd-060
 Input: "SWEREF99 TM Nordlig: 7148101
 SWEREF99 TM Östlig: 708433"
 Expected:
-- Count: 1
-- CRS: SWEREF99TM
+- N.value: 7148101
+- E.value: 708433
+- refsys: SWEREF99TM
 
 ## Point Test: SWEREF99 TM med N/E prefix
 Test-ID: tdd-061
 Input: "N: 6504089 E: 278978"
 Expected:
-- Count: 1
-- CRS: SWEREF99TM
+- N.value: 6504089
+- E.value: 278978
+- refsys: SWEREF99TM
 
 ## Points Test: WKT Point med SWEREF-koordinater
 Test-ID: tdd-062
-Input: "Point (313096 6353860)
+Input:
+"Point (313096 6353860)
 Point (311784 6355675)"
 Expected:
 - Count: 2
@@ -445,7 +444,8 @@ Expected:
 
 ## Points Test: WKT med höga decimalvärden
 Test-ID: tdd-063
-Input: "Point (313096.356550686 6353860.684766964)
+Input: 
+"Point (313096.356550686 6353860.684766964)
 Point (311784.981124307 6355675.992064684)"
 Expected:
 - Count: 2
@@ -464,22 +464,25 @@ Expected:
 Test-ID: tdd-065
 Input: "x=540000&y=6580000"
 Expected:
-- Count: 1
-- CRS: SWEREF99TM
+- N.value: 540000
+- E.value: 6580000
+- refsys: SWEREF99TM
 
 ## Point Test: URL-parametrar omvänd ordning
 Test-ID: tdd-066
 Input: "y=6580000&x=540000"
 Expected:
-- Count: 1
-- CRS: SWEREF99TM
+- N.value: 540000
+- E.value: 6580000
+- refsys: SWEREF99TM
 
 ## Point Test: URL-parametrar med RT90
 Test-ID: tdd-067
 Input: "x=1540000&y=6580000"
 Expected:
-- Count: 1
-- CRS: RT90
+- N.value: 1540000
+- E.value: 6580000
+- refsys: SWEREF99TM
 
 ## Points Test: RT90 grundformat
 Test-ID: tdd-068
@@ -487,14 +490,15 @@ Input: "6465364, 1259677
 6910904, 1411545"
 Expected:
 - Count: 2
-- CRS: RT90
+- CRS: RT90_25gonV
 
 ## Point Test: RT90 med Y före X
 Test-ID: tdd-069
 Input: "Y: 1570600, X: 7546077"
 Expected:
-- Count: 1
-- CRS: RT90
+- N.value: 7546077
+- E.value: 1570600
+- refsys: RT90_25gonV
 
 ## Points Test: RT90 med X/Y prefix och tab
 Test-ID: tdd-070
@@ -502,7 +506,7 @@ Input: "X:6532864 Y:1375529
 X 6131381	Y 1832691"
 Expected:
 - Count: 2
-- CRS: RT90
+- CRS: RT90_25gonV
 
 ## Points Test: RT90 med decimaler
 Test-ID: tdd-071
@@ -511,7 +515,7 @@ Input:
 6480082.101, 1372031.843
 Expected:
 - Count: 2
-- CRS: RT90
+- CRS: RT90_25gonV
 
 ## Points Test: RT90 efter beskrivande text
 Test-ID: tdd-072
@@ -521,28 +525,25 @@ RT90 2.5 gon V koordinater:
 6910904, 1411545
 Expected:
 - Count: 2
-- CRS: RT90
+- CRS: RT90_25gonV
 
 ## Point Test: Grader och hela minuter med minustecken
 Test-ID: tdd-073
 Implements test-IDs: test-0031
 Input: 60-15N 19-30E
-Expected:
-- Coords: 60.250 19.500
+Expected: 60.250 19.500
 
 ## Point Test: Grader-minuter som ska avrundas
 Test-ID: tdd-074
 Implements test-IDs: test-0031
 Input: 58-22N 13-47E
-Expected:
-- Coords: 58.367 13.783
+Expected: 58.367 13.783
 
 ## Point Test: Grader-minuter med ledande nolla
 Test-ID: tdd-075
 Implements test-IDs: test-0031
 Input: 59-18N 014-52E
-Expected:
-- Coords: 59.300 14.867
+Expected: 59.300 14.867
 
 ## Points Test: Leaflet bounds array korrekt ordning
 Test-ID: tdd-076
@@ -579,7 +580,6 @@ Koordinatsystem: RT90 2.5 gon V
 6620000, 1420000
 Expected:
 - Count: 2
-- CRS: RT90
 
 ## Point Test: RT90 Y,X ordning med decimaler
 Test-ID: tdd-080
@@ -587,8 +587,9 @@ Implements test-IDs: test-0080
 Input: 
 1450000.5, 6700000.75
 Expected:
-- Coords: 6700000.75 1450000.5
-- CRS: RT90
+- N.value: 6700000.75
+- E.value: 1450000.5
+- refsys: RT90_25gonV
 
 ## Points Test: RT90 med X/Y prefix blandat
 Test-ID: tdd-081
@@ -598,7 +599,6 @@ X:6550000 Y:1350000
 X 6620000	Y 1420000
 Expected:
 - Count: 2
-- CRS: RT90
 
 ## Points Test: RT90 med decimaler och blandad text
 Test-ID: tdd-082
@@ -610,105 +610,90 @@ Nästa punkt:
 6620000.75, 1420000.125
 Expected:
 - Count: 2
-- CRS: RT90
 
 ## Point Test: Grader och decimalminuter utan tecken
 Test-ID: tdd-083
 Implements test-IDs: test-0005
 Input: 60 30,5 019 15,25
-Expected:
-- Coords: 60.50833 19.25417
+Expected: 60.50833 19.25417
 
 ## Point Test: Grader minuter sekunder utan tecken
 Test-ID: tdd-084
 Implements test-IDs: test-0006
 Input: 60 30 45.5 019 15 30.2
-Expected:
-- Coords: 60.51264 19.25839
+Expected: 60.51264 19.25839
 
 ## Point Test: DMS med tecken och decimalsekunder
 Test-ID: tdd-085
 Implements test-IDs: test-0009
 Input: 60°30'45.5" 019°15'30.2"
-Expected:
-- Coords: 60.51264 19.25839
+Expected: 60.51264 19.25839
 
 ## Point Test: Alternativt gradtecken med decimalminuter
 Test-ID: tdd-086
 Implements test-IDs: test-0011
 Input: 60 ̊ 30.5 019 ̊ 15.25
-Expected:
-- Coords: 60.50833 19.25417
+Expected: 60.50833 19.25417
 
 ## Point Test: Nordvästra kvadranten med negativt
 Test-ID: tdd-087
 Implements test-IDs: test-0013
 Input: 60.5 -18.25
-Expected:
-- Coords: 60.5 -18.25
+Expected: 60.5 -18.25
 
 ## Point Test: Sydöstra kvadranten med negativt
 Test-ID: tdd-088
 Implements test-IDs: test-0014
 Input: -35.5 140.25
-Expected:
-- Coords: -35.5 140.25
+Expected: -35.5 140.25
 
 ## Point Test: Sydvästra kvadranten båda negativa
 Test-ID: tdd-089
 Implements test-IDs: test-0015
 Input: -33.8 -70.6
-Expected:
-- Coords: -33.8 -70.6
+Expected: -33.8 -70.6
 
 ## Point Test: Svenska väderstreck V för väst
 Test-ID: tdd-090
 Implements test-IDs: test-0026
 Input: N 60° 30,5' V 019° 15,25'
-Expected:
-- Coords: 60.50833 -19.25417
+Expected: 60.50833 -19.25417
 
 ## Point Test: Svenska väderstreck S och V
 Test-ID: tdd-091
 Implements test-IDs: test-0026
 Input: S 35° 30' V 70° 40'
-Expected:
-- Coords: -35.50000 -70.66667
+Expected: -35.50000 -70.66667
 
 ## Point Test: DMS utan omslutande citationstecken
 Test-ID: tdd-092
 Implements test-IDs: test-0009
 Input: 60°30'45.5" 019°15'30.2"
-Expected:
-- Coords: 60.51264 19.25839
+Expected: 60.51264 19.25839
 
 ## Point Test: Extremt kompakt format med väderstreck
 Test-ID: tdd-093
 Implements test-IDs: test-0027
 Input: N60 E19
-Expected:
-- Coords: 60.0 19.0
+Expected: 60.0 19.0
 
 ## Point Test: Extremt glest format med DMS
 Test-ID: tdd-094
 Implements test-IDs: test-0028
 Input: N  60  °  30'  45.5  "  E  019°  15  '  30.2"
-Expected:
-- Coords: 60.51264 19.25839
+Expected: 60.51264 19.25839
 
 ## Points Test: Väderstreck före värde med E först
 Test-ID: tdd-095
 Implements test-IDs: test-0056
 Input: E60.0 N19.0
-Expected:
-- Coords: 19.0 60.0
+Expected: 19.0 60.0
 
 ## Points Test: Blandat format med DMS och text
 Test-ID: tdd-096
 Implements test-IDs: test-0056
 Input: Koordinat WGS84 60°30'15.5"N 19°15'30.2"E
-Expected:
-- Coords: 60.50431 19.25839
+Expected: 60.50431 19.25839
 
 ## Points Test: Validering av latitudgränser
 Test-ID: tdd-097
@@ -758,8 +743,7 @@ Expected:
 Test-ID: tdd-102
 Implements test-IDs: test-0009, test-0028
 Input: 60°30'45.5" 019°15'30.2
-Expected:
-- Coords: 60.51264 19.25839
+Expected: 60.51264 19.25839
 
 ## Points Test: URL utan koordinater i data-parametrar
 Test-ID: tdd-103
@@ -773,8 +757,7 @@ Expected:
 Test-ID: tdd-104
 Implements test-IDs: test-0056
 Input: E19.5 N60.5
-Expected:
-- Coords: 60.5 19.5
+Expected: 60.5 19.5
 
 ## Points Test: Validering negativa latitudgränser
 Test-ID: tdd-105
