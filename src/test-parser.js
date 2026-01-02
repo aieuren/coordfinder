@@ -56,7 +56,8 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
                 expected: null,
                 count: null,
                 coords: [],
-                crs: null
+                crs: null,
+                bounds: null
             };
             state = 'test';
             continue;
@@ -167,6 +168,18 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
                 } else if (trimmed.match(/^-\s*refsys:\s*(.+)$/i)) {
                     // Format: "- refsys: SWEREF99TM"
                     currentTest.crs = RegExp.$1.trim();
+                } else if (trimmed.match(/^-\s*Bounds:\s*(.+)$/i)) {
+                    // Format: "- Bounds: minLat minLon maxLat maxLon"
+                    var boundsStr = RegExp.$1.trim();
+                    var parts = boundsStr.split(/\s+/);
+                    if (parts.length >= 4) {
+                        currentTest.bounds = {
+                            minLat: parseFloat(parts[0]),
+                            minLon: parseFloat(parts[1]),
+                            maxLat: parseFloat(parts[2]),
+                            maxLon: parseFloat(parts[3])
+                        };
+                    }
                 } else if (!trimmed.match(/^-/)) {
                     // Direct format: "59.50 18.25" (no "Coords:" prefix)
                     var parts = trimmed.split(/\s+/);
@@ -197,6 +210,18 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
                 } else if (trimmed.match(/^-\s*CRS:\s*(.+)$/i)) {
                     // Format: "- CRS: SWEREF99TM"
                     currentTest.crs = RegExp.$1.trim();
+                } else if (trimmed.match(/^-\s*Bounds:\s*(.+)$/i)) {
+                    // Format: "- Bounds: minLat minLon maxLat maxLon"
+                    var boundsStr = RegExp.$1.trim();
+                    var parts = boundsStr.split(/\s+/);
+                    if (parts.length >= 4) {
+                        currentTest.bounds = {
+                            minLat: parseFloat(parts[0]),
+                            minLon: parseFloat(parts[1]),
+                            maxLat: parseFloat(parts[2]),
+                            maxLon: parseFloat(parts[3])
+                        };
+                    }
                 }
             }
             continue;
@@ -225,11 +250,12 @@ MarkdownTestParser.prototype._addTestToSuite = function(suite, test) {
     }
     
     if (test.type === 'Point') {
-        // If Point Test has count/coords/crs, treat it as Points Test
+        // If Point Test has count/coords/crs/bounds, treat it as Points Test
         var hasCoords = test.coords && test.coords.length > 0;
-        if (test.count !== undefined || hasCoords || test.crs) {
+        if (test.count !== undefined || hasCoords || test.crs || test.bounds) {
             var coords = hasCoords ? test.coords : null;
             var crs = test.crs || null;
+            var bounds = test.bounds || null;
             // Determine count: explicit count, or coords.length, or 1
             var count;
             if (test.count !== undefined && test.count !== null) {
@@ -239,7 +265,7 @@ MarkdownTestParser.prototype._addTestToSuite = function(suite, test) {
             } else {
                 count = 1;
             }
-            suite.addPointsTest(test.id, test.name, test.input, count, coords, crs, test.implements);
+            suite.addPointsTest(test.id, test.name, test.input, count, coords, crs, test.implements, bounds);
         } else {
             suite.addPointTest(test.id, test.name, test.input, test.expected, test.implements);
         }
@@ -250,7 +276,8 @@ MarkdownTestParser.prototype._addTestToSuite = function(suite, test) {
         }
         var coords = test.coords.length > 0 ? test.coords : null;
         var crs = test.crs || null;
-        suite.addPointsTest(test.id, test.name, test.input, test.count, coords, crs, test.implements);
+        var bounds = test.bounds || null;
+        suite.addPointsTest(test.id, test.name, test.input, test.count, coords, crs, test.implements, bounds);
     }
 };
 

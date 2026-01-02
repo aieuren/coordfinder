@@ -102,7 +102,7 @@ PointTest.prototype._comparePoints = function(actual, expected) {
 
 // ——————————— PointsTest ——————————— //
 // Tests finding multiple coordinate pairs
-function PointsTest(id, name, input, expectedCount, expectedCoords, expectedCRS, implementsTestIds) {
+function PointsTest(id, name, input, expectedCount, expectedCoords, expectedCRS, implementsTestIds, expectedBounds) {
     this.id = id;
     this.name = name;
     this.input = input;
@@ -110,6 +110,7 @@ function PointsTest(id, name, input, expectedCount, expectedCoords, expectedCRS,
     this.expectedCoords = expectedCoords || null; // Array of {lat, lon} objects
     this.expectedCRS = expectedCRS || null; // Expected CRS name
     this.implementsTestIds = implementsTestIds || null; // Optional: test-IDs this implements
+    this.expectedBounds = expectedBounds || null; // Expected bounding box {minLat, minLon, maxLat, maxLon}
     this.type = "PointsTest";
 }
 
@@ -196,6 +197,25 @@ PointsTest.prototype.run = function() {
             }
         }
         
+        // Check bounds if specified
+        if (this.expectedBounds && points.length > 0) {
+            for (var i = 0; i < points.length; i++) {
+                var p = points[i];
+                var lat = p.latitude();
+                var lon = p.longitude();
+                
+                if (lat < this.expectedBounds.minLat || lat > this.expectedBounds.maxLat ||
+                    lon < this.expectedBounds.minLon || lon > this.expectedBounds.maxLon) {
+                    var msg = "Point " + (i + 1) + " outside expected bounds\n";
+                    msg += "   Point: " + lat.toFixed(4) + ", " + lon.toFixed(4) + "\n";
+                    msg += "   Bounds: [" + this.expectedBounds.minLat + ", " + 
+                           this.expectedBounds.minLon + "] to [" + 
+                           this.expectedBounds.maxLat + ", " + this.expectedBounds.maxLon + "]";
+                    return new TestResult(this, false, msg);
+                }
+            }
+        }
+        
         return new TestResult(this, true, 
             "Found " + actualCount + " point(s) as expected",
             actualCount, this.expectedCount);
@@ -232,8 +252,8 @@ TestSuite.prototype.addPointTest = function(id, name, input, expected, implement
     return this;
 };
 
-TestSuite.prototype.addPointsTest = function(id, name, input, expectedCount, expectedCoords, expectedCRS, implementsTestIds) {
-    this.tests.push(new PointsTest(id, name, input, expectedCount, expectedCoords, expectedCRS, implementsTestIds));
+TestSuite.prototype.addPointsTest = function(id, name, input, expectedCount, expectedCoords, expectedCRS, implementsTestIds, expectedBounds) {
+    this.tests.push(new PointsTest(id, name, input, expectedCount, expectedCoords, expectedCRS, implementsTestIds, expectedBounds));
     return this;
 };
 
