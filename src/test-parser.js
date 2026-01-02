@@ -249,6 +249,15 @@ MarkdownTestParser.prototype._addTestToSuite = function(suite, test) {
         return;
     }
     
+    // Remove surrounding quotes from input if present (for multi-line inputs)
+    if (test.input) {
+        var input = test.input.trim();
+        if ((input[0] === '"' && input[input.length - 1] === '"') ||
+            (input[0] === "'" && input[input.length - 1] === "'")) {
+            test.input = input.substring(1, input.length - 1);
+        }
+    }
+    
     if (test.type === 'Point') {
         // If Point Test has count/coords/crs/bounds, treat it as Points Test
         var hasCoords = test.coords && test.coords.length > 0;

@@ -290,12 +290,47 @@ function TextParser(text) {
     this.encodedText = this._encode(text || "");
     this.lines = this.originalText.split(/\r?\n/);
     this._logEntries = [];
+    this.csvColumnMapping = this._detectCSVHeader();
 }
 
 TextParser.prototype._encode = function(text) {
     // Normalize whitespace but preserve newlines for coordinate separation
     // Replace multiple spaces/tabs with single space, but keep newlines
     return text.replace(/[ \t]+/g, ' ').replace(/\n+/g, '\n');
+};
+
+TextParser.prototype._detectCSVHeader = function() {
+    // Check if first line looks like a CSV header with X,Y columns
+    if (this.lines.length === 0) return null;
+    
+    var firstLine = this.lines[0].trim();
+    
+    // Split by comma and check for X, Y columns (case-insensitive)
+    var columns = firstLine.split(',').map(function(col) {
+        return col.trim().toUpperCase();
+    });
+    
+    var xIndex = -1;
+    var yIndex = -1;
+    
+    for (var i = 0; i < columns.length; i++) {
+        if (columns[i] === 'X') xIndex = i;
+        if (columns[i] === 'Y') yIndex = i;
+    }
+    
+    // If we found both X and Y columns, return mapping
+    // X = longitude (E), Y = latitude (N)
+    // Standard coordinate order is lat,lon (Y,X)
+    // So if X comes before Y in CSV, we need to swap to get lat,lon order
+    if (xIndex !== -1 && yIndex !== -1) {
+        return {
+            xIndex: xIndex,
+            yIndex: yIndex,
+            swapNeeded: xIndex < yIndex  // If X comes before Y, swap to get lat,lon order
+        };
+    }
+    
+    return null;
 };
 
 TextParser.prototype.log = function(msg) {
@@ -1809,10 +1844,25 @@ CF.prototype._coordsToPoints = function() {
             }
             if (hasCoordsBetween) continue;
             
+            // Check if these coords are from a CSV line with X,Y header
+            var csvSwapNeeded = false;
+            if (c1.parsedFrom && c1.parsedFrom.parser && c1.parsedFrom.parser.csvColumnMapping) {
+                var mapping = c1.parsedFrom.parser.csvColumnMapping;
+                // Check if both coords are on the same line (line after header)
+                if (c1.parsedFrom.lineNo === c2.parsedFrom.lineNo && c1.parsedFrom.lineNo > 0) {
+                    csvSwapNeeded = mapping.swapNeeded;
+                    this._log("CSV header detected: " + (csvSwapNeeded ? "Y,X order" : "X,Y order"));
+                }
+            }
+            
+            // If CSV swap is needed, swap the coords before pairing
+            var coord1 = csvSwapNeeded ? c2 : c1;
+            var coord2 = csvSwapNeeded ? c1 : c2;
+            
             // Try to find a reference system that contains both coords
             // Allow auto-swapping only if neither coordinate has explicit axis (no direction letters)
-            var hasExplicitAxis = (c1.axis !== CoordAxis.Unknown) || (c2.axis !== CoordAxis.Unknown);
-            var result = RefSys.fromCoords(c1, c2, hasExplicitAxis);
+            var hasExplicitAxis = (coord1.axis !== CoordAxis.Unknown) || (coord2.axis !== CoordAxis.Unknown);
+            var result = RefSys.fromCoords(coord1, coord2, hasExplicitAxis);
             
             if (result) {
                 var point = new Point(result.N, result.E, result.RefSys);
