@@ -137,22 +137,45 @@ PointsTest.prototype.run = function() {
                 var expected = this.expectedCoords[i];
                 var actual = points[i];
                 
-                // Determine decimal places from expected coordinates
-                var latDecimals = this._getDecimalPlaces(expected.lat);
-                var lonDecimals = this._getDecimalPlaces(expected.lon);
-                var maxDecimals = Math.max(latDecimals, lonDecimals);
-                
-                // Round actual coordinates to same decimal places as expected
-                var actualLat = this._roundToDecimals(actual.latitude(), latDecimals);
-                var actualLon = this._roundToDecimals(actual.longitude(), lonDecimals);
-                var expectedLat = this._roundToDecimals(expected.lat, latDecimals);
-                var expectedLon = this._roundToDecimals(expected.lon, lonDecimals);
-                
-                if (actualLat !== expectedLat || actualLon !== expectedLon) {
-                    var msg = "Point " + (i + 1) + " coordinates mismatch\n";
-                    msg += "   Expected: " + expectedLat.toFixed(latDecimals) + ", " + expectedLon.toFixed(lonDecimals) + "\n";
-                    msg += "   Actual:   " + actualLat.toFixed(latDecimals) + ", " + actualLon.toFixed(lonDecimals);
-                    return new TestResult(this, false, msg, actual, expected);
+                // Check if expected uses N/E (meter coordinates) or lat/lon (degree coordinates)
+                if (expected.N !== undefined && expected.E !== undefined) {
+                    // Meter coordinates - compare N and E values directly
+                    var actualN = actual.N.value;
+                    var actualE = actual.E.value;
+                    
+                    // Determine decimal places
+                    var nDecimals = this._getDecimalPlaces(expected.N);
+                    var eDecimals = this._getDecimalPlaces(expected.E);
+                    
+                    // Round to same decimal places
+                    var roundedActualN = this._roundToDecimals(actualN, nDecimals);
+                    var roundedActualE = this._roundToDecimals(actualE, eDecimals);
+                    var roundedExpectedN = this._roundToDecimals(expected.N, nDecimals);
+                    var roundedExpectedE = this._roundToDecimals(expected.E, eDecimals);
+                    
+                    if (roundedActualN !== roundedExpectedN || roundedActualE !== roundedExpectedE) {
+                        var msg = "Point " + (i + 1) + " coordinates mismatch\n";
+                        msg += "   Expected N: " + roundedExpectedN.toFixed(nDecimals) + ", E: " + roundedExpectedE.toFixed(eDecimals) + "\n";
+                        msg += "   Actual   N: " + roundedActualN.toFixed(nDecimals) + ", E: " + roundedActualE.toFixed(eDecimals);
+                        return new TestResult(this, false, msg, actual, expected);
+                    }
+                } else if (expected.lat !== undefined && expected.lon !== undefined) {
+                    // Degree coordinates - compare lat/lon
+                    var latDecimals = this._getDecimalPlaces(expected.lat);
+                    var lonDecimals = this._getDecimalPlaces(expected.lon);
+                    
+                    // Round actual coordinates to same decimal places as expected
+                    var actualLat = this._roundToDecimals(actual.latitude(), latDecimals);
+                    var actualLon = this._roundToDecimals(actual.longitude(), lonDecimals);
+                    var expectedLat = this._roundToDecimals(expected.lat, latDecimals);
+                    var expectedLon = this._roundToDecimals(expected.lon, lonDecimals);
+                    
+                    if (actualLat !== expectedLat || actualLon !== expectedLon) {
+                        var msg = "Point " + (i + 1) + " coordinates mismatch\n";
+                        msg += "   Expected: " + expectedLat.toFixed(latDecimals) + ", " + expectedLon.toFixed(lonDecimals) + "\n";
+                        msg += "   Actual:   " + actualLat.toFixed(latDecimals) + ", " + actualLon.toFixed(lonDecimals);
+                        return new TestResult(this, false, msg, actual, expected);
+                    }
                 }
             }
         }
@@ -160,9 +183,9 @@ PointsTest.prototype.run = function() {
         // Check CRS if specified
         if (this.expectedCRS && points.length > 0) {
             var actualCRS = points[0].refsys.name;
-            // Normalize for comparison: remove spaces, lowercase
-            var normalizedActual = actualCRS.replace(/\s+/g, '').toLowerCase();
-            var normalizedExpected = this.expectedCRS.replace(/\s+/g, '').toLowerCase();
+            // Normalize for comparison: remove spaces, dots, underscores, lowercase
+            var normalizedActual = actualCRS.replace(/[\s._]+/g, '').toLowerCase();
+            var normalizedExpected = this.expectedCRS.replace(/[\s._]+/g, '').toLowerCase();
             
             // Check if expected is contained in actual (allows "RT90" to match "RT90 2.5 gon V")
             if (normalizedActual.indexOf(normalizedExpected) === -1) {

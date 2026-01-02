@@ -92,9 +92,26 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
             continue;
         }
         
-        // Expected section
-        if (trimmed === 'Expected:') {
+        // Expected section (can be "Expected:" or "Expected: value")
+        if (trimmed.match(/^Expected:\s*(.*)$/)) {
             state = 'expected';
+            var expectedValue = RegExp.$1.trim();
+            if (expectedValue) {
+                // Expected value on same line - process it
+                if (currentTest.type === 'Point') {
+                    // Direct format: "Expected: 59.50 18.25"
+                    var parts = expectedValue.split(/\s+/);
+                    if (parts.length >= 2) {
+                        if (!currentTest.coords) currentTest.coords = [];
+                        currentTest.coords.push({
+                            lat: parseFloat(parts[0]),
+                            lon: parseFloat(parts[1])
+                        });
+                    } else {
+                        currentTest.expected = expectedValue;
+                    }
+                }
+            }
             continue;
         }
         
@@ -119,6 +136,7 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
             if (currentTest.type === 'Point') {
                 // Point Test: expected format is "lat lon" or "- Coords: lat lon" or "null"
                 // Also support Count and CRS for compatibility
+                // NEW: Also support direct "lat lon" without "Coords:" prefix
                 if (trimmed.toLowerCase() === 'null' || trimmed === '-') {
                     currentTest.expected = null;
                 } else if (trimmed.match(/^-?\s*Count:\s*(\d+)$/i)) {
@@ -136,8 +154,31 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
                     }
                 } else if (trimmed.match(/^-\s*CRS:\s*(.+)$/i)) {
                     currentTest.crs = RegExp.$1.trim();
+                } else if (trimmed.match(/^-\s*N\.value:\s*(.+)$/i)) {
+                    // Format: "- N.value: 7148101"
+                    if (!currentTest.coords) currentTest.coords = [];
+                    if (currentTest.coords.length === 0) currentTest.coords.push({});
+                    currentTest.coords[0].N = parseFloat(RegExp.$1.trim());
+                } else if (trimmed.match(/^-\s*E\.value:\s*(.+)$/i)) {
+                    // Format: "- E.value: 708433"
+                    if (!currentTest.coords) currentTest.coords = [];
+                    if (currentTest.coords.length === 0) currentTest.coords.push({});
+                    currentTest.coords[0].E = parseFloat(RegExp.$1.trim());
+                } else if (trimmed.match(/^-\s*refsys:\s*(.+)$/i)) {
+                    // Format: "- refsys: SWEREF99TM"
+                    currentTest.crs = RegExp.$1.trim();
                 } else if (!trimmed.match(/^-/)) {
-                    currentTest.expected = trimmed;
+                    // Direct format: "59.50 18.25" (no "Coords:" prefix)
+                    var parts = trimmed.split(/\s+/);
+                    if (parts.length >= 2) {
+                        if (!currentTest.coords) currentTest.coords = [];
+                        currentTest.coords.push({
+                            lat: parseFloat(parts[0]),
+                            lon: parseFloat(parts[1])
+                        });
+                    } else {
+                        currentTest.expected = trimmed;
+                    }
                 }
             } else if (currentTest.type === 'Points') {
                 // Points Test: expected format is "- Count: N", "- Coords: lat lon", "- CRS: name"
