@@ -392,12 +392,34 @@ Expected:
 - Count: 2
 
 ## Points Test: CSV med XYZ och ID-kolumner
-Test-ID: tdd-057
-Input: "X,Y,Z,id
+Test-ID: tdd-057a
+Input: 
+"X,Y,Z,id
 18.06491,59.32894,0,1
 19.54321,60.12345,0,2"
 Expected:
 - Count: 2
+- Bounds: 59.0 18.0 61.0 20.0
+
+## Points Test: CSV med XYZ och ID-kolumner
+Test-ID: tdd-057b
+Input: "
+X,Y,id
+18.06491,59.32894,1
+19.54321,60.12345,2"
+Expected:
+- Count: 2
+- Bounds: 59.0 18.0 61.0 20.0
+
+## Points Test: CSV med XYZ och ID-kolumner
+Test-ID: tdd-057c
+Input: 
+"Y,X,id
+59.32894,18.06491,1
+60.12345,19.54321,2"
+Expected:
+- Count: 2
+- Bounds: 59.0 18.0 61.0 20.0
 
 ## Points Test: Negativa koordinater i CSV med extra kolumner
 Test-ID: tdd-058
