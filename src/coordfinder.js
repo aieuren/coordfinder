@@ -444,7 +444,8 @@ var Patterns = {
     // Negative lookahead for ' ´ ′ " ″ \u201C \u201D to avoid matching DM/DMS like "30.5'" or "18.3""
     // Negative lookahead for z to avoid matching zoom parameters like "13.3z"
     // Use [ \t] to avoid matching across newlines
-    degs: /([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![ \t]*\d))?/gi,
+    // Direction letter must not be followed by another letter (avoids "Ska", "Viktig", etc.)
+    degs: /([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![ \t]*\d)(?![a-zåäöA-ZÅÄÖ]))?/gi,
     
     // Plain number (meters or large coordinates)
     // Use [ \t] to avoid matching across newlines
