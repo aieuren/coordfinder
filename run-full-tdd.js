@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// TDD Test Runner - Dynamically runs all TDD tests from test-suites-tdd.txt
+// TDD Test Runner - Dynamically runs all TDD tests from tdd-points.txt
 // This is the canonical test suite that must pass before any commit
 
 var fs = require('fs');
@@ -20,7 +20,7 @@ console.log('Build:', CF.build);
 console.log('');
 
 // Parse test file
-var testFile = fs.readFileSync('./requirements/test-suites-tdd.txt', 'utf8');
+var testFile = fs.readFileSync('./requirements/tdd-points.txt', 'utf8');
 var parser = new MarkdownTestParser();
 var suites = parser.parse(testFile);
 
@@ -29,7 +29,7 @@ suites.forEach(function(suite) {
     totalTests += suite.tests.length;
 });
 
-console.log('Running ' + totalTests + ' tests from requirements/test-suites-tdd.txt\n');
+console.log('Running ' + totalTests + ' tests from requirements/tdd-points.txt\n');
 
 // Run all tests
 var runner = new TestFramework.TestRunner();
