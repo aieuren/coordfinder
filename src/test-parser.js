@@ -44,8 +44,8 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
             continue;
         }
         
-        // Test header (## Point Test: or ## Points Test:)
-        if (trimmed.match(/^##\s+(Point|Points)\s+Test:\s*(.+)$/)) {
+        // Test header (## CoordFinder Test: or ## Point Test: or ## Points Test: for backwards compatibility)
+        if (trimmed.match(/^##\s+(CoordFinder|Point|Points)\s+Test:\s*(.+)$/)) {
             var testType = RegExp.$1;
             var testName = RegExp.$2;
             
@@ -58,11 +58,17 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
                 this._addTestToSuite(currentSuite, currentTest);
             }
             
+            // Map CoordFinder to appropriate type (will be determined by Method:)
+            if (testType === 'CoordFinder') {
+                testType = 'CoordFinder'; // Keep as is, will be refined by Method
+            }
+            
             currentTest = {
                 type: testType,
                 name: testName,
                 id: null,
                 implements: null,
+                method: null,
                 input: '',
                 expected: null,
                 count: null,
@@ -77,6 +83,20 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
         // Test-ID
         if (state === 'test' && trimmed.match(/^Test-ID:\s*(.+)$/)) {
             currentTest.id = RegExp.$1.trim();
+            continue;
+        }
+        
+        // Method (optional, for CoordFinder tests)
+        if (state === 'test' && trimmed.match(/^Method:\s*(.+)$/)) {
+            currentTest.method = RegExp.$1.trim();
+            // Determine test type from method if type is CoordFinder
+            if (currentTest.type === 'CoordFinder') {
+                if (currentTest.method === 'pointIn()') {
+                    currentTest.type = 'Point';
+                } else if (currentTest.method === 'pointsIn()') {
+                    currentTest.type = 'Points';
+                }
+            }
             continue;
         }
         

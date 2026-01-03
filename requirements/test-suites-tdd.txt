@@ -2,118 +2,135 @@
 
 # GRUNDLÄGGANDE WGS84 DECIMALGRADER
 
-## Point Test: Enkel decimalform
+## CoordFinder Test: Enkel decimalform
 Test-ID: tdd-001
+Method: pointIn()
 Input: "59.32894 18.06491"
 Expected:
 59.32894 18.06491
 
-## Point Test: Decimalkomma
+## CoordFinder Test: Decimalkomma
 Test-ID: tdd-002
+Method: pointIn()
 Input: "59,32894 18,06491"
 Expected:
 59.32894 18.06491
 
-## Point Test: Semikolon som separator
+## CoordFinder Test: Semikolon som separator
 Test-ID: tdd-003
+Method: pointIn()
 Input: "59.32894; 18.06491"
 Expected:
 59.32894 18.06491
 
 # GRADER OCH MINUTER
 
-## Point Test: Grader och decimalminuter
+## CoordFinder Test: Grader och decimalminuter
 Test-ID: tdd-004
+Method: pointIn()
 Input: "59° 19.736' N 18° 3.895' E"
 Expected:
 59.32893 18.06492
 
-## Point Test: Grader, minuter och sekunder
+## CoordFinder Test: Grader, minuter och sekunder
 Test-ID: tdd-005
+Method: pointIn()
 Input: 59° 19' 44.2" N 18° 3' 53.7" E
 Expected:
 59.32894 18.06492
 
-## Point Test: Kompakt DMS format
+## CoordFinder Test: Kompakt DMS format
 Test-ID: tdd-006
+Method: pointIn()
 Input: "591944N0180354E"
 Expected:
 59.32889 18.06500
 
 # VÄDERSTRECK OCH KVADRANTER
 
-## Point Test: Väderstreck före värden
+## CoordFinder Test: Väderstreck före värden
 Test-ID: tdd-007
+Method: pointIn()
 Input: "N 62.45 E 17.38"
 Expected:
 62.45 17.38
 
-## Point Test: Sydvästra kvadranten
+## CoordFinder Test: Sydvästra kvadranten
 Test-ID: tdd-008
+Method: pointIn()
 Input: "S 33.92 W 18.42"
 Expected:
 -33.92 -18.42
 
-## Point Test: Svenska väderstreck
+## CoordFinder Test: Svenska väderstreck
 Test-ID: tdd-009
+Method: pointIn()
 Input: "N 65.58 Ö 22.14"
 Expected:
 65.58 22.14
 
 # MINUSTECKEN SOM SEPARATOR
 
-## Point Test: Grader-minuter format
+## CoordFinder Test: Grader-minuter format
 Test-ID: tdd-010
+Method: pointIn()
 Input: "58-30 16-45"
 Expected:
 58.50 16.75
 
-## Point Test: Kompakt gradminut
+## CoordFinder Test: Kompakt gradminut
 Test-ID: tdd-011
+Method: pointIn()
 Input: "6230-1545"
 Expected:
 62.50 15.75
 
 # URL-FORMAT
 
-## Point Test: Google Maps URL
+## CoordFinder Test: Google Maps URL
 Test-ID: tdd-012
+Method: pointIn()
 Input: "https://www.google.com/maps/place/59.32894,18.06491"
 Expected:
 59.32894 18.06491
 
-## Point Test: Eniro-stil
+## CoordFinder Test: Eniro-stil
 Test-ID: tdd-013
+Method: pointIn()
 Input: "map/59.329440/18.064510"
 Expected:
 59.32944 18.06451
 
 # DATAFORMAT
 
-## Point Test: GeoJSON koordinater
+## CoordFinder Test: GeoJSON koordinater
 Test-ID: tdd-014
+Method: pointIn()
 Input: '{"coordinates": [18.06491, 59.32894]}'
 Expected:
 59.32894 18.06491
 
-## Point Test: GML format
+## CoordFinder Test: GML format
 Test-ID: tdd-015
+Method: pointIn()
 Input: "<gml:pos>59.32894 18.06491</gml:pos>"
 Expected:
 59.32894 18.06491
 
 # FLERRADIGA OCH LISTOR
 
-## Point Test: Tvåradiga koordinater
+## CoordFinder Test: Tvåradiga koordinater
 Test-ID: tdd-016
+Method: pointIn()
 Input: |
   Lat: 60.12345
   Long: 19.54321
 Expected:
 60.12345 19.54321
 
-## Points Test: Numrerad lista
+## CoordFinder Test: Numrerad lista
 Test-ID: tdd-017
+Method: pointsIn()
 Input: |
   1) 57°30'N 12°15'E
   2) 57°45'N 12°30'E
@@ -124,22 +141,25 @@ Expected:
 
 # SWEREF 99 TM
 
-## Points Test: SWEREF 99 TM grundformat
+## CoordFinder Test: SWEREF 99 TM grundformat
 Test-ID: tdd-018
+Method: pointsIn()
 Input: "6580000 540000"
 Expected:
 - Count: 1
 - CRS: SWEREF99TM
 
-## Points Test: SWEREF med x-separator
+## CoordFinder Test: SWEREF med x-separator
 Test-ID: tdd-019
+Method: pointsIn()
 Input: "7350000 x 850000"
 Expected:
 - Count: 1
 - CRS: SWEREF99TM
 
-## Points Test: SWEREF i text
+## CoordFinder Test: SWEREF i text
 Test-ID: tdd-020
+Method: pointsIn()
 Input: "Punkten ligger på N 6450000, E 320000 i SWEREF 99 TM"
 Expected:
 - Count: 1
@@ -147,15 +167,17 @@ Expected:
 
 # RT90
 
-## Points Test: RT90 2.5 gon V
+## CoordFinder Test: RT90 2.5 gon V
 Test-ID: tdd-021
+Method: pointsIn()
 Input: "6580000 1540000"
 Expected:
 - Count: 1
 - CRS: RT90_25gonV
 
-## Points Test: RT90 med kommaseparering
+## CoordFinder Test: RT90 med kommaseparering
 Test-ID: tdd-022
+Method: pointsIn()
 Input: "X: 6580000, Y: 1540000"
 Expected:
 - Count: 1
@@ -163,42 +185,49 @@ Expected:
 
 # SPECIALFALL OCH KANTFALL
 
-## Point Test: Mycket kompakt format
+## CoordFinder Test: Mycket kompakt format
 Test-ID: tdd-023
+Method: pointIn()
 Input: "5830N01245E"
 Expected: 58.50 12.75
 
-## Point Test: Mycket glest format
+## CoordFinder Test: Mycket glest format
 Test-ID: tdd-024
+Method: pointIn()
 Input: "58  °  30  '  N    12  °  45  '  E"
 Expected: 58.50 12.75
 
-## Point Test: Prefix Lat/Long
+## CoordFinder Test: Prefix Lat/Long
 Test-ID: tdd-025
+Method: pointIn()
 Input: "Lat: 61.234567 Long: 15.876543"
 Expected: 61.234567 15.876543
 
 # INTERNATIONELLA KOORDINATER
 
-## Point Test: Södra halvklotet
+## CoordFinder Test: Södra halvklotet
 Test-ID: tdd-026
+Method: pointIn()
 Input: "POINT(-35.5 149.1)"
 Expected: -35.5 149.1
 
-## Point Test: Västra halvklotet
+## CoordFinder Test: Västra halvklotet
 Test-ID: tdd-027
+Method: pointIn()
 Input: "40.7128 N, 74.0060 W"
 Expected: 40.7128 -74.0060
 
 # BLANDAD TEXT
 
-## Point Test: Koordinater i löptext
+## CoordFinder Test: Koordinater i löptext
 Test-ID: tdd-028
+Method: pointIn()
 Input: "Fartyget befann sig vid position 58°45'N 17°30'E när händelsen inträffade."
 Expected: 58.75 17.50
 
-## Points Test: Fiskeriloggbok-stil
+## CoordFinder Test: Fiskeriloggbok-stil
 Test-ID: tdd-029
+Method: pointsIn()
 Input: |
   Fångstområde: 5820N-1145E
   Position vid start: 5835N-1152E
@@ -208,34 +237,39 @@ Expected:
 
 # NEGATIVA TESTER (ska inte matcha)
 
-## Points Test: För stora latitudvärden
+## CoordFinder Test: För stora latitudvärden
 Test-ID: tdd-030
+Method: pointsIn()
 Input: "N95.0 E18.0"
 Expected:
 - Count: 0
 
-## Points Test: För stora longitudvärden  
+## CoordFinder Test: För stora longitudvärden  
 Test-ID: tdd-031
+Method: pointsIn()
 Input: "58.0 185.0"
 Expected:
 - Count: 0
 
-## Points Test: Telefonnummer ska inte matcha
+## CoordFinder Test: Telefonnummer ska inte matcha
 Test-ID: tdd-032
+Method: pointsIn()
 Input: "Ring 08-123 45 67"
 Expected:
 - Count: 0
 
-## Points Test: Datum ska inte matcha
+## CoordFinder Test: Datum ska inte matcha
 Test-ID: tdd-033
+Method: pointsIn()
 Input: "2024-01-15"
 Expected:
 - Count: 0
 
 # PRECISION OCH DECIMALER
 
-## Points Test: Olika antal decimaler
+## CoordFinder Test: Olika antal decimaler
 Test-ID: tdd-034
+Method: pointsIn()
 Input: 
   59 18
   59.3 18.1
@@ -245,130 +279,152 @@ Input:
 Expected:
 - Count: 4
 
-## Point Test: Hög precision
+## CoordFinder Test: Hög precision
 Test-ID: tdd-035
+Method: pointIn()
 Input: "59.328944123 18.064910456"
 Expected: 59.328944123 18.064910456
 
 # NOTATIONER FÖR HELTÄCKNING
 
-## Point Test: WKT POINT notation
+## CoordFinder Test: WKT POINT notation
 Test-ID: tdd-036
+Method: pointIn()
 Input: "POINT(18.06491 59.32894)"
 Expected: 59.32894 18.06491
 
 # Övrigt
 
-## Point Test: Svensk verbal notation
+## CoordFinder Test: Svensk verbal notation
 Test-ID: tdd-037
+Method: pointIn()
 Input: "Norr 59 grader 19,8 minuter Öst 18 grader 3,9 minuter"
 Expected: 59.33000 18.06500
 
-## Point Test: Verbalt format - grader och minuter
+## CoordFinder Test: Verbalt format - grader och minuter
 Test-ID: tdd-038
+Method: pointIn()
 Input: "Nord 65 grader 30 minutter Øst 015 grader 45 minutter"
 Expected: 65.50000 15.75000
 
-## Point Test: Verbalt format med decimalminuter
+## CoordFinder Test: Verbalt format med decimalminuter
 Test-ID: tdd-039
+Method: pointIn()
 Input: "N 58 grader 45,5 minutter E 012 grader 30,2 minutter"
 Expected:
 58.75833 12.50333
 
-## Point Test: Verbalt format med extremt whitespace och punktavslut
+## CoordFinder Test: Verbalt format med extremt whitespace och punktavslut
 Test-ID: tdd-041
+Method: pointIn()
 Input: "Nord 69 grader 29,2   minutter.  Øst 018 grader 20,0  minutter."
 Expected:
 69.48667 18.33333
 
-## Point Test: GML format med koordinatordning lon,lat
+## CoordFinder Test: GML format med koordinatordning lon,lat
 Test-ID: tdd-042
+Method: pointIn()
 Input: "<gml:coordinates>18.06491,59.32894</gml:coordinates>"
 Expected:
 59.32894 18.06491
 
-## Point Test: GML Point med namespace
+## CoordFinder Test: GML Point med namespace
 Test-ID: tdd-043
+Method: pointIn()
 Input: "<gml:Point><gml:coordinates>15.5,62.5</gml:coordinates></gml:Point>"
 Expected:
 62.5 15.5
 
-## Point Test: Google Maps @-notation
+## CoordFinder Test: Google Maps @-notation
 Test-ID: tdd-044
+Method: pointIn()
 Input: "https://www.google.com/maps/@59.32894,18.06491,15z"
 Expected: 59.32894 18.06491
 
-## Point Test: Google Maps med place och koordinater
+## CoordFinder Test: Google Maps med place och koordinater
 Test-ID: tdd-045
+Method: pointIn()
 Input: "https://www.google.com/maps/place/Stockholm/@59.3293,18.0686,12z/data=!4m5!3m4"
 Expected: 59.3293 18.0686
 
-## Point Test: Hitta.se kartan-format
+## CoordFinder Test: Hitta.se kartan-format
 Test-ID: tdd-046
+Method: pointIn()
 Input: "http://www.hitta.se/kartan!~59.32894,18.06491,14z/tr"
 Expected: 59.32894 18.06491
 
-## Points Test: Leaflet bounds array
+## CoordFinder Test: Leaflet bounds array
 Test-ID: tdd-047
+Method: pointsIn()
 Input: "imageBounds = [[59.32894, 18.06491],[60.12345, 19.54321]];"
 Expected:
 - Count: 2
 
-## Point Test: Kompakt DDMM format utan väderstreck
+## CoordFinder Test: Kompakt DDMM format utan väderstreck
 Test-ID: tdd-048
+Method: pointIn()
 Input: "5930 1815"
 Expected: 59.50 18.25
 
-## Points Test: Fiskeriloggbok DDMM-lista
+## CoordFinder Test: Fiskeriloggbok DDMM-lista
 Test-ID: tdd-049
+Method: pointsIn()
 Input: "6015 1230
 6020 1245
 6025 1300"
 Expected:
 - Count: 3
 
-## Point Test: DDMM med ledande nolla i longitud
+## CoordFinder Test: DDMM med ledande nolla i longitud
 Test-ID: tdd-050
+Method: pointIn()
 Input: "6007 0530"
 Expected: 60.11667 5.50000
 
-## Point Test: DDMM.M med minustecken och väderstreck
+## CoordFinder Test: DDMM.M med minustecken och väderstreck
 Test-ID: tdd-051
+Method: pointIn()
 Input: "5930.5N-01815.2E"
 Expected: 59.50833 18.25333
 
-## Point Test: DD MM med minustecken som separator
+## CoordFinder Test: DD MM med minustecken som separator
 Test-ID: tdd-052
+Method: pointIn()
 Input: "59 30N - 018 15E"
 Expected: 59.50 18.25
 
-## Point Test: Kompakt DDMM.M utan separator
+## CoordFinder Test: Kompakt DDMM.M utan separator
 Test-ID: tdd-053
+Method: pointIn()
 Input: "5930.5N-01815.2E"
 Expected: 59.50833 18.25333
 
-## Points Test: Numrerad lista med olika format
+## CoordFinder Test: Numrerad lista med olika format
 Test-ID: tdd-054
+Method: pointsIn()
 Input: "1. 5930.0N-01800.0E
 2. 5935.0N-01805.0E
 3. 59 40N - 018 10E"
 Expected:
 - Count: 3
 
-## Point Test: Google Maps URL med data-parametrar
+## CoordFinder Test: Google Maps URL med data-parametrar
 Test-ID: tdd-055
+Method: pointIn()
 Input: "https://www.google.se/maps/place/@50.5525407,-4.354845,13z/data=!4m5!3m4!8m2!3d50.5476715!4d-4.3148175"
 Expected: 50.5525407 -4.354845
 
-## Points Test: Blandade URL:er utan falska positiva
+## CoordFinder Test: Blandade URL:er utan falska positiva
 Test-ID: tdd-056
+Method: pointsIn()
 Input: "URL1: maps/@59.32,18.06,15z/data=!3m4
 URL2: hitta.se/kartan!~60.12,19.54,12z/tr!i=abc123"
 Expected:
 - Count: 2
 
-## Points Test: CSV med XYZ och ID-kolumner
+## CoordFinder Test: CSV med XYZ och ID-kolumner
 Test-ID: tdd-057a
+Method: pointsIn()
 Input: 
 "X,Y,Z,id
 18.06491,59.32894,0,1
@@ -377,8 +433,9 @@ Expected:
 - Count: 2
 - Bounds: 59.0 18.0 61.0 20.0
 
-## Points Test: CSV med XYZ och ID-kolumner
+## CoordFinder Test: CSV med XYZ och ID-kolumner
 Test-ID: tdd-057b
+Method: pointsIn()
 Input: "
 X,Y,id
 18.06491,59.32894,1
@@ -387,8 +444,9 @@ Expected:
 - Count: 2
 - Bounds: 59.0 18.0 61.0 20.0
 
-## Points Test: CSV med XYZ och ID-kolumner
+## CoordFinder Test: CSV med XYZ och ID-kolumner
 Test-ID: tdd-057c
+Method: pointsIn()
 Input: 
 "Y,X,id
 59.32894,18.06491,1
@@ -397,8 +455,9 @@ Expected:
 - Count: 2
 - Bounds: 59.0 18.0 61.0 20.0
 
-## Points Test: Negativa koordinater i CSV med extra kolumner
+## CoordFinder Test: Negativa koordinater i CSV med extra kolumner
 Test-ID: tdd-058
+Method: pointsIn()
 Input: "X,Y,Z,id
 -35.5,-5.2,0,3
 77.5,8.3,0,4"
@@ -406,16 +465,18 @@ Expected:
 - Count: 2
 - Bounds: -6.0 -36.0 9.0 78.0
 
-## Point Test: SWEREF99 TM med svenska prefix
+## CoordFinder Test: SWEREF99 TM med svenska prefix
 Test-ID: tdd-059
+Method: pointIn()
 Input: "Nordlig: 6580000 Östlig: 540000"
 Expected:
 - N.value: 6580000
 - E.value: 540000
 - refsys: SWEREF99TM
 
-## Point Test: SWEREF99 TM flerradigt med prefix
+## CoordFinder Test: SWEREF99 TM flerradigt med prefix
 Test-ID: tdd-060
+Method: pointIn()
 Input: "SWEREF99 TM Nordlig: 7148101
 SWEREF99 TM Östlig: 708433"
 Expected:
@@ -423,16 +484,18 @@ Expected:
 - E.value: 708433
 - refsys: SWEREF99TM
 
-## Point Test: SWEREF99 TM med N/E prefix
+## CoordFinder Test: SWEREF99 TM med N/E prefix
 Test-ID: tdd-061
+Method: pointIn()
 Input: "N: 6504089 E: 278978"
 Expected:
 - N.value: 6504089
 - E.value: 278978
 - refsys: SWEREF99TM
 
-## Points Test: WKT Point med SWEREF-koordinater
+## CoordFinder Test: WKT Point med SWEREF-koordinater
 Test-ID: tdd-062
+Method: pointsIn()
 Input:
 "Point (313096 6353860)
 Point (311784 6355675)"
@@ -440,8 +503,9 @@ Expected:
 - Count: 2
 - CRS: SWEREF99TM
 
-## Points Test: WKT med höga decimalvärden
+## CoordFinder Test: WKT med höga decimalvärden
 Test-ID: tdd-063
+Method: pointsIn()
 Input: 
 "Point (313096.356550686 6353860.684766964)
 Point (311784.981124307 6355675.992064684)"
@@ -449,8 +513,9 @@ Expected:
 - Count: 2
 - CRS: SWEREF99TM
 
-## Points Test: QGIS attributtabell format
+## CoordFinder Test: QGIS attributtabell format
 Test-ID: tdd-064
+Method: pointsIn()
 Input: "wkt_geom   Id   Area
 Point (313096 6353860)   0   865.28
 Point (311784 6355675)   1   865.28"
@@ -458,56 +523,63 @@ Expected:
 - Count: 2
 - CRS: SWEREF99TM
 
-## Point Test: URL-parametrar med x och y (SWEREF)
+## CoordFinder Test: URL-parametrar med x och y (SWEREF)
 Test-ID: tdd-065
+Method: pointIn()
 Input: "x=540000&y=6580000"
 Expected:
 - N.value: 6580000
 - E.value: 540000
 - refsys: SWEREF99TM
 
-## Point Test: URL-parametrar omvänd ordning
+## CoordFinder Test: URL-parametrar omvänd ordning
 Test-ID: tdd-066
+Method: pointIn()
 Input: "y=6580000&x=540000"
 Expected:
 - N.value: 6580000
 - E.value: 540000
 - refsys: SWEREF99TM
 
-## Point Test: URL-parametrar med RT90
+## CoordFinder Test: URL-parametrar med RT90
 Test-ID: tdd-067
+Method: pointIn()
 Input: "x=1540000&y=6580000"
 Expected:
 - N.value: 6580000
 - E.value: 1540000
 - refsys: RT90_25gonV
 
-## Points Test: RT90 grundformat
+## CoordFinder Test: RT90 grundformat
 Test-ID: tdd-068
+Method: pointsIn()
 Input: "6465364, 1259677
 6910904, 1411545"
 Expected:
 - Count: 2
 - CRS: RT90_25gonV
 
-## Point Test: RT90 med Y före X
+## CoordFinder Test: RT90 med Y före X
 Test-ID: tdd-069
+Method: pointIn()
 Input: "Y: 1570600, X: 7546077"
 Expected:
 - N.value: 7546077
 - E.value: 1570600
 - refsys: RT90_25gonV
 
-## Points Test: RT90 med X/Y prefix och tab
+## CoordFinder Test: RT90 med X/Y prefix och tab
 Test-ID: tdd-070
+Method: pointsIn()
 Input: "X:6532864 Y:1375529
 X 6131381	Y 1832691"
 Expected:
 - Count: 2
 - CRS: RT90_25gonV
 
-## Points Test: RT90 med decimaler
+## CoordFinder Test: RT90 med decimaler
 Test-ID: tdd-071
+Method: pointsIn()
 Input: 
 6405112.192, 1272031.939
 6480082.101, 1372031.843
@@ -515,8 +587,9 @@ Expected:
 - Count: 2
 - CRS: RT90_25gonV
 
-## Points Test: RT90 efter beskrivande text
+## CoordFinder Test: RT90 efter beskrivande text
 Test-ID: tdd-072
+Method: pointsIn()
 Input: 
 RT90 2.5 gon V koordinater:
 6465364, 1259677
@@ -525,41 +598,47 @@ Expected:
 - Count: 2
 - CRS: RT90_25gonV
 
-## Point Test: Grader och hela minuter med minustecken
+## CoordFinder Test: Grader och hela minuter med minustecken
 Test-ID: tdd-073
+Method: pointIn()
 Implements test-IDs: test-0031
 Input: 60-15N 19-30E
 Expected: 60.250 19.500
 
-## Point Test: Grader-minuter som ska avrundas
+## CoordFinder Test: Grader-minuter som ska avrundas
 Test-ID: tdd-074
+Method: pointIn()
 Implements test-IDs: test-0031
 Input: 58-22N 13-47E
 Expected: 58.367 13.783
 
-## Point Test: Grader-minuter med ledande nolla
+## CoordFinder Test: Grader-minuter med ledande nolla
 Test-ID: tdd-075
+Method: pointIn()
 Implements test-IDs: test-0031
 Input: 59-18N 014-52E
 Expected: 59.300 14.867
 
-## Points Test: Leaflet bounds array korrekt ordning
+## CoordFinder Test: Leaflet bounds array korrekt ordning
 Test-ID: tdd-076
+Method: pointsIn()
 Implements test-IDs: test-0045
 Input: 
 bounds = [[60.5, 18.2],[61.3, 19.8]];
 Expected:
 - Count: 2
 
-## Point Test: Google Maps @-notation ren
+## CoordFinder Test: Google Maps @-notation ren
 Test-ID: tdd-077
+Method: pointIn()
 Implements test-IDs: test-0037, test-0045
 Input: 
 https://www.google.se/maps/@60.32894,19.06491,15z
 Expected: 60.32894 19.06491
 
-## Points Test: Flera URL-format utan falska positiva
+## CoordFinder Test: Flera URL-format utan falska positiva
 Test-ID: tdd-078
+Method: pointsIn()
 Implements test-IDs: test-0045
 Input: 
 https://www.google.se/maps/@60.5,18.5,15z
@@ -567,8 +646,9 @@ http://www.hitta.se/kartan!~61.2,19.3,14z/tr
 Expected:
 - Count: 2
 
-## Points Test: RT90 efter beskrivande text
+## CoordFinder Test: RT90 efter beskrivande text
 Test-ID: tdd-079
+Method: pointsIn()
 Implements test-IDs: test-0080
 Input: 
 Koordinatsystem: RT90 2.5 gon V
@@ -577,8 +657,9 @@ Koordinatsystem: RT90 2.5 gon V
 Expected:
 - Count: 2
 
-## Point Test: RT90 Y,X ordning med decimaler
+## CoordFinder Test: RT90 Y,X ordning med decimaler
 Test-ID: tdd-080
+Method: pointIn()
 Implements test-IDs: test-0080
 Input: 
 1450000.5, 6700000.75
@@ -587,8 +668,9 @@ Expected:
 - E.value: 1450000.5
 - refsys: RT90_25gonV
 
-## Points Test: RT90 med X/Y prefix blandat
+## CoordFinder Test: RT90 med X/Y prefix blandat
 Test-ID: tdd-081
+Method: pointsIn()
 Implements test-IDs: test-0080
 Input: 
 X:6550000 Y:1350000
@@ -596,8 +678,9 @@ X 6620000	Y 1420000
 Expected:
 - Count: 2
 
-## Points Test: RT90 med decimaler och blandad text
+## CoordFinder Test: RT90 med decimaler och blandad text
 Test-ID: tdd-082
+Method: pointsIn()
 Implements test-IDs: test-0080
 Input: 
 Punkter nedan:
@@ -607,92 +690,107 @@ Nästa punkt:
 Expected:
 - Count: 2
 
-## Point Test: Grader och decimalminuter utan tecken
+## CoordFinder Test: Grader och decimalminuter utan tecken
 Test-ID: tdd-083
+Method: pointIn()
 Implements test-IDs: test-0005
 Input: 60 30,5 019 15,25
 Expected: 60.50833 19.25417
 
-## Point Test: Grader minuter sekunder utan tecken
+## CoordFinder Test: Grader minuter sekunder utan tecken
 Test-ID: tdd-084
+Method: pointIn()
 Implements test-IDs: test-0006
 Input: 60 30 45.5 019 15 30.2
 Expected: 60.51264 19.25839
 
-## Point Test: DMS med tecken och decimalsekunder
+## CoordFinder Test: DMS med tecken och decimalsekunder
 Test-ID: tdd-085
+Method: pointIn()
 Implements test-IDs: test-0009
 Input: 60°30'45.5" 019°15'30.2"
 Expected: 60.51264 19.25839
 
-## Point Test: Alternativt gradtecken med decimalminuter
+## CoordFinder Test: Alternativt gradtecken med decimalminuter
 Test-ID: tdd-086
+Method: pointIn()
 Implements test-IDs: test-0011
 Input: 60 ̊ 30.5 019 ̊ 15.25
 Expected: 60.50833 19.25417
 
-## Point Test: Nordvästra kvadranten med negativt
+## CoordFinder Test: Nordvästra kvadranten med negativt
 Test-ID: tdd-087
+Method: pointIn()
 Implements test-IDs: test-0013
 Input: 60.5 -18.25
 Expected: 60.5 -18.25
 
-## Point Test: Sydöstra kvadranten med negativt
+## CoordFinder Test: Sydöstra kvadranten med negativt
 Test-ID: tdd-088
+Method: pointIn()
 Implements test-IDs: test-0014
 Input: -35.5 140.25
 Expected: -35.5 140.25
 
-## Point Test: Sydvästra kvadranten båda negativa
+## CoordFinder Test: Sydvästra kvadranten båda negativa
 Test-ID: tdd-089
+Method: pointIn()
 Implements test-IDs: test-0015
 Input: -33.8 -70.6
 Expected: -33.8 -70.6
 
-## Point Test: Svenska väderstreck V för väst
+## CoordFinder Test: Svenska väderstreck V för väst
 Test-ID: tdd-090
+Method: pointIn()
 Implements test-IDs: test-0026
 Input: N 60° 30,5' V 019° 15,25'
 Expected: 60.50833 -19.25417
 
-## Point Test: Svenska väderstreck S och V
+## CoordFinder Test: Svenska väderstreck S och V
 Test-ID: tdd-091
+Method: pointIn()
 Implements test-IDs: test-0026
 Input: S 35° 30' V 70° 40'
 Expected: -35.50000 -70.66667
 
-## Point Test: DMS utan omslutande citationstecken
+## CoordFinder Test: DMS utan omslutande citationstecken
 Test-ID: tdd-092
+Method: pointIn()
 Implements test-IDs: test-0009
 Input: 60°30'45.5" 019°15'30.2"
 Expected: 60.51264 19.25839
 
-## Point Test: Extremt kompakt format med väderstreck
+## CoordFinder Test: Extremt kompakt format med väderstreck
 Test-ID: tdd-093
+Method: pointIn()
 Implements test-IDs: test-0027
 Input: N60 E19
 Expected: 60.0 19.0
 
-## Point Test: Extremt glest format med DMS
+## CoordFinder Test: Extremt glest format med DMS
 Test-ID: tdd-094
+Method: pointIn()
 Implements test-IDs: test-0028
 Input: N  60  °  30'  45.5  "  E  019°  15  '  30.2"
 Expected: 60.51264 19.25839
 
-## Points Test: Väderstreck före värde med E först
+## CoordFinder Test: Väderstreck före värde med E först
 Test-ID: tdd-095
+Method: pointsIn()
 Implements test-IDs: test-0056
 Input: E60.0 N19.0
 Expected: 19.0 60.0
 
-## Points Test: Blandat format med DMS och text
+## CoordFinder Test: Blandat format med DMS och text
 Test-ID: tdd-096
+Method: pointsIn()
 Implements test-IDs: test-0056
 Input: Koordinat WGS84 60°30'15.5"N 19°15'30.2"E
 Expected: 60.50431 19.25839
 
-## Points Test: Validering av latitudgränser
+## CoordFinder Test: Validering av latitudgränser
 Test-ID: tdd-097
+Method: pointsIn()
 Implements test-IDs: test-0064
 Input: N 85,5 E 19,0
 N 95,5 E 19,0
@@ -700,8 +798,9 @@ N 95,5 E 19,0
 Expected:
 - Count: 2
 
-## Points Test: Validering av longitudgränser  
+## CoordFinder Test: Validering av longitudgränser  
 Test-ID: tdd-098
+Method: pointsIn()
 Implements test-IDs: test-0064
 Input: 60,5 175,0
 60,5 185,0
@@ -709,8 +808,9 @@ Input: 60,5 175,0
 Expected:
 - Count: 2
 
-## Points Test: Validering av minutgränser
+## CoordFinder Test: Validering av minutgränser
 Test-ID: tdd-099
+Method: pointsIn()
 Implements test-IDs: test-0065
 Input: N60 30,5 O19 15,25
 N60 65,0 O19 15,25
@@ -718,16 +818,18 @@ N60 30,5 O19 70,0
 Expected:
 - Count: 1
 
-## Points Test: Validering av sekundgränser
+## CoordFinder Test: Validering av sekundgränser
 Test-ID: tdd-100
+Method: pointsIn()
 Implements test-IDs: test-0066
 Input: N60 30 45 O19 15 30
 N60 30 70 O19 15 30
 Expected:
 - Count: 1
 
-## Points Test: Validering gradminuter format
+## CoordFinder Test: Validering gradminuter format
 Test-ID: tdd-101
+Method: pointsIn()
 Implements test-IDs: test-0067
 Input: 6030.5N-01915.2E
 6070.0N-01915.2E
@@ -735,26 +837,30 @@ Input: 6030.5N-01915.2E
 Expected:
 - Count: 1
 
-## Point Test: DMS utan avslutande sekundtecken
+## CoordFinder Test: DMS utan avslutande sekundtecken
 Test-ID: tdd-102
+Method: pointIn()
 Implements test-IDs: test-0009, test-0028
 Input: 60°30'45.5" 019°15'30.2
 Expected: 60.51264 19.25839
 
-## Point Test: URL utan koordinater i data-parametrar
+## CoordFinder Test: URL utan koordinater i data-parametrar
 Test-ID: tdd-103
+Method: pointIn()
 Implements test-IDs: test-0045
 Input: https://www.google.se/maps/@60.5,19.5,15z/data=!4m5!3m4!1s0xabc123
 Expected: 60.5 19.5
 
-## Point Test: Väderstreck före värde ENordning
+## CoordFinder Test: Väderstreck före värde ENordning
 Test-ID: tdd-104
+Method: pointIn()
 Implements test-IDs: test-0056
 Input: E19.5 N60.5
 Expected: 60.5 19.5
 
-## Points Test: Validering negativa latitudgränser
+## CoordFinder Test: Validering negativa latitudgränser
 Test-ID: tdd-105
+Method: pointsIn()
 Implements test-IDs: test-0064
 Input: 
 -89.5 119.0
@@ -762,8 +868,9 @@ Input:
 Expected:
 - Count: 1
 
-## Points Test: DMS validering utan citationstecken
+## CoordFinder Test: DMS validering utan citationstecken
 Test-ID: tdd-106
+Method: pointsIn()
 Implements test-IDs: test-0066
 Input: N60 30 45 O19 15 30
 N60 30 70 O19 15 30
@@ -772,8 +879,9 @@ Expected:
 - Count: 1
 - Bounds: 60 19 61 20
 
-## Points Test: Negativa värden
+## CoordFinder Test: Negativa värden
 Test-ID: tdd-107
+Method: pointsIn()
 Implements test-IDs: test-0064
 Input: 
 -89.5 19.0
@@ -782,8 +890,9 @@ Input:
 Expected:
 - Count: 3
 
-## Points Test: Olika precision ska accepteras
+## CoordFinder Test: Olika precision ska accepteras
 Test-ID: tdd-108
+Method: pointsIn()
 Implements test-IDs: test-0068
 Input: 
 60.404 19.1
@@ -792,8 +901,9 @@ Input:
 Expected:
 - Count: 3
 
-## Points Test: För få decimaler ska avvisas
+## CoordFinder Test: För få decimaler ska avvisas
 Test-ID: tdd-109
+Method: pointsIn()
 Implements test-IDs: test-0068
 Input: 
 60 19
@@ -802,16 +912,18 @@ Input:
 Expected:
 - Count: 2
 
-## Points Test: Lat/Long prefix med löptext
+## CoordFinder Test: Lat/Long prefix med löptext
 Test-ID: tdd-110
+Method: pointsIn()
 Implements test-IDs: test-0085
 Input: 1. Lat. N 60 30,5 Long. O 19 15,25 Punkt vid fyren
 2. Lat. N 60 35,8 Long. O 19 20,4 Punkt 2,5 nautiska mil norr
 Expected:
 - Count: 2
 
-## Points Test: Numrerad lista med Lat/Long format
+## CoordFinder Test: Numrerad lista med Lat/Long format
 Test-ID: tdd-111
+Method: pointsIn()
 Implements test-IDs: test-0085
 Input: Enligt formen: Pkt, Latitud, Longitud, Anmärkning
 1. Lat. N 60 30,57 Long. O 19 15,10 Punkt A
@@ -820,8 +932,9 @@ Input: Enligt formen: Pkt, Latitud, Longitud, Anmärkning
 Expected:
 - Count: 3
 
-## Points Test: Avståndsangivelser med minuttecken ska inte tolkas
+## CoordFinder Test: Avståndsangivelser med minuttecken ska inte tolkas
 Test-ID: tdd-112
+Method: pointsIn()
 Implements test-IDs: test-0085, test-0086
 Input: Pkt Lat. N Long. O Anmärkning
 1 60 30,5 19 15,25 Punkt 2,5' norr
@@ -831,8 +944,9 @@ Input: Pkt Lat. N Long. O Anmärkning
 Expected:
 - Count: 4
 
-## Points Test: Avståndsangivelser med minuttecken ska inte tolkas, alt minuttecken
+## CoordFinder Test: Avståndsangivelser med minuttecken ska inte tolkas, alt minuttecken
 Test-ID: tdd-112b
+Method: pointsIn()
 Implements test-IDs: test-0085, test-0086
 Input: Pkt Lat. N Long. O Anmärkning
 1 60 30,5 19 15,25 Punkt 2,5’ norr
@@ -843,22 +957,25 @@ Expected:
 - Count: 4
 
 
-## Points Test: Hitta.se URL med zoom-parameter
+## CoordFinder Test: Hitta.se URL med zoom-parameter
 Test-ID: tdd-113
+Method: pointsIn()
 Implements test-IDs: test-0045
 Input: http://www.hitta.se/kartan!~60.12345,19.54321,12.345678z/tr!i=abc
 Expected:
 - Count: 1
 
-## Points Test: Leaflet bounds utan extra koordinater
+## CoordFinder Test: Leaflet bounds utan extra koordinater
 Test-ID: tdd-114
+Method: pointsIn()
 Implements test-IDs: test-0045
 Input: imageBounds = [[60.5, 19.2],[61.3, 19.8]];
 Expected:
 - Count: 2
 
-## Points Test: Blandade URL-format
+## CoordFinder Test: Blandade URL-format
 Test-ID: tdd-115
+Method: pointsIn()
 Implements test-IDs: test-0045
 Input: maps/@60.5,19.2,15z
 hitta.se/kartan!~61.3,19.8,12.5z/tr
@@ -866,8 +983,9 @@ bounds = [[62.1, 20.5],[63.2, 21.6]];
 Expected:
 - Count: 4
 
-## Points Test: Validering med tydligt ogiltiga värden
+## CoordFinder Test: Validering med tydligt ogiltiga värden
 Test-ID: tdd-116
+Method: pointsIn()
 Implements test-IDs: test-0064
 Input: 56.5 12.0
 -96.5 200.0
@@ -875,8 +993,9 @@ Input: 56.5 12.0
 Expected:
 - Count: 2
 
-## Points Test: Validering med väderstreck och negativa
+## CoordFinder Test: Validering med väderstreck och negativa
 Test-ID: tdd-117
+Method: pointsIn()
 Implements test-IDs: test-0064
 Input: N 56.5 E 12.0
 N 96.5 E 12.0
@@ -885,14 +1004,16 @@ N 96.5 E 12.0
 Expected:
 - Count: 3
 
-## Point Test: Hitta.se URL med lång zoom-parameter
+## CoordFinder Test: Hitta.se URL med lång zoom-parameter
 Test-ID: tdd-120
+Method: pointIn()
 Implements test-IDs: test-0045
 Input: http://www.hitta.se/kartan!~58.04208,12.52948,11.385523692999612z/tr!i=15aS1OGB
 Expected: 58.04208 12.52948
 
-## Points Test: Lurigt med olika sifferserier i urler 
+## CoordFinder Test: Lurigt med olika sifferserier i urler 
 Test-ID: tdd-123
+Method: pointsIn()
 Implements test-IDs: test-0045
 Input: 
 https://www.google.se/maps/place/Rain+Charm+House,+Kyl+Cober+Parc,+Stoke+Climsland,+Callington+PL17+8PH,+Storbritannien/@50.5525407,-4.354845,13.3z/data=!4m5!3m4!1s0x486c88e2d3431b97:0xc30d623287cb4600!8m2!3d50.5476715!4d-4.3148175
@@ -901,8 +1022,9 @@ http://www.hitta.se/kartan!~58.04208,12.52948,11.385523692999612z/tr!i=15aS1OGB
 Expected:
 - Count: 3
 
-## Points Test: Koordinatkomponenter får inte brytas över rader
+## CoordFinder Test: Koordinatkomponenter får inte brytas över rader
 Test-ID: tdd-124
+Method: pointsIn()
 Implements test-IDs: test-0087
 Input: 
 61° 
@@ -919,8 +1041,9 @@ Expected:
 - Count: 1
 - Bounds: 65 24 66 25
 
-## Points Test: RT90 efter varandra 
+## CoordFinder Test: RT90 efter varandra 
 Test-ID: tdd-125
+Method: pointsIn()
 Implements test-IDs: test-0080
 Input: 
 RT90 2,5 gonW
@@ -929,8 +1052,9 @@ RT90 2,5 gonW
 Expected:
 - Count: 2
 
-## Points Test: Text efter koordinater får inte felanvändas som väderstreck
+## CoordFinder Test: Text efter koordinater får inte felanvändas som väderstreck
 Test-ID: tdd-130
+Method: pointsIn()
 Implements test-IDs: test-0068
 Input: 
 60.404 19.013 Ska hittas
@@ -941,8 +1065,9 @@ Expected:
 - Count: 4
 - Bounds: 60.0 19.0 62.0 21.0
 
-## Points Test: Numrerad lista 
+## CoordFinder Test: Numrerad lista 
 Test-ID: tdd-131
+Method: pointsIn()
 Implements test-IDs: test-00zz
 Input: 
 
