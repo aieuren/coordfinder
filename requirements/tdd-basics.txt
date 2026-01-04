@@ -1,0 +1,1096 @@
+=== TDD Test Suite - CoordFinder Other Functions ===
+
+# Point.latitude()
+
+## Point Test: Decimalgrader grundformat
+Test-ID: tdd-lat-001
+Method: latitude()
+Input: “58.41234 12.56789”
+Expected: 58.41234
+
+## Point Test: DMS format
+Test-ID: tdd-lat-002
+Method: latitude()
+Input: “58°24’44.4”N 12°34’4.4”E”
+Expected: 58.41233
+
+## Point Test: DM format
+Test-ID: tdd-lat-003
+Method: latitude()
+Input: “58° 24.740’ 12° 34.073’”
+Expected: 58.41233
+
+## Point Test: Negativ latitud
+Test-ID: tdd-lat-004
+Method: latitude()
+Input: “-34.9285 138.6007”
+Expected: -34.9285
+
+## Point Test: Väderstreck S
+Test-ID: tdd-lat-005
+Method: latitude()
+Input: “34°55’42.3”S 138°36’2.5”E”
+Expected: -34.92842
+
+## Point Test: SWEREF99TM
+Test-ID: tdd-lat-006
+Method: latitude()
+Input: “6450123 320456”
+Expected: ~58.1
+
+## Point Test: RT90
+Test-ID: tdd-lat-007
+Method: latitude()
+Input: “6450123 1320456”
+Expected: ~58.1
+
+## Point Test: Hög precision
+Test-ID: tdd-lat-008
+Method: latitude()
+Input: “58.412345678 12.567891234”
+Expected: 58.412345678
+
+## Point Test: Låg precision
+Test-ID: tdd-lat-009
+Method: latitude()
+Input: “58.4 12.6”
+Expected: 58.4
+
+
+# Point.longitude()
+
+## Point Test: Decimalgrader grundformat
+Test-ID: tdd-lon-001
+Method: longitude()
+Input: “58.41234 12.56789”
+Expected: 12.56789
+
+## Point Test: DMS format
+Test-ID: tdd-lon-002
+Method: longitude()
+Input: “58°24’44.4”N 12°34’4.4”E”
+Expected: 12.56789
+
+## Point Test: DM format
+Test-ID: tdd-lon-003
+Method: longitude()
+Input: “58° 24.740’ 12° 34.073’”
+Expected: 12.56883
+
+## Point Test: Negativ longitud
+Test-ID: tdd-lon-004
+Method: longitude()
+Input: “40.7128 -74.0060”
+Expected: -74.0060
+
+## Point Test: Väderstreck W
+Test-ID: tdd-lon-005
+Method: longitude()
+Input: “40°42’46.1”N 74°0’21.6”W”
+Expected: -74.00600
+
+## Point Test: SWEREF99TM
+Test-ID: tdd-lon-006
+Method: longitude()
+Input: “6450123 320456”
+Expected: ~12.5
+
+## Point Test: RT90
+Test-ID: tdd-lon-007
+Method: longitude()
+Input: “6450123 1320456”
+Expected: ~12.5
+
+## Point Test: Östlig longitud nära 180
+Test-ID: tdd-lon-008
+Method: longitude()
+Input: “60.5 179.5”
+Expected: 179.5
+
+## Point Test: Västlig longitud nära -180
+Test-ID: tdd-lon-009
+Method: longitude()
+Input: “60.5 -179.5”
+Expected: -179.5
+
+
+# Point.first()
+
+## Point Test: Normal ordning lat-lon
+Test-ID: tdd-first-001
+Method: first()
+Input: “58.41234 12.56789”
+Expected:
+- value: 58.41234
+- axis: Northing
+
+## Point Test: GML-ordning lon-lat
+Test-ID: tdd-first-002
+Method: first()
+Input: “<gml:coordinates>12.56789,58.41234</gml:coordinates>”
+Expected:
+- value: 12.56789
+- axis: Easting
+
+## Point Test: SWEREF99TM ordning
+Test-ID: tdd-first-003
+Method: first()
+Input: “6450123 320456”
+Expected:
+- value: 6450123
+- axis: Northing
+
+## Point Test: WKT POINT ordning
+Test-ID: tdd-first-004
+Method: first()
+Input: “POINT(12.56789 58.41234)”
+Expected:
+- value: 12.56789
+- axis: Easting
+
+
+# Point.last()
+
+## Point Test: Normal ordning lat-lon
+Test-ID: tdd-last-001
+Method: last()
+Input: “58.41234 12.56789”
+Expected:
+- value: 12.56789
+- axis: Easting
+
+## Point Test: GML-ordning lon-lat
+Test-ID: tdd-last-002
+Method: last()
+Input: “<gml:coordinates>12.56789,58.41234</gml:coordinates>”
+Expected:
+- value: 58.41234
+- axis: Northing
+
+## Point Test: SWEREF99TM ordning
+Test-ID: tdd-last-003
+Method: last()
+Input: “6450123 320456”
+Expected:
+- value: 320456
+- axis: Easting
+
+## Point Test: RT90 ordning
+Test-ID: tdd-last-004
+Method: last()
+Input: “6450123 1320456”
+Expected:
+- value: 1320456
+- axis: Easting
+
+
+# Point.original()
+
+## Point Test: WGS84 oförändrad
+Test-ID: tdd-orig-001
+Method: original()
+Input: “58.41234 12.56789”
+Expected:
+- N.value: 58.41234
+- E.value: 12.56789
+- refsys.name: WGS84
+
+## Point Test: SWEREF99TM före transformation
+Test-ID: tdd-orig-002
+Method: original()
+Input: “6450123 320456”
+Expected:
+- N.value: 6450123
+- E.value: 320456
+- refsys.name: SWEREF99TM
+
+## Point Test: RT90 före transformation
+Test-ID: tdd-orig-003
+Method: original()
+Input: “6450123 1320456”
+Expected:
+- N.value: 6450123
+- E.value: 1320456
+- refsys.name: RT90_25gonV
+
+## Point Test: DMS till WGS84
+Test-ID: tdd-orig-004
+Method: original()
+Input: “58°24’44.4”N 12°34’4.4”E”
+Expected:
+- N.value: ~58.412
+- E.value: ~12.568
+- refsys.name: WGS84
+
+
+# Point.reprojectTo()
+
+## Point Test: WGS84 till SWEREF99TM
+Test-ID: tdd-reproj-001
+Method: reprojectTo(SWEREF99TM)
+Input: “58.41234 12.56789”
+Expected:
+- N.value: ~6477000
+- E.value: ~347000
+- refsys.name: SWEREF99TM
+
+## Point Test: WGS84 till RT90
+Test-ID: tdd-reproj-002
+Method: reprojectTo(RT90_25gonV)
+Input: “58.41234 12.56789”
+Expected:
+- N.value: ~6477000
+- E.value: ~1347000
+- refsys.name: RT90_25gonV
+
+## Point Test: SWEREF99TM till WGS84
+Test-ID: tdd-reproj-003
+Method: reprojectTo(WGS84)
+Input: “6450123 320456”
+Expected:
+- N.value: ~58.1
+- E.value: ~12.5
+- refsys.name: WGS84
+
+## Point Test: RT90 till WGS84
+Test-ID: tdd-reproj-004
+Method: reprojectTo(WGS84)
+Input: “6450123 1320456”
+Expected:
+- N.value: ~58.1
+- E.value: ~12.5
+- refsys.name: WGS84
+
+## Point Test: SWEREF99TM till RT90
+Test-ID: tdd-reproj-005
+Method: reprojectTo(RT90_25gonV)
+Input: “6450123 320456”
+Expected:
+- N.value: ~6450000
+- E.value: ~1320000
+- refsys.name: RT90_25gonV
+
+## Point Test: RT90 till SWEREF99TM
+Test-ID: tdd-reproj-006
+Method: reprojectTo(SWEREF99TM)
+Input: “6450123 1320456”
+Expected:
+- N.value: ~6450000
+- E.value: ~320000
+- refsys.name: SWEREF99TM
+
+
+# Point.textBefore()
+
+## Point Test: Med text före
+Test-ID: tdd-textbef-001
+Method: textBefore()
+Input: “Koordinat vid hamnen är 58.41234 12.56789 och position mätt med GPS.”
+Expected: “Koordinat vid hamnen är”
+
+## Point Test: Utan text före
+Test-ID: tdd-textbef-002
+Method: textBefore()
+Input: 
+58.41234 12.56789 är positionen för fyren
+Expected: “”
+
+## Point Test: Med maxchars kort
+Test-ID: tdd-textbef-003
+Method: textBefore(maxchars=15)
+Input: “Detta är en extremt lång text som innehåller koordinat 58.41234 12.56789”
+Expected: “…ller koordinat “
+
+## Point Test: Med maxchars lång
+Test-ID: tdd-textbef-004
+Method: textBefore(maxchars=30)
+Input: “Fartygets position var 58.41234 12.56789 när larmet kom”
+Expected: “Fartygets position var “
+
+## Point Test: Kort text före maxchars
+Test-ID: tdd-textbef-005
+Method: textBefore(maxchars=50)
+Input: “Position: 58.41234 12.56789”
+Expected: “Position: “
+
+## Point Test: Text med specialtecken före
+Test-ID: tdd-textbef-006
+Method: textBefore()
+Input: “Bryggan (nybyggd 2024) vid 58.41234 12.56789 renoveras”
+Expected: “Bryggan (nybyggd 2024) vid “
+
+
+# Point.textAfter()
+
+## Point Test: Med text efter
+Test-ID: tdd-textaft-001
+Method: textAfter()
+Input: “58.41234 12.56789 ligger nära kusten”
+Expected: “ ligger nära kusten”
+
+## Point Test: Utan text efter
+Test-ID: tdd-textaft-002
+Method: textAfter()
+Input: Positionen är 58.41234 12.56789
+Expected: “”
+
+## Point Test: Med maxchars kort
+Test-ID: tdd-textaft-003
+Method: textAfter(maxchars=10)
+Input: “58.41234 12.56789 och sedan kommer mycket lång beskrivning”
+Expected: “ och sedan…”
+
+## Point Test: Med maxchars lång
+Test-ID: tdd-textaft-004
+Method: textAfter(maxchars=30)
+Input: “58.41234 12.56789 vid norra udden”
+Expected: “ vid norra udden”
+
+## Point Test: Text med specialtecken efter
+Test-ID: tdd-textaft-005
+Method: textAfter()
+Input: “58.41234 12.56789 (ungefärlig position)”
+Expected: “ (ungefärlig position)”
+
+
+# Point.originalText()
+
+## Point Test: Decimalgrader i text
+Test-ID: tdd-origtxt-001
+Method: originalText()
+Input: “Båten låg vid 58.41234 12.56789 när olyckan hände.”
+Expected:
+- Contains: “Båten låg vid”
+- Contains: “58.41234”
+- Contains: “12.56789”
+- Contains: “när olyckan hände.”
+
+## Point Test: DMS i text
+Test-ID: tdd-origtxt-002
+Method: originalText()
+Input: “Position N 58°24’44.2” E 12°34’4.4” rapporterad.”
+Expected:
+- Contains: “Position”
+- Contains: “58°24’44.2””
+- Contains: “12°34’4.4””
+- Contains: “rapporterad.”
+
+## Point Test: Med maxchars
+Test-ID: tdd-origtxt-003
+Method: originalText(maxchars=20, ellipse=true)
+Input: “En mycket lång beskrivning av position N 58°24’44.234567” E 12°34’4.456789” som användes i rapporten.”
+Expected:
+- Contains: “…”
+
+## Point Test: Kort text ingen ellipse
+Test-ID: tdd-origtxt-004
+Method: originalText(maxchars=100)
+Input: “Pos 58.41 12.57”
+Expected:
+- Contains: “Pos 58.41 12.57”
+- Contains not: “…”
+
+## Point Test: SWEREF i text
+Test-ID: tdd-origtxt-005
+Method: originalText()
+Input: “Punkten 6450123 320456 markerad på kartan.”
+Expected:
+- Contains: “Punkten”
+- Contains: “6450123”
+- Contains: “320456”
+- Contains: “markerad på kartan.”
+
+
+# Point.context()
+
+## Point Test: Standard kontext
+Test-ID: tdd-ctx-001
+Method: context()
+Input: “Fyren står vid 58.41234 12.56789 på Stora grundet”
+Expected:
+- Contains: “står vid”
+- Contains: “58.41234 12.56789”
+- Contains: “på”
+
+## Point Test: Med maxchars båda sidor
+Test-ID: tdd-ctx-002
+Method: context(maxchars=15)
+Input: “Den gamla fyren står vid 58.41234 12.56789 på det gamla Stora grundet”
+Expected:
+- Contains: “…a fyren står vid”
+- Contains: “58.41234 12.56789”
+- Contains: “på det gamla St…”
+
+## Point Test: Kort text före och efter
+Test-ID: tdd-ctx-003
+Method: context()
+Input: “Vid 58.41234 12.56789 här”
+Expected:
+- Contains: “Vid”
+- Contains: “58.41234 12.56789”
+- Contains: “här”
+
+## Point Test: Ingen text före
+Test-ID: tdd-ctx-004
+Method: context()
+Input: “58.41234 12.56789 markerar gränsen”
+Expected:
+- Contains: “58.41234 12.56789”
+- Contains: “markerar gränsen”
+
+## Point Test: Ingen text efter
+Test-ID: tdd-ctx-005
+Method: context()
+Input: “Gränspunkten ligger på 58.41234 12.56789”
+Expected:
+- Contains: “ligger på”
+- Contains: “58.41234 12.56789”
+
+
+# Point.asText()
+
+## Point Test: Plain format
+Test-ID: tdd-astxt-001
+Method: asText(format=plain)
+Input: 58.41234 12.56789
+Expected: “58.41234 12.56789”
+
+## Point Test: Degrees format med symboler
+Test-ID: tdd-astxt-002
+Method: asText(format=degrees, symbols=true)
+Input: “58.41234 12.56789”
+Expected: “58.41234° 12.56789°”
+
+## Point Test: Degrees format utan symboler
+
+Test-ID: tdd-astxt-003
+Method: asText(format=degrees, symbols=false)
+Input: “58.41234 12.56789”
+Expected: “58.41234 12.56789”
+
+## Point Test: Degrees and minutes format
+Test-ID: tdd-astxt-004
+Method: asText(format=degreesandminutes, symbols=true)
+Input: “58.41234 12.56789”
+Expected: “58° 24.740’ 12° 34.073’”
+
+## Point Test: DMS format
+Test-ID: tdd-astxt-005
+Method: asText(format=degreesminutesandseconds, symbols=true)
+Input: “58.41234 12.56789”
+Expected: “58° 24’ 44.4” 12° 34’ 4.4””
+
+## Point Test: Direction letter before
+Test-ID: tdd-astxt-006
+Method: asText(directionLetter=before)
+Input: “58.41234 12.56789”
+Expected: “N 58.41234 E 12.56789”
+
+## Point Test: Direction letter after
+Test-ID: tdd-astxt-007
+Method: asText(directionLetter=after)
+Input: “58.41234 12.56789”
+Expected: “58.41234 N 12.56789 E”
+
+## Point Test: Negativa med direction before
+Test-ID: tdd-astxt-008
+Method: asText(directionLetter=before)
+Input: “-34.9285 138.6007”
+Expected: “S 34.9285 E 138.6007”
+
+## Point Test: Negativa med direction after
+Test-ID: tdd-astxt-009
+Method: asText(directionLetter=after)
+Input: “-34.9285 -118.2436”
+Expected: “34.9285 S 118.2436 W”
+
+## Point Test: Compact format DM
+Test-ID: tdd-astxt-010
+Method: asText(format=degreesandminutes, compact=true, symbols=true)
+Input: “58.41234 12.56789”
+Expected: “58°24.740’12°34.073’”
+
+## Point Test: Compact format DMS
+Test-ID: tdd-astxt-011
+Method: asText(format=degreesminutesandseconds, compact=true, symbols=true)
+Input: “58.41234 12.56789”
+Expected: “58°24’44.4”12°34’4.4””
+
+## Point Test: Decimals 0
+Test-ID: tdd-astxt-012
+Method: asText(decimals=0)
+Input: “58.41234 12.56789”
+Expected: “58 13”
+
+## Point Test: Decimals 1
+Test-ID: tdd-astxt-013
+Method: asText(decimals=1)
+Input: “58.41234 12.56789”
+Expected: “58.4 12.6”
+
+## Point Test: Decimals 2
+Test-ID: tdd-astxt-014
+Method: asText(decimals=2)
+Input: “58.41234 12.56789”
+Expected: “58.41 12.57”
+
+## Point Test: Decimals 3
+
+Test-ID: tdd-astxt-015
+Method: asText(decimals=3)
+Input: “58.41234 12.56789”
+Expected: “58.412 12.568”
+
+## Point Test: Decimals 6
+Test-ID: tdd-astxt-016
+Method: asText(decimals=6)
+Input: “58.41234 12.56789”
+Expected: “58.412340 12.567890”
+
+## Point Test: DMS med direction och compact
+Test-ID: tdd-astxt-017
+Method: asText(format=degreesminutesandseconds, directionLetter=after, compact=true, symbols=true)
+Input: “58.41234 12.56789”
+Expected: “58°24’44.4”N12°34’4.4”E”
+
+## Point Test: DM med direction before
+Test-ID: tdd-astxt-018
+Method: asText(format=degreesandminutes, directionLetter=before, symbols=true)
+Input: “58.41234 12.56789”
+Expected: “N 58° 24.740’ E 12° 34.073’”
+
+
+# Point.rating()
+
+## Point Test: Hög precision 5 decimaler
+Test-ID: tdd-rating-001
+Method: rating()
+Input: “58.41234 12.56789”
+Expected: > 0.9
+
+## Point Test: Hög precision DMS
+Test-ID: tdd-rating-002
+Method: rating()
+Input: “58°24’44.4”N 12°34’4.4”E”
+Expected: > 0.9
+
+## Point Test: Medel precision 3 decimaler
+Test-ID: tdd-rating-003
+Method: rating()
+Input: “58.412 12.568”
+Expected: 0.7 < x < 0.9
+
+## Point Test: Medel precision DM
+Test-ID: tdd-rating-004
+Method: rating()
+Input: “58° 24.7’ 12° 34.1’”
+Expected: 0.7 < x < 0.9
+
+## Point Test: Låg precision 1 decimal
+Test-ID: tdd-rating-005
+Method: rating()
+Input: “58.4 12.6”
+Expected: < 0.7
+
+## Point Test: Låg precision hela grader
+Test-ID: tdd-rating-006
+Method: rating()
+Input: “N58 E13”
+Expected: < 0.5
+
+## Point Test: Mycket hög precision 8 decimaler
+Test-ID: tdd-rating-007
+Method: rating()
+Input: “58.41234567 12.56789012”
+Expected: > 0.95
+
+## Point Test: SWEREF precision
+Test-ID: tdd-rating-008
+Method: rating()
+Input: “6450123 320456”
+Expected: > 0.9
+
+
+# Point.maxErrors()
+
+## Point Test: Hög precision små fel
+Test-ID: tdd-maxerr-001
+Method: maxErrors()
+Input: “58.41234 12.56789”
+Expected:
+- N: 0.5 < 0.6
+- E: 0.2 < 0.3
+
+## Point Test: Medel precision
+Test-ID: tdd-maxerr-002
+Method: maxErrors()
+Input: “58.412 12.568”
+Expected:
+- N: 50 < 60
+- E: 20 < 30
+
+## Point Test: Låg precision 1 decimal
+Test-ID: tdd-maxerr-003
+Method: maxErrors()
+Input: “58.4 12.6”
+Expected:
+- N: 5000 < 6000
+- E: 2000 < 3000
+
+## Point Test: DMS precision
+Test-ID: tdd-maxerr-005
+Method: maxErrors()
+Input: “58°24’44.4”N 12°34’4.4”E”
+Expected:
+- N: 1 < 3
+- E: 1 < 3
+
+## Point Test: DM precision
+
+Test-ID: tdd-maxerr-006
+Method: maxErrors()
+Input: “58° 24.7’ 12° 34.1’”
+Expected:
+
+- N: < 100 meters
+- E: < 100 meters
+
+
+# Point.maxErrorBounds()
+
+## Point Test: Returnerar bounds med medelprecision
+Test-ID: tdd-maxerrb-001
+Method: maxErrorBounds()
+Input: “58.412 12.568”
+Expected:
+- Nmin: ~58.4115
+- Nmax: ~58.4125
+- Emin: ~12.5675
+- Emax: ~12.5685
+
+## Point Test: Returnerar bounds med hög precision
+Test-ID: tdd-maxerrb-002
+Method: maxErrorBounds()
+Input: “58.41234 12.56789”
+Expected:
+- Nmin: ~58.412335
+- Nmax: ~58.412345
+- Emin: ~12.567885
+- Emax: ~12.567895
+
+## Point Test: Returnerar bounds med låg precision
+Test-ID: tdd-maxerrb-003
+Method: maxErrorBounds()
+Input: “58.4 12.6”
+Expected:
+- Nmin: ~58.35
+- Nmax: ~58.45
+- Emin: ~12.55
+- Emax: ~12.65
+
+## Point Test: Bounds för DMS
+Test-ID: tdd-maxerrb-004
+Method: maxErrorBounds()
+Input: “58°24’44”N 12°34’4”E”
+Expected:
+- Nmin: ~58.412
+- Nmax: ~58.413
+- Emin: ~12.567
+- Emax: ~12.568
+
+
+# BoundingBox.asLatLngArray()
+
+## BoundingBox Test: Returnerar korrekt array
+Test-ID: tdd-bbox-arr-001
+Method: asLatLngArray()
+Input: “58.0, 12.0, 59.0, 13.0”
+Expected: 
+[[58,12],[58,13],[59,13],[59,12]]
+
+## BoundingBox Test: Liten bounding box
+Test-ID: tdd-bbox-arr-002
+Method: asLatLngArray()
+Input: “58.4, 12.5, 58.5, 12.6”
+Expected: 
+[[58.4,12.5],[58.4,12.6],[58.5,12.6],[58.5,12.5]]
+
+## BoundingBox Test: Negativa värden
+Test-ID: tdd-bbox-arr-003
+Method: asLatLngArray()
+Input: “-35.0, -60.0, -34.0, -59.0”
+Expected: 
+[[-35,-60],[-35,-59],[-34,-59],[-34,-60]]
+
+## BoundingBox Test: Över nollmeridianen
+Test-ID: tdd-bbox-arr-004
+Method: asLatLngArray()
+Input: “50.0, -5.0, 51.0, 5.0”
+Expected: 
+[[50,-5],[50,5],[51,5],[51,-5]]
+
+
+# BoundingBox.covers()
+
+## BoundingBox Test: Punkt mitt i box
+Test-ID: tdd-bbox-cov-001
+Method: covers()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: 58.5, 12.5
+Expected: true
+
+## BoundingBox Test: Punkt utanför norr
+Test-ID: tdd-bbox-cov-002
+Method: covers()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: 59.5, 12.5
+Expected: false
+
+## BoundingBox Test: Punkt utanför söder
+Test-ID: tdd-bbox-cov-003
+Method: covers()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: 57.5, 12.5
+Expected: false
+
+## BoundingBox Test: Punkt utanför öster
+Test-ID: tdd-bbox-cov-004
+Method: covers()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: 58.5, 13.5
+Expected: false
+
+## BoundingBox Test: Punkt utanför väster
+Test-ID: tdd-bbox-cov-005
+Method: covers()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: 58.5, 11.5
+Expected: false
+
+## BoundingBox Test: På min-gräns lat
+Test-ID: tdd-bbox-cov-006
+Method: covers()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: 58.0, 12.5
+Expected: true
+
+## BoundingBox Test: På min-gräns lon
+Test-ID: tdd-bbox-cov-007
+Method: covers()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: 58.5, 12.0
+Expected: true
+
+## BoundingBox Test: På max-gräns lat
+Test-ID: tdd-bbox-cov-008
+Method: covers()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: 59.0, 12.5
+Expected: true
+
+## BoundingBox Test: På max-gräns lon
+Test-ID: tdd-bbox-cov-009
+Method: covers()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: 58.5, 13.0
+Expected: true
+
+## BoundingBox Test: Hörn min-min
+Test-ID: tdd-bbox-cov-010
+Method: covers()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: 58.0, 12.0
+Expected: true
+
+## BoundingBox Test: Hörn max-max
+Test-ID: tdd-bbox-cov-011
+Method: covers()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: 59.0, 13.0
+Expected: true
+
+## BoundingBox Test: Med SWEREF transformation
+Test-ID: tdd-bbox-cov-012
+Method: covers()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: 6450123 320456
+Expected: true
+
+## BoundingBox Test: Med RT90 transformation
+Test-ID: tdd-bbox-cov-013
+Method: covers()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: 6450123 1320456
+Expected: true
+
+## BoundingBox Test: Negativ bounding box
+Test-ID: tdd-bbox-cov-014
+Method: covers()
+Input:
+- Bounds: -35.0, -60.0, -34.0, -59.0
+- Point: -34.5, -59.5
+Expected: true
+
+## BoundingBox Test: Mycket liten box
+Test-ID: tdd-bbox-cov-015
+Method: covers()
+Input:
+- Bounds: 58.41, 12.56, 58.42, 12.57
+- Point: 58.415, 12.565
+Expected: true
+
+
+# BoundingBox.coversPoint()
+
+## BoundingBox Test: Point-objekt inuti
+Test-ID: tdd-bbox-covp-001
+Method: coversPoint()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: “58.41234 12.56789”
+Expected: true
+
+## BoundingBox Test: Point-objekt utanför
+Test-ID: tdd-bbox-covp-002
+Method: coversPoint()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: “60.5 14.5”
+Expected: false
+
+## BoundingBox Test: Point-objekt på gräns
+Test-ID: tdd-bbox-covp-003
+Method: coversPoint()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: “59.0 13.0”
+Expected: true
+
+## BoundingBox Test: Point-objekt SWEREF
+Test-ID: tdd-bbox-covp-004
+Method: coversPoint()
+Input:
+- Bounds: 58.0, 12.0, 59.0, 13.0
+- Point: “6450123 320456”
+ Expected: true
+
+
+# CoordFinder.groups()
+
+## CoordFinder Test: En grupp nära punkter
+Test-ID: tdd-groups-001
+Method: groups()
+Input: 
+58.41 12.56
+58.42 12.57
+58.43 12.58
+Expected:
+- Count: 1
+
+## CoordFinder Test: Två separata grupper
+Test-ID: tdd-groups-002
+Method: groups()
+Input: 
+58.41 12.56
+58.42 12.57
+
+60.50 15.30
+60.51 15.31
+Expected:
+- Count: 2
+
+## CoordFinder Test: Tre grupper
+Test-ID: tdd-groups-003
+Method: groups()
+Input: 
+58.41 12.56
+60.50 15.30
+
+60.51 15.31
+
+65.58 22.15
+65.59 22.16
+Expected:
+- Count: 3
+
+## CoordFinder Test: Gränsvärde för gruppering
+Test-ID: tdd-groups-004
+Method: groups()
+Input: 
+58.41 12.56
+58.45 12.60
+58.50 12.65
+Expected:
+- Count: 1
+
+## CoordFinder Test: Blandade koordinatsystem
+Test-ID: tdd-groups-005
+Method: groups()
+Input: 
+58.41 12.56
+6450123 320456
+
+60.50 15.30
+Expected:
+- Count: 2
+
+
+# CoordFinder.foundRatings()
+
+## CoordFinder Test: Olika precision ratings
+Test-ID: tdd-foundrat-001
+Method: foundRatings()
+Input: “58.41234 12.56789 N58 E13 58°24’44”N 12°34’4”E”
+Expected:
+- Count: 3
+
+## CoordFinder Test: Endast hög precision
+
+Test-ID: tdd-foundrat-002
+Method: foundRatings()
+Input: “58.41234 12.56789 58.41235 12.56790”
+Expected:
+- Count: 1
+
+## CoordFinder Test: Blandad precision
+Test-ID: tdd-foundrat-003
+Method: foundRatings()
+Input: “58.4 12.6 58.41 12.57 58.412 12.568 58.4123 12.5679”
+Expected:
+- Count: 4
+
+## CoordFinder Test: Samma precision olika format
+Test-ID: tdd-foundrat-004
+Method: foundRatings()
+Input: “58.41234 12.56789 58°24’44.4”N 12°34’4.4”E”
+Expected:
+- Count: 1
+
+
+# CoordFinder.ratingIndex()
+
+## CoordFinder Test: Hitta index för hög rating
+Test-ID: tdd-ratidx-001
+Method: ratingIndex(0.95)
+Input: “58.41234 12.56789 N58 E13”
+Expected: 0
+
+## CoordFinder Test: Hitta index för medel rating
+Test-ID: tdd-ratidx-002
+Method: ratingIndex(0.7)
+Input: “N58 E13 58.412 12.568 58.41234 12.56789”
+Expected: 1
+
+## CoordFinder Test: Hitta index för låg rating
+Test-ID: tdd-ratidx-003
+Method: ratingIndex(0.5)
+Input: “58.41234 12.56789 N58,0 E13,5”
+Expected: 1
+
+## CoordFinder Test: Rating som inte finns
+Test-ID: tdd-ratidx-004
+Method: ratingIndex(0.99)
+Input: “58.412 12.568 N58,0 E13,5”
+Expected: 1
+
+
+# CoordFinder.points(rating)
+
+## CoordFinder Test: Filtrera på hög rating
+Test-ID: tdd-points-rat-001
+Method: points(rating=0.95)
+Input: 58.41234 12.56789 58.4 12.6 58°24’44.4”N 12°34’4.4”E
+Expected:
+- Count: 2
+
+## CoordFinder Test: Filtrera på medel rating
+Test-ID: tdd-points-rat-002
+Method: points(rating=0.8)
+Input: “58.41234 12.56789 58.4 12.6 N58,4 E13 58°24’44.4”N 12°34’4.4”E”
+Expected:
+- Count: 2
+
+## CoordFinder Test: Filtrera på låg rating
+
+Test-ID: tdd-points-rat-003
+Method: points(rating=0.5)
+Input: “58.41234 12.56789 N58,4 E13,2 58°24’44”N 12°34’4”E”
+Expected:
+- Count: 3
+
+## CoordFinder Test: Mycket hög rating threshold
+Test-ID: tdd-points-rat-004
+Method: points(rating=1.0)
+Input: “58.4123456 12.5678901 58.412 12.568”
+Expected:
+- Count: 1
+
+## CoordFinder Test: Mycket låg rating threshold
+Test-ID: tdd-points-rat-005
+Method: points(rating=0.1)
+Input: “58.41234 12.56789 N58,2 E13,8”
+Expected:
+- Count: 2
+
+
+# log()
+
+## CoordFinder Test: Loggutskrift för WGS84
+Test-ID: tdd-log-001
+Method: log()
+Input: “58.41234 12.56789”
+Expected:
+- Contains: “WGS84”
+- Contains: “58.41234”
+- Contains: “12.56789”
+
+## CoordFinder Test: Loggutskrift för DMS
+Test-ID: tdd-log-002
+Method: log()
+Input: “58°24’44.4”N 12°34’4.4”E”
+Expected:
+- Contains: “degrees” eller “minutes” eller “seconds”
+
+## CoordFinder Test: Loggutskrift för SWEREF99TM
+Test-ID: tdd-log-003
+Method: log()
+Input: “6450123 320456”
+Expected:
+- Contains: “SWEREF99TM”
+
+## CoordFinder Test: Loggutskrift för RT90
+Test-ID: tdd-log-004
+Method: log()
+Input: “6450123 1320456”
+Expected:
+- Contains: “RT90”
+
+## CoordFinder Test: Loggutskrift för flera punkter
+Test-ID: tdd-log-005
+Method: log()
+Input: “58.41234 12.56789
+60.50 15.30
+6450123 320456”
+Expected:
+- Contains: “3”
+
+## CoordFinder Test: Loggutskrift med kontext
+Test-ID: tdd-log-006
+Method: log()
+Input: “Fyren vid 58.41234 12.56789 renoveras”
+Expected:
+- Contains: “Fyren vid” 
+
