@@ -1,5 +1,13 @@
-// coordfinder.js - Coordinate Finder Implementation
-// Version, author, and license are defined as CF.version, CF.author, CF.license
+/**
+ * CoordFinder - Coordinate Parser and Converter
+ * 
+ * @version 5.0-beta.5
+ * @author Bernt Rane, Claude & Ona
+ * @license MIT
+ * @description Parses and converts coordinates between different formats and reference systems.
+ *              Supports WGS84, SWEREF99, RT90, and various coordinate formats.
+ * @repository https://github.com/aieuren/coordfinder
+ */
 
 (function(global) {
 'use strict';
@@ -196,13 +204,14 @@ BoundingBox.prototype.toString = function() {
 };
 
 // ——————————— RefSys ——————————— //
-function RefSys(name, code, unit, boundingBox, projDef, description) {
+function RefSys(name, code, unit, boundingBox, projDef, description, canonicalName) {
     this.name = name;
     this.code = code;
     this.unit = unit;
     this.bounds = boundingBox;
     this.projDef = projDef;
     this.description = description || "";
+    this.canonicalName = canonicalName || name;  // Canonical name for test comparison
 }
 
 RefSys.prototype.contains = function(c1, c2, ordered) {
@@ -240,19 +249,26 @@ RefSys.Unknown = new RefSys("Unknown reference system", 0, CoordUnit.Unknown,
 RefSys.WGS84 = new RefSys("WGS84", 4326, CoordUnit.Degrees, 
     new BoundingBox(-90.0, -180.0, 90.0, 180.0), 
     "+title=WGS 84 (long/lat) +proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees",
-    "WGS84 är ett globalt koordinatsystem");
+    "WGS84 är ett globalt koordinatsystem",
+    "WGS84");
 
 RefSys.WGS84NorthernEurope = new RefSys("WGS84 i norra Europa", 4326, CoordUnit.Degrees, 
     new BoundingBox(49.0, 0.0, 75.0, 32.0), 
-    "+title=WGS 84 (long/lat) +proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees");
+    "+title=WGS 84 (long/lat) +proj=longlat +ellps=WGS84 +datum=WGS84 +units=degrees",
+    "",
+    "WGS84");
 
 RefSys.SWEREF99TM = new RefSys("SWEREF99 TM", 3006, CoordUnit.Meters, 
     new BoundingBox(6100000, 200000, 7700000, 1000000), 
-    "+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
+    "+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
+    "",
+    "SWEREF99TM");
 
 RefSys.RT90_25gonV = new RefSys("RT90 2.5 gon V", 3021, CoordUnit.Meters, 
     new BoundingBox(6100000, 1200000, 7700000, 1900000), 
-    "+proj=tmerc +lat_0=0 +lon_0=15.80827777777778 +k=1 +x_0=1500000 +y_0=0 +ellps=bessel +units=m +no_defs");
+    "+proj=tmerc +lat_0=0 +lon_0=15.80827777777778 +k=1 +x_0=1500000 +y_0=0 +ellps=bessel +units=m +no_defs",
+    "",
+    "RT90_25gonV");
 
 RefSys.ETRS89 = new RefSys("ETRS89", 4258, CoordUnit.Degrees, 
     new BoundingBox(34.5000, -10.6700, 71.0500, 31.5500), 
@@ -361,8 +377,12 @@ TextParser.prototype.getLog = function() {
 TextParser.prototype.lineNoFromIndex = function(index) {
     var pos = 0;
     for (var i = 0; i < this.lines.length; i++) {
-        pos += this.lines[i].length + 1; // +1 for newline
-        if (pos > index) return i;
+        var nextPos = pos + this.lines[i].length + 1; // +1 for newline
+        // If index is before the next line starts, it's on this line
+        if (index < nextPos - 1 || (i === this.lines.length - 1)) {
+            return i;
+        }
+        pos = nextPos;
     }
     return this.lines.length - 1;
 };
@@ -434,14 +454,14 @@ var Patterns = {
     
     // Degrees, minutes, seconds: 59°19'44.2"N or 59°19'44"N or 60°30'45.5" (seconds marker optional at end)
     // Use [ \t] to avoid matching across newlines
-    degsMinsSecs: /([NSEWÖV])?[ \t]*(\d+)[ \t]*[°º][ \t]*(\d+)[ \t]*['′´`][ \t]*(\d+(?:[,.]?\d+)?)[ \t]*["″]?[ \t]*([NSEWÖV])?/gi,
+    degsMinsSecs: /([NSEWÖV])?[ \t]*(\d+)[ \t]*[°º][ \t]*(\d+)[ \t]*['′´`\u2019][ \t]*(\d+(?:[,.]?\d+)?)[ \t]*["″\u201D]?[ \t]*([NSEWÖV])?/gi,
     
     // Grader-minuter med minustecken: 58-30 or 6230-1545 or 5820N-1145E
     degsMinus: /([NSEWÖV])?(\d{2,4})([NSEWÖV])?-(\d{2,4})([NSEWÖV])?/gi,
     
     // Degrees and minutes: 59°19.736'N or 59°19,736'N
     // Use [ \t] to avoid matching across newlines
-    degsMins: /([NSEWÖV])?[ \t]*(\d+)[ \t]*[°º\u030A][ \t]*(\d+(?:[,.]?\d+)?)[ \t]*['′´`]?[ \t]*([NSEWÖV])?/gi,
+    degsMins: /([NSEWÖV])?[ \t]*(\d+)[ \t]*[°º\u030A][ \t]*(\d+(?:[,.]?\d+)?)[ \t]*['′´`\u2019]?[ \t]*([NSEWÖV])?/gi,
     
     // Degrees and minutes without degree symbol: 60 30,5 or 019 15,25 or N60 30,5
     degsMinsPlain: /\b([NSEWÖVO])?(\d{2,3})[ \t]+(\d{1,2}[,.]\d+)\b/gi,
@@ -517,10 +537,18 @@ Snippet.prototype.textBefore = function(maxChars, showEllipse) {
     var lineText = this.parser.lineText(this.lineNo);
     var lineStart = this.parser.originalText.indexOf(lineText);
     var relativeIndex = this.index - lineStart;
-    var before = lineText.substring(0, relativeIndex).trim();
+    var before = lineText.substring(0, relativeIndex);
     
     if (maxChars && before.length > maxChars) {
-        before = (showEllipse ? "..." : "") + before.substring(before.length - maxChars);
+        // Take last maxChars characters, ellipsis is extra
+        before = before.substring(before.length - maxChars);
+        // Trim leading space if present
+        before = before.trimStart();
+        if (showEllipse) {
+            before = "…" + before;
+        }
+    } else {
+        before = before.trim();
     }
     return before;
 };
@@ -530,10 +558,18 @@ Snippet.prototype.textAfter = function(maxChars, showEllipse) {
     var lineText = this.parser.lineText(this.lineNo);
     var lineStart = this.parser.originalText.indexOf(lineText);
     var relativeIndex = this.index - lineStart;
-    var after = lineText.substring(relativeIndex + this.text.length).trim();
+    var after = lineText.substring(relativeIndex + this.text.length);
     
     if (maxChars && after.length > maxChars) {
-        after = after.substring(0, maxChars) + (showEllipse ? "..." : "");
+        // Take first maxChars characters, ellipsis is extra
+        after = after.substring(0, maxChars);
+        // Trim trailing space if present
+        after = after.trimEnd();
+        if (showEllipse) {
+            after = after + "…";
+        }
+    } else {
+        after = after.trim();
     }
     return after;
 };
@@ -1295,7 +1331,7 @@ Coord.prototype.asDebugText = function() {
 // ——————————— FormatOptions ——————————— //
 function FormatOptions(opts) {
     this.format = 'plain';
-    this.directionLetter = 'before';
+    this.directionLetter = null;  // null means no direction letters
     this.symbols = false;
     this.compact = false;
     this.decimals = 'auto';
@@ -1332,6 +1368,14 @@ function Point(N, E, refsys) {
     this.reprojectedFrom = null;
     this._rating = null;
     this._ratingLog = [];
+    
+    // Set axis if not already set
+    if (this.N && this.N.axis === CoordAxis.Unknown) {
+        this.N.axis = CoordAxis.Northing;
+    }
+    if (this.E && this.E.axis === CoordAxis.Unknown) {
+        this.E.axis = CoordAxis.Easting;
+    }
 }
 
 Point.prototype.latitude = function() {
@@ -1355,12 +1399,26 @@ Point.prototype.longitude = function() {
 Point.prototype.first = function() {
     if (!this.N || !this.E) return null;
     if (!this.N.parsedFrom || !this.E.parsedFrom) return this.N;
+    // If indices are equal (parsed as pair), check if lon-first format (GML, WKT)
+    if (this.N.parsedFrom.index === this.E.parsedFrom.index) {
+        if (this.N.parsedFrom._isLonFirst) {
+            return this.E;  // Lon (E) comes first in GML/WKT
+        }
+        return this.N;  // Normal lat-lon order
+    }
     return this.N.parsedFrom.index < this.E.parsedFrom.index ? this.N : this.E;
 };
 
 Point.prototype.last = function() {
     if (!this.N || !this.E) return null;
     if (!this.N.parsedFrom || !this.E.parsedFrom) return this.E;
+    // If indices are equal (parsed as pair), check if lon-first format (GML, WKT)
+    if (this.N.parsedFrom.index === this.E.parsedFrom.index) {
+        if (this.N.parsedFrom._isLonFirst) {
+            return this.N;  // Lat (N) comes last in GML/WKT
+        }
+        return this.E;  // Normal lat-lon order
+    }
     return this.N.parsedFrom.index > this.E.parsedFrom.index ? this.N : this.E;
 };
 
@@ -1381,16 +1439,11 @@ Point.prototype.textAfter = function(maxChars) {
 Point.prototype.originalText = function(opts) {
     if (!this.N || !this.E) return "";
     var first = this.first();
-    var last = this.last();
-    if (!first.parsedFrom || !last.parsedFrom) return "";
+    if (!first.parsedFrom || !first.parsedFrom.parser) return "";
     
-    var startIdx = first.parsedFrom.index;
-    var endIdx = last.parsedFrom.index + last.parsedFrom.text.length;
-    
-    if (first.parsedFrom.parser) {
-        return first.parsedFrom.parser.originalText.substring(startIdx, endIdx);
-    }
-    return "";
+    // Return the full line where the coordinate was found
+    var lineNo = first.parsedFrom.lineNo;
+    return first.parsedFrom.parser.lineText(lineNo);
 };
 
 Point.prototype.context = function(opts) {
@@ -1403,33 +1456,197 @@ Point.prototype.context = function(opts) {
 
 Point.prototype.asText = function(explicitOpts) {
     var opts = new FormatOptions(explicitOpts);
-    var parts = [];
     
     if (!this.N || !this.E) return "";
     
-    var nVal = Math.abs(this.N.value);
-    var eVal = Math.abs(this.E.value);
-    
-    var nDir = this.N.value >= 0 ? "N" : "S";
-    var eDir = this.E.value >= 0 ? "E" : "W";
-    
-    var space = opts.compact ? "" : " ";
-    
-    if (opts.directionLetter === 'before') {
-        parts.push(nDir + space + nVal);
-        parts.push(eDir + space + eVal);
-    } else if (opts.directionLetter === 'after') {
-        parts.push(nVal + space + nDir);
-        parts.push(eVal + space + eDir);
+    // Get lat/lon values (convert to WGS84 if needed)
+    var lat, lon;
+    if (this.refsys.unit === CoordUnit.Degrees) {
+        lat = this.N.value;
+        lon = this.E.value;
     } else {
-        parts.push(nVal.toString());
-        parts.push(eVal.toString());
+        var wgs = this.reprojectTo(RefSys.WGS84);
+        lat = wgs.N.value;
+        lon = wgs.E.value;
     }
     
-    var result = parts.join(opts.compact ? " " : ", ");
+    // Format lat/lon as strings with proper decimals
+    var latStr, lonStr;
+    if (opts.decimals !== 'auto' && typeof opts.decimals === 'number') {
+        latStr = lat.toFixed(opts.decimals);
+        lonStr = lon.toFixed(opts.decimals);
+    } else {
+        latStr = lat.toString();
+        lonStr = lon.toString();
+    }
     
-    if (opts.localized) {
-        result = result.replace(/\./g, ',');
+    var format = opts.format || 'plain';
+    
+    // Handle direction letters for plain/degrees format
+    if ((format === 'plain' || format === 'degrees') && opts.directionLetter) {
+        var nVal = Math.abs(lat);
+        var eVal = Math.abs(lon);
+        var nDir = lat >= 0 ? "N" : "S";
+        var eDir = lon >= 0 ? "E" : "W";
+        
+        var nValStr, eValStr;
+        if (opts.decimals !== 'auto' && typeof opts.decimals === 'number') {
+            nValStr = nVal.toFixed(opts.decimals);
+            eValStr = eVal.toFixed(opts.decimals);
+        } else {
+            nValStr = nVal.toString();
+            eValStr = eVal.toString();
+        }
+        
+        if (format === 'degrees' && opts.symbols) {
+            nValStr += "°";
+            eValStr += "°";
+        }
+        
+        if (opts.directionLetter === 'before') {
+            return nDir + " " + nValStr + " " + eDir + " " + eValStr;
+        } else if (opts.directionLetter === 'after') {
+            return nValStr + " " + nDir + " " + eValStr + " " + eDir;
+        }
+    }
+    
+    // Format based on requested format
+    switch(format.toLowerCase()) {
+        case 'plain':
+            return latStr + " " + lonStr;
+        
+        case 'degrees':
+            if (opts.symbols) {
+                return latStr + "° " + lonStr + "°";
+            } else {
+                return latStr + " " + lonStr;
+            }
+        
+        case 'degreesandminutes':
+        case 'dm':
+            return this._formatDM(lat, lon, opts);
+        
+        case 'degreesminutesandseconds':
+        case 'dms':
+            return this._formatDMS(lat, lon, opts);
+        
+        case 'sweref99tm':
+            var sweref = this.reprojectTo(RefSys.SWEREF99TM);
+            return Math.round(sweref.N.value) + " " + Math.round(sweref.E.value);
+        
+        case 'rt90':
+            var rt90 = this.reprojectTo(RefSys.RT90_25gonV);
+            return Math.round(rt90.N.value) + " " + Math.round(rt90.E.value);
+        
+        default:
+            return lat + " " + lon;
+    }
+};
+
+Point.prototype._formatDM = function(lat, lon, opts) {
+    var latAbs = Math.abs(lat);
+    var lonAbs = Math.abs(lon);
+    
+    var latDeg = Math.floor(latAbs);
+    var latMin = (latAbs - latDeg) * 60;
+    
+    var lonDeg = Math.floor(lonAbs);
+    var lonMin = (lonAbs - lonDeg) * 60;
+    
+    var latDir = lat >= 0 ? "N" : "S";
+    var lonDir = lon >= 0 ? "E" : "W";
+    
+    var minSymbol = "\u2019";  // Use fancy quote U+2019 (RIGHT SINGLE QUOTATION MARK)
+    
+    var result;
+    if (opts.symbols) {
+        if (opts.compact) {
+            // Compact format: no spaces
+            if (opts.directionLetter === 'before') {
+                result = latDir + latDeg + "°" + latMin.toFixed(3) + minSymbol + 
+                         lonDir + lonDeg + "°" + lonMin.toFixed(3) + minSymbol;
+            } else if (opts.directionLetter === 'after') {
+                result = latDeg + "°" + latMin.toFixed(3) + minSymbol + latDir + 
+                         lonDeg + "°" + lonMin.toFixed(3) + minSymbol + lonDir;
+            } else {
+                // No direction letters
+                result = latDeg + "°" + latMin.toFixed(3) + minSymbol + 
+                         lonDeg + "°" + lonMin.toFixed(3) + minSymbol;
+            }
+        } else {
+            // Normal format with spaces
+            if (opts.directionLetter === 'before') {
+                result = latDir + " " + latDeg + "° " + latMin.toFixed(3) + minSymbol + " " + 
+                         lonDir + " " + lonDeg + "° " + lonMin.toFixed(3) + minSymbol;
+            } else if (opts.directionLetter === 'after') {
+                result = latDeg + "° " + latMin.toFixed(3) + minSymbol + " " + latDir + " " + 
+                         lonDeg + "° " + lonMin.toFixed(3) + minSymbol + " " + lonDir;
+            } else {
+                // No direction letters
+                result = latDeg + "° " + latMin.toFixed(3) + minSymbol + " " + 
+                         lonDeg + "° " + lonMin.toFixed(3) + minSymbol;
+            }
+        }
+    } else {
+        result = latDeg + " " + latMin.toFixed(3) + " " + latDir + " " + 
+                 lonDeg + " " + lonMin.toFixed(3) + " " + lonDir;
+    }
+    
+    return result;
+};
+
+Point.prototype._formatDMS = function(lat, lon, opts) {
+    var latAbs = Math.abs(lat);
+    var lonAbs = Math.abs(lon);
+    
+    var latDeg = Math.floor(latAbs);
+    var latMinDec = (latAbs - latDeg) * 60;
+    var latMin = Math.floor(latMinDec);
+    var latSec = (latMinDec - latMin) * 60;
+    
+    var lonDeg = Math.floor(lonAbs);
+    var lonMinDec = (lonAbs - lonDeg) * 60;
+    var lonMin = Math.floor(lonMinDec);
+    var lonSec = (lonMinDec - lonMin) * 60;
+    
+    var latDir = lat >= 0 ? "N" : "S";
+    var lonDir = lon >= 0 ? "E" : "W";
+    
+    var minSymbol = "\u2019";  // Use fancy quote U+2019 (RIGHT SINGLE QUOTATION MARK)
+    var secSymbol = "\u201D";  // Use fancy quote U+201D (RIGHT DOUBLE QUOTATION MARK)
+    
+    var result;
+    if (opts.symbols) {
+        if (opts.compact) {
+            // Compact format: no spaces
+            if (opts.directionLetter === 'before') {
+                result = latDir + latDeg + "°" + latMin + minSymbol + latSec.toFixed(1) + secSymbol + 
+                         lonDir + lonDeg + "°" + lonMin + minSymbol + lonSec.toFixed(1) + secSymbol;
+            } else if (opts.directionLetter === 'after') {
+                result = latDeg + "°" + latMin + minSymbol + latSec.toFixed(1) + secSymbol + latDir + 
+                         lonDeg + "°" + lonMin + minSymbol + lonSec.toFixed(1) + secSymbol + lonDir;
+            } else {
+                // No direction letters
+                result = latDeg + "°" + latMin + minSymbol + latSec.toFixed(1) + secSymbol + 
+                         lonDeg + "°" + lonMin + minSymbol + lonSec.toFixed(1) + secSymbol;
+            }
+        } else {
+            // Normal format with spaces
+            if (opts.directionLetter === 'before') {
+                result = latDir + " " + latDeg + "° " + latMin + minSymbol + " " + latSec.toFixed(1) + secSymbol + " " + 
+                         lonDir + " " + lonDeg + "° " + lonMin + minSymbol + " " + lonSec.toFixed(1) + secSymbol;
+            } else if (opts.directionLetter === 'after') {
+                result = latDeg + "° " + latMin + minSymbol + " " + latSec.toFixed(1) + secSymbol + " " + latDir + " " + 
+                         lonDeg + "° " + lonMin + minSymbol + " " + lonSec.toFixed(1) + secSymbol + " " + lonDir;
+            } else {
+                // No direction letters
+                result = latDeg + "° " + latMin + minSymbol + " " + latSec.toFixed(1) + secSymbol + " " + 
+                         lonDeg + "° " + lonMin + minSymbol + " " + lonSec.toFixed(1) + secSymbol;
+            }
+        }
+    } else {
+        result = latDeg + " " + latMin + " " + latSec.toFixed(1) + " " + latDir + " " + 
+                 lonDeg + " " + lonMin + " " + lonSec.toFixed(1) + " " + lonDir;
     }
     
     return result;
@@ -1961,6 +2178,11 @@ CF.prototype.points = function(opts) {
 CF.prototype.groups = function(opts) {
     opts = opts || {};
     var minRating = opts.rating !== undefined ? opts.rating : CF.ratingDefault;
+    
+    // Group points if not already done
+    if (this._groups.length === 0 && this._points.length > 0) {
+        this._groupPoints();
+    }
     
     var filtered = [];
     for (var i = 0; i < this._groups.length; i++) {

@@ -71,6 +71,8 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
                 method: null,
                 input: '',
                 expected: null,
+                expectedType: null,
+                expectedObject: null,
                 count: null,
                 coords: [],
                 crs: null,
@@ -108,6 +110,10 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
         
         // Input section (can be "Input:" or "Input: value")
         if (trimmed.match(/^Input:\s*(.*)$/)) {
+            if (!currentTest) {
+                // Skip input if no test is active
+                continue;
+            }
             state = 'input';
             var inputValue = RegExp.$1.trim();
             if (inputValue) {
@@ -126,29 +132,30 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
         
         // Expected section (can be "Expected:" or "Expected: value")
         if (trimmed.match(/^Expected:\s*(.*)$/)) {
+            if (!currentTest) {
+                // Skip expected if no test is active
+                continue;
+            }
             state = 'expected';
             var expectedValue = RegExp.$1.trim();
             if (expectedValue) {
                 // Expected value on same line - process it
-                if (currentTest.type === 'Point') {
-                    // Direct format: "Expected: 59.50 18.25"
-                    var parts = expectedValue.split(/\s+/);
-                    if (parts.length >= 2) {
-                        if (!currentTest.coords) currentTest.coords = [];
-                        currentTest.coords.push({
-                            lat: parseFloat(parts[0]),
-                            lon: parseFloat(parts[1])
-                        });
-                    } else {
-                        currentTest.expected = expectedValue;
-                    }
-                }
+                this._parseExpectedValue(currentTest, expectedValue);
             }
             continue;
         }
         
         // Collect input
-        if (state === 'input' && trimmed !== '') {
+        if (state === 'input' && currentTest) {
+            // Allow empty lines in input (important for grouping tests)
+            if (trimmed === '') {
+                // Empty line
+                if (currentTest.input) {
+                    currentTest.input += '\n';
+                }
+                continue;
+            }
+            
             // Remove quotes only if they wrap the entire line (both start and end)
             var inputLine = trimmed;
             if ((inputLine[0] === '"' && inputLine[inputLine.length - 1] === '"') ||
@@ -164,74 +171,57 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
         }
         
         // Collect expected
-        if (state === 'expected' && trimmed !== '') {
-            if (currentTest.type === 'Point') {
-                // Point Test: expected format is "lat lon" or "null"
-                // Also support Count, CRS, N.value, E.value, refsys, Bounds
-                if (trimmed.toLowerCase() === 'null' || trimmed === '-') {
-                    currentTest.expected = null;
-                } else if (trimmed.match(/^-?\s*Count:\s*(\d+)$/i)) {
-                    currentTest.count = parseInt(RegExp.$1, 10);
-                } else if (trimmed.match(/^-\s*CRS:\s*(.+)$/i)) {
-                    currentTest.crs = RegExp.$1.trim();
-                } else if (trimmed.match(/^-\s*N\.value:\s*(.+)$/i)) {
-                    // Format: "- N.value: 7148101"
-                    if (!currentTest.coords) currentTest.coords = [];
-                    if (currentTest.coords.length === 0) currentTest.coords.push({});
-                    currentTest.coords[0].N = parseFloat(RegExp.$1.trim());
-                } else if (trimmed.match(/^-\s*E\.value:\s*(.+)$/i)) {
-                    // Format: "- E.value: 708433"
-                    if (!currentTest.coords) currentTest.coords = [];
-                    if (currentTest.coords.length === 0) currentTest.coords.push({});
-                    currentTest.coords[0].E = parseFloat(RegExp.$1.trim());
-                } else if (trimmed.match(/^-\s*refsys:\s*(.+)$/i)) {
-                    // Format: "- refsys: SWEREF99TM"
-                    currentTest.crs = RegExp.$1.trim();
-                } else if (trimmed.match(/^-\s*Bounds:\s*(.+)$/i)) {
-                    // Format: "- Bounds: minLat minLon maxLat maxLon"
-                    var boundsStr = RegExp.$1.trim();
-                    var parts = boundsStr.split(/\s+/);
-                    if (parts.length >= 4) {
-                        currentTest.bounds = {
-                            minLat: parseFloat(parts[0]),
-                            minLon: parseFloat(parts[1]),
-                            maxLat: parseFloat(parts[2]),
-                            maxLon: parseFloat(parts[3])
-                        };
+        if (state === 'expected' && trimmed !== '' && currentTest) {
+            // Check if it's an object property (starts with -)
+            if (trimmed.match(/^-\s*([^:]+):\s*(.+)$/)) {
+                var propName = RegExp.$1.trim();
+                var propValue = RegExp.$2.trim();
+                
+                // Handle special property: Contains (for string matching)
+                if (propName.toLowerCase() === 'contains') {
+                    if (!currentTest.expectedContains) {
+                        currentTest.expectedContains = [];
+                        currentTest.expectedType = 'contains';
                     }
-                } else if (!trimmed.match(/^-/)) {
-                    // Direct format: "59.50 18.25" (no "Coords:" prefix)
-                    var parts = trimmed.split(/\s+/);
-                    if (parts.length >= 2) {
-                        if (!currentTest.coords) currentTest.coords = [];
-                        currentTest.coords.push({
-                            lat: parseFloat(parts[0]),
-                            lon: parseFloat(parts[1])
-                        });
-                    } else {
-                        currentTest.expected = trimmed;
+                    currentTest.expectedContains.push(this._parseValue(propValue));
+                } else if (propName.toLowerCase() === 'contains not') {
+                    if (!currentTest.expectedNotContains) {
+                        currentTest.expectedNotContains = [];
+                        if (!currentTest.expectedType) {
+                            currentTest.expectedType = 'contains';
+                        }
                     }
-                }
-            } else if (currentTest.type === 'Points') {
-                // Points Test: expected format is "- Count: N", "- CRS: name", "- Bounds: ..."
-                if (trimmed.match(/^-?\s*Count:\s*(\d+)$/i)) {
-                    currentTest.count = parseInt(RegExp.$1, 10);
-                } else if (trimmed.match(/^-\s*CRS:\s*(.+)$/i)) {
-                    // Format: "- CRS: SWEREF99TM"
-                    currentTest.crs = RegExp.$1.trim();
-                } else if (trimmed.match(/^-\s*Bounds:\s*(.+)$/i)) {
-                    // Format: "- Bounds: minLat minLon maxLat maxLon"
-                    var boundsStr = RegExp.$1.trim();
-                    var parts = boundsStr.split(/\s+/);
-                    if (parts.length >= 4) {
-                        currentTest.bounds = {
-                            minLat: parseFloat(parts[0]),
-                            minLon: parseFloat(parts[1]),
-                            maxLat: parseFloat(parts[2]),
-                            maxLon: parseFloat(parts[3])
-                        };
+                    currentTest.expectedNotContains.push(this._parseValue(propValue));
+                } else {
+                    // Initialize expectedObject if needed
+                    if (!currentTest.expectedObject) {
+                        currentTest.expectedObject = {};
+                        currentTest.expectedType = 'object';
+                    }
+                    
+                    // Handle nested properties (e.g., "N.value", "refsys.name")
+                    this._setNestedProperty(currentTest.expectedObject, propName, this._parseValue(propValue));
+                    
+                    // Also handle legacy format for backward compatibility
+                    if (propName.toLowerCase() === 'count') {
+                        currentTest.count = parseInt(propValue, 10);
+                    } else if (propName.toLowerCase() === 'crs') {
+                        currentTest.crs = propValue;
+                    } else if (propName.toLowerCase() === 'bounds') {
+                        var parts = propValue.split(/\s+/);
+                        if (parts.length >= 4) {
+                            currentTest.bounds = {
+                                minLat: parseFloat(parts[0]),
+                                minLon: parseFloat(parts[1]),
+                                maxLat: parseFloat(parts[2]),
+                                maxLon: parseFloat(parts[3])
+                            };
+                        }
                     }
                 }
+            } else if (!trimmed.match(/^-/)) {
+                // Not a property line, parse as simple value
+                this._parseExpectedValue(currentTest, trimmed);
             }
             continue;
         }
@@ -251,6 +241,130 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
     return this.suites;
 };
 
+// Helper: Parse expected value (simple values like numbers, strings, booleans, null, approximate)
+MarkdownTestParser.prototype._parseExpectedValue = function(test, value) {
+    // Handle approximate values (~58.1)
+    if (value.match(/^~(.+)$/)) {
+        test.expected = parseFloat(RegExp.$1);
+        test.expectedType = 'approximate';
+        return;
+    }
+    
+    // Handle null
+    if (value.toLowerCase() === 'null' || value === '-') {
+        test.expected = null;
+        test.expectedType = 'null';
+        return;
+    }
+    
+    // Handle boolean
+    if (value.toLowerCase() === 'true') {
+        test.expected = true;
+        test.expectedType = 'boolean';
+        return;
+    }
+    if (value.toLowerCase() === 'false') {
+        test.expected = false;
+        test.expectedType = 'boolean';
+        return;
+    }
+    
+    // Handle quoted string (ASCII and Unicode quotes)
+    var firstChar = value.charCodeAt(0);
+    var lastChar = value.charCodeAt(value.length - 1);
+    var hasQuotes = (
+        (firstChar === 34 && lastChar === 34) ||  // "..."
+        (firstChar === 39 && lastChar === 39) ||  // '...'
+        (firstChar === 8220 && lastChar === 8221) ||  // "..."
+        (firstChar === 8216 && lastChar === 8217)     // '...'
+    );
+    
+    if (hasQuotes) {
+        test.expected = value.substring(1, value.length - 1);
+        test.expectedType = 'string';
+        return;
+    }
+    
+    // Try to parse as lat lon pair (for backward compatibility)
+    var parts = value.split(/\s+/);
+    if (parts.length >= 2 && !isNaN(parseFloat(parts[0])) && !isNaN(parseFloat(parts[1]))) {
+        // This is a lat lon pair
+        if (!test.coords) test.coords = [];
+        test.coords.push({
+            lat: parseFloat(parts[0]),
+            lon: parseFloat(parts[1])
+        });
+        test.expectedType = 'latlon';
+        return;
+    }
+    
+    // Try to parse as number
+    if (!isNaN(parseFloat(value)) && isFinite(value)) {
+        test.expected = parseFloat(value);
+        test.expectedType = 'number';
+        return;
+    }
+    
+    // Default: treat as string
+    test.expected = value;
+    test.expectedType = 'string';
+};
+
+// Helper: Parse a value (for object properties)
+MarkdownTestParser.prototype._parseValue = function(str) {
+    // Handle approximate values
+    if (str.match(/^~(.+)$/)) {
+        return { approx: parseFloat(RegExp.$1) };
+    }
+    
+    // Handle null
+    if (str.toLowerCase() === 'null') {
+        return null;
+    }
+    
+    // Handle boolean
+    if (str.toLowerCase() === 'true') return true;
+    if (str.toLowerCase() === 'false') return false;
+    
+    // Handle quoted string (ASCII and Unicode quotes)
+    var firstChar = str.charCodeAt(0);
+    var lastChar = str.charCodeAt(str.length - 1);
+    var hasQuotes = (
+        (firstChar === 34 && lastChar === 34) ||  // "..."
+        (firstChar === 39 && lastChar === 39) ||  // '...'
+        (firstChar === 8220 && lastChar === 8221) ||  // "..."
+        (firstChar === 8216 && lastChar === 8217)     // '...'
+    );
+    
+    if (hasQuotes) {
+        return str.substring(1, str.length - 1);
+    }
+    
+    // Try to parse as number
+    if (!isNaN(parseFloat(str)) && isFinite(str)) {
+        return parseFloat(str);
+    }
+    
+    // Default: return as string
+    return str;
+};
+
+// Helper: Set nested property in object (e.g., "N.value" -> obj.N.value)
+MarkdownTestParser.prototype._setNestedProperty = function(obj, path, value) {
+    var parts = path.split('.');
+    var current = obj;
+    
+    for (var i = 0; i < parts.length - 1; i++) {
+        var part = parts[i];
+        if (!current[part]) {
+            current[part] = {};
+        }
+        current = current[part];
+    }
+    
+    current[parts[parts.length - 1]] = value;
+};
+
 MarkdownTestParser.prototype._addTestToSuite = function(suite, test) {
     if (!test.id) {
         console.warn('Test without ID skipped:', test.name);
@@ -260,10 +374,30 @@ MarkdownTestParser.prototype._addTestToSuite = function(suite, test) {
     // Remove surrounding quotes from input if present (for multi-line inputs)
     if (test.input) {
         var input = test.input.trim();
-        if ((input[0] === '"' && input[input.length - 1] === '"') ||
-            (input[0] === "'" && input[input.length - 1] === "'")) {
+        var firstChar = input.charCodeAt(0);
+        var lastChar = input.charCodeAt(input.length - 1);
+        
+        // Check for ASCII quotes (34 = ", 39 = ') or Unicode quotes (8220 = ", 8221 = ", 8216 = ', 8217 = ')
+        var hasQuotes = (
+            (firstChar === 34 && lastChar === 34) ||  // "..."
+            (firstChar === 39 && lastChar === 39) ||  // '...'
+            (firstChar === 8220 && lastChar === 8221) ||  // "..."
+            (firstChar === 8216 && lastChar === 8217)     // '...'
+        );
+        
+        if (hasQuotes) {
             test.input = input.substring(1, input.length - 1);
         }
+    }
+    
+    // If test has a Method specified, create a MethodTest
+    if (test.method && test.method !== 'pointIn()' && test.method !== 'pointsIn()') {
+        var expected = test.expectedObject || test.expected;
+        var expectedType = test.expectedType || 'auto';
+        var expectedContains = test.expectedContains || null;
+        var expectedNotContains = test.expectedNotContains || null;
+        suite.addMethodTest(test.id, test.name, test.method, test.input, expected, expectedType, test.implements, expectedContains, expectedNotContains);
+        return;
     }
     
     if (test.type === 'Point') {
