@@ -530,7 +530,7 @@ MethodTest.prototype._compareContains = function(actual, expectedContains) {
 };
 
 MethodTest.prototype._compareObject = function(actual, expected) {
-    var result = this._compareObjectRecursive(actual, expected, '');
+    var result = this._compareObjectRecursive(actual, expected, '', actual);
     if (result.passed) {
         return { passed: true };
     }
@@ -540,8 +540,9 @@ MethodTest.prototype._compareObject = function(actual, expected) {
     };
 };
 
-MethodTest.prototype._compareObjectRecursive = function(actual, expected, path) {
+MethodTest.prototype._compareObjectRecursive = function(actual, expected, path, root) {
     var errors = [];
+    if (!root) root = actual;
     
     // Special handling: if expected has "Count" and actual is an array, compare array.length
     if (expected.Count !== undefined && Array.isArray(actual)) {
@@ -581,7 +582,7 @@ MethodTest.prototype._compareObjectRecursive = function(actual, expected, path) 
             if (actualVal === undefined || actualVal === null) {
                 errors.push("   " + currentPath + ": missing");
             } else {
-                var nestedResult = this._compareObjectRecursive(actualVal, expectedVal, currentPath);
+                var nestedResult = this._compareObjectRecursive(actualVal, expectedVal, currentPath, root);
                 if (!nestedResult.passed) {
                     errors = errors.concat(nestedResult.errors);
                 }
@@ -589,10 +590,51 @@ MethodTest.prototype._compareObjectRecursive = function(actual, expected, path) 
         }
         // Direct comparison
         else {
-            if (actualVal === undefined) {
-                errors.push("   " + currentPath + ": missing (expected " + JSON.stringify(expectedVal) + ")");
-            } else if (actualVal !== expectedVal) {
-                errors.push("   " + currentPath + ": expected " + JSON.stringify(expectedVal) + ", got " + JSON.stringify(actualVal));
+            // Special case: refsys.name should use canonicalName
+            if (currentPath === 'refsys.name' && actualVal && typeof actualVal === 'string') {
+                // Get the refsys object from root
+                var refsys = this._getNestedProperty(root, 'refsys');
+                if (refsys && refsys.canonicalName) {
+                    actualVal = refsys.canonicalName;
+                }
+            }
+            
+            // Special case: range comparison "min < max" or "< max"
+            var isRangeComparison = false;
+            if (typeof expectedVal === 'string' && expectedVal.indexOf('<') !== -1) {
+                // Handle "< max" format
+                if (expectedVal.trim().startsWith('<')) {
+                    var maxStr = expectedVal.trim().substring(1).trim();
+                    var max = parseFloat(maxStr);
+                    if (!isNaN(max) && typeof actualVal === 'number') {
+                        isRangeComparison = true;
+                        if (actualVal >= max) {
+                            errors.push("   " + currentPath + ": expected " + expectedVal + ", got " + actualVal);
+                        }
+                    }
+                }
+                // Handle "min < max" format
+                else if (expectedVal.indexOf(' < ') !== -1) {
+                    var parts = expectedVal.split(' < ');
+                    if (parts.length === 2) {
+                        var min = parseFloat(parts[0]);
+                        var max = parseFloat(parts[1]);
+                        if (!isNaN(min) && !isNaN(max) && typeof actualVal === 'number') {
+                            isRangeComparison = true;
+                            if (actualVal < min || actualVal > max) {
+                                errors.push("   " + currentPath + ": expected " + expectedVal + ", got " + actualVal);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (!isRangeComparison) {
+                if (actualVal === undefined) {
+                    errors.push("   " + currentPath + ": missing (expected " + JSON.stringify(expectedVal) + ")");
+                } else if (actualVal !== expectedVal) {
+                    errors.push("   " + currentPath + ": expected " + JSON.stringify(expectedVal) + ", got " + JSON.stringify(actualVal));
+                }
             }
         }
     }
@@ -616,16 +658,14 @@ MethodTest.prototype._compareDefault = function(actual, expected) {
 MethodTest.prototype._getNestedProperty = function(obj, path) {
     var parts = path.split('.');
     var current = obj;
+    
+    // Special case: refsys.name should use canonicalName
+    if (path === 'refsys.name' && obj.refsys && obj.refsys.canonicalName) {
+        return obj.refsys.canonicalName;
+    }
+    
     for (var i = 0; i < parts.length; i++) {
         if (current === null || current === undefined) return undefined;
-        
-        // Special handling for refsys.name - use canonicalName if available
-        if (i === parts.length - 1 && parts[i] === 'name' && i > 0 && parts[i-1] === 'refsys') {
-            if (current.refsys && current.refsys.canonicalName) {
-                return current.refsys.canonicalName;
-            }
-        }
-        
         current = current[parts[i]];
     }
     

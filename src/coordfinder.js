@@ -1759,9 +1759,11 @@ Point.prototype.reprojectTo = function(toRefSys) {
  * Get uncertainty in original units (degrees or meters)
  */
 Point.prototype.maxErrors = function() {
+    // Return uncertainty in meters (per kravspec 9.3)
+    var uncertainty = this.uncertaintyMeters();
     return {
-        N: this.N ? this.N.maxError() : 0,
-        E: this.E ? this.E.maxError() : 0
+        N: uncertainty.north,
+        E: uncertainty.east
     };
 };
 
