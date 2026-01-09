@@ -75,7 +75,7 @@ Expected: 12.56789
 Test-ID: tdd-lon-003
 Method: longitude()
 Input: “58° 24.740’ 12° 34.073’”
-Expected: 12.56883
+Expected: 12.56788
 
 ## Point Test: Negativ longitud
 Test-ID: tdd-lon-004
