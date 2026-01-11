@@ -360,45 +360,35 @@ Test-ID: tdd-origtxt-001
 Method: originalText()
 Input: “Båten låg vid 58.41234 12.56789 när olyckan hände.”
 Expected:
-- Contains: “Båten låg vid”
-- Contains: “58.41234”
-- Contains: “12.56789”
-- Contains: “när olyckan hände.”
+”58.41234 12.56789”
 
 ## Point Test: DMS i text
 Test-ID: tdd-origtxt-002
 Method: originalText()
-Input: “Position N 58°24’44.2” E 12°34’4.4” rapporterad.”
+Input: Position N 58°24’44.2” E 12°34’4.4” rapporterad.”
 Expected:
-- Contains: “Position”
-- Contains: “58°24’44.2””
-- Contains: “12°34’4.4””
-- Contains: “rapporterad.”
+”N 58°24’44.2” E 12°34’4.4””
 
 ## Point Test: Med maxchars
 Test-ID: tdd-origtxt-003
 Method: originalText(maxchars=20, ellipse=true)
 Input: “En mycket lång beskrivning av position N 58°24’44.234567” E 12°34’4.456789” som användes i rapporten.”
 Expected:
-- Contains: “…”
+N 58°24’44.234567” E 12°34’4.456789”
 
 ## Point Test: Kort text ingen ellipse
 Test-ID: tdd-origtxt-004
 Method: originalText(maxchars=100)
 Input: “Pos 58.41 12.57”
 Expected:
-- Contains: “Pos 58.41 12.57”
-- Contains not: “…”
+”58.41 12.57”
 
 ## Point Test: SWEREF i text
 Test-ID: tdd-origtxt-005
 Method: originalText()
 Input: “Punkten 6450123 320456 markerad på kartan.”
 Expected:
-- Contains: “Punkten”
-- Contains: “6450123”
-- Contains: “320456”
-- Contains: “markerad på kartan.”
+”6450123 320456”
 
 
 # Point.context()
@@ -598,14 +588,12 @@ Expected:
 - E: 1 < 3
 
 ## Point Test: DM precision
-
 Test-ID: tdd-maxerr-006
 Method: maxErrors()
 Input: “58° 24.7’ 12° 34.1’”
 Expected:
-
-- N: < 100 meters
-- E: < 100 meters
+- N: 90 < 100 meters
+- E: 40 < 50 meters
 
 
 # Point.maxErrorBounds()
@@ -840,9 +828,113 @@ Input:
  Expected: true
 
 
+# CoordFinder.points(rating)
+
+## CoordFinder Test: Filtrera medelhög precision
+Test-ID: tdd-rating-p-001
+Method: points(rating=0.7)
+Input: 58.41234 12.56789 N58 E13 58°24’44”N 12°34’4”E 58.4 12.6
+Expected:
+- Count: 3
+
+## CoordFinder Test: Decimalprecision stegvis
+Test-ID: tdd-rating-p-002
+Method: points(rating=0.6)
+Input: 58 13
+58.4 12.6
+58.41 12.57
+58.412 12.568
+58.4123 12.5679
+58.41234 12.56789
+Expected:
+- Count: 4
+
+## CoordFinder Test: Fallande rating-ordning komplex
+Test-ID: tdd-rating-p-003
+Method: points(rating=0.5)
+Input: 57.71556 11.97315
+57°42’57.6” 11°58’12.9”
+57.716N 11.973E
+N 57°42,961’ E 011°58,215’
+57 ̊ 43.0 11 ̊ 58.2
+N57.716 E11.973
+57.72° 11.97°
+N57 E12
+57.3 12.0
+57 12
+Expected:
+- Count: 8
+
+## CoordFinder Test: SWEREF och WGS84 blandad precision
+Test-ID: tdd-rating-p-004
+Method: points(rating=0.9)
+Input: 6450123 320456
+58.41234 12.56789
+58.4 12.6
+6450000 320000
+Expected:
+- Count: 2
+
+# CoordFinder.foundRatings()
+
+## CoordFinder Test: Tre olika rating-nivåer
+Test-ID: tdd-rating-fr-001
+Method: foundRatings()
+Input: 58.41234 12.56789 N58 E13 58°24’44”N 12°34’4”E
+Expected:
+- Count: 3
+
+## CoordFinder Test: Fem rating-nivåer
+Test-ID: tdd-rating-fr-002
+Method: foundRatings()
+Input: 58 13
+58.4 12.6
+58.41 12.57
+58.412 12.568
+58.4123 12.5679
+58.41234 12.56789
+Expected:
+- Count: 6
+
+## CoordFinder Test: Blandade format samma precision
+Test-ID: tdd-rating-fr-003
+Method: foundRatings()
+Input: 58.41234 12.56789
+58°24’44.4”N 12°34’4.4”E
+58° 24.740’ 12° 34.073’
+Expected:
+- Count: 1
+
+
+# CoordFinder.ratingIndex()
+
+## CoordFinder Test: Hitta index för mellanrating
+Test-ID: tdd-rating-ri-001
+Method: ratingIndex(0.7)
+Input: N58 E13 58.412 12.568 58.41234 12.56789
+Expected: 1
+
+## CoordFinder Test: Index för rating som inte finns
+Test-ID: tdd-rating-ri-002
+Method: ratingIndex(0.99)
+Input: 58.412 12.568 N58 E13
+Expected: 1
+
+## CoordFinder Test: Index med många rating-nivåer
+Test-ID: tdd-rating-ri-003
+Method: ratingIndex(0.5)
+Input: 58 13
+58.4 12.6
+58.41 12.57
+58.412 12.568
+58.4123 12.5679
+58.41234 12.56789
+- Expected: 3
+
+
 # CoordFinder.groups()
 
-## CoordFinder Test: En grupp nära punkter
+## CoordFinder Test: En grupp
 Test-ID: tdd-groups-001
 Method: groups()
 Input: 
@@ -878,13 +970,18 @@ Input:
 Expected:
 - Count: 3
 
-## CoordFinder Test: Gränsvärde för gruppering
+## CoordFinder Test: Texter bland koordinaterna
 Test-ID: tdd-groups-004
 Method: groups()
 Input: 
 58.41 12.56
+Och sen en punkt till:
 58.45 12.60
-58.50 12.65
+Och en till här, med lat:
+58.50
+och en massa text 
+och text
+12.65
 Expected:
 - Count: 1
 
