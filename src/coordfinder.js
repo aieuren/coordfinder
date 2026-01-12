@@ -1481,10 +1481,14 @@ Point.prototype.originalText = function(opts) {
 };
 
 Point.prototype.context = function(opts) {
-    var maxChars = opts && opts.maxChars ? opts.maxChars : 50;
-    var before = this.textBefore(maxChars);
+    opts = opts || {};
+    var maxChars = opts.maxchars || opts.maxChars || 50;
+    var ellipse = opts.ellipse !== false; // default true
+    
+    var before = this.textBefore({maxchars: maxChars, ellipse: ellipse});
     var orig = this.originalText();
-    var after = this.textAfter(maxChars);
+    var after = this.textAfter({maxchars: maxChars, ellipse: ellipse});
+    
     return before + " [" + orig + "] " + after;
 };
 
