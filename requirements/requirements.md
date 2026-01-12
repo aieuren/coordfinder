@@ -1,7 +1,7 @@
 # CoordFinder - Kravspecifikation
 
 Version: 5.0-beta.5  
-Datum: 2026-01-11
+Datum: 2026-01-12
 Baserad på: Interface, TDD-tester och implementation
 
 ## Syfte
@@ -378,10 +378,12 @@ Gruppering är en **textuell funktion**, inte en geografisk. Koordinater grupper
 
 **Grundprincip:**
 
-- Koordinater separeras i grupper av **tomma rader**
-- Detta är användbart för att extrahera separata polylinjer eller polygoner från input-text
+- Koordinatpar grupperas baserat på **tomma rader** i texten
+- Varje grupp består av **ett eller flera koordinatpar**
+- Tom rad (endast whitespace eller helt tom) separerar grupper
+- Om inga tomma rader finns, hamnar alla koordinatpar i **samma grupp**
 
-**Exempel:**
+**Exempel med flera grupper:**
 
 ```
 58.5 N 12.3 E
@@ -391,13 +393,31 @@ Gruppering är en **textuell funktion**, inte en geografisk. Koordinater grupper
 59.2 N 13.3 E
 ```
 
-Detta ger **2 grupper** (separerade av tom rad).
+Detta ger **2 grupper**:
+
+- Grupp 1: 2 koordinatpar (58.5/12.3 och 58.6/12.4)
+- Grupp 2: 2 koordinatpar (59.1/13.2 och 59.2/13.3)
+
+**Exempel utan gruppering:**
+
+```
+58.5 N 12.3 E
+58.6 N 12.4 E
+59.1 N 13.2 E
+```
+
+Detta ger **1 grupp** med 3 koordinatpar (inga tomma rader).
 
 **API:**
 
 - `CoordFinder.groupsIn(text)` - Statisk metod
 - `new CoordFinder().parse(text, {grouping: true}).groups()` - Instansmetod (se Interface)
 - Kan returnera olika antal punkter än `.pointsIn()` beroende på rating-tröskel
+
+**Användningsfall:**
+
+- Extrahera separata polylinjer eller polygoner från text
+- Hantera listor där varje “sektion” (separerad av tom rad) är en logisk enhet
 
 **Notera:**
 
