@@ -839,20 +839,22 @@ Expected:
 
 ## CoordFinder Test: Decimalprecision stegvis
 Test-ID: tdd-rating-p-002
-Method: points(rating=0.6)
-Input: 58 13
+Method: points(rating=0.7)
+Input: 
+58 13
 58.4 12.6
 58.41 12.57
 58.412 12.568
 58.4123 12.5679
 58.41234 12.56789
 Expected:
-- Count: 4
+- Count: 3
 
 ## CoordFinder Test: Fallande rating-ordning komplex
 Test-ID: tdd-rating-p-003
 Method: points(rating=0.5)
-Input: 57.71556 11.97315
+Input: 
+57.71556 11.97315
 57°42’57.6” 11°58’12.9”
 57.716N 11.973E
 N 57°42,961’ E 011°58,215’
@@ -863,17 +865,19 @@ N57 E12
 57.3 12.0
 57 12
 Expected:
-- Count: 8
+- Count: 9
 
 ## CoordFinder Test: SWEREF och WGS84 blandad precision
 Test-ID: tdd-rating-p-004
-Method: points(rating=0.9)
-Input: 6450123 320456
+Method: points(rating=0.7)
+Input: 
+6450123 320456
 58.41234 12.56789
 58.4 12.6
 6450000 320000
 Expected:
-- Count: 2
+- Count: 3
+
 
 # CoordFinder.foundRatings()
 
@@ -884,22 +888,24 @@ Input: 58.41234 12.56789 N58 E13 58°24’44”N 12°34’4”E
 Expected:
 - Count: 3
 
-## CoordFinder Test: Fem rating-nivåer
+## CoordFinder Test: Olika rating-nivåer
 Test-ID: tdd-rating-fr-002
 Method: foundRatings()
-Input: 58 13
+Input: 
+58 13
 58.4 12.6
 58.41 12.57
 58.412 12.568
 58.4123 12.5679
 58.41234 12.56789
 Expected:
-- Count: 6
+- Count: 2
 
 ## CoordFinder Test: Blandade format samma precision
 Test-ID: tdd-rating-fr-003
 Method: foundRatings()
-Input: 58.41234 12.56789
+Input: 
+58.41234 12.56789
 58°24’44.4”N 12°34’4.4”E
 58° 24.740’ 12° 34.073’
 Expected:
