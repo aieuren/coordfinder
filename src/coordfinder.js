@@ -1,7 +1,7 @@
 /**
  * CoordFinder - Coordinate Parser and Converter
  * 
- * @version 5.0-beta.5
+ * @version 5.0-beta.6
  * @author Bernt Rane, Claude & Ona
  * @license MIT
  * @description Parses and converts coordinates between different formats and reference systems.
@@ -314,20 +314,8 @@ TextParser.prototype._encode = function(text) {
     // Replace multiple spaces/tabs with single space, but keep newlines
     text = text.replace(/[ \t]+/g, ' ').replace(/\n+/g, '\n');
     
-    // Remove numbered list prefixes that could be confused with coordinates
-    // Pattern: line starts with 1-99 (optionally followed by .) then space and coordinate-like pattern
-    // Example: "10 58 45,15" -> " 58 45,15" (remove "10")
-    // Example: "10. 58 45,15" -> " 58 45,15" (remove "10.")
-    // Match at start of string or after newline
-    text = text.replace(/(^|\n)(\d{1,2})\.?\s+(\d{2,3}\s+\d+[,.]\d+)/g, function(match, prefix, num, coords) {
-        var listNum = parseInt(num, 10);
-        var coordStart = parseInt(coords.split(/\s+/)[0], 10);
-        // Only remove if list number is smaller than coordinate start
-        if (listNum < 100 && coordStart > listNum) {
-            return prefix + coords;
-        }
-        return match;
-    });
+    // Note: List number removal disabled to preserve text indices
+    // List numbers are filtered out during coordinate pairing instead
     
     return text;
 };
@@ -480,10 +468,10 @@ var Patterns = {
     // Negative lookahead for ) to avoid matching list numbers like "2)"
     // Negative lookahead for ' ´ ′ " ″ \u201C \u201D to avoid matching DM/DMS like "30.5'" or "18.3""
     // Negative lookahead for z to avoid matching zoom parameters like "13.3z"
-    // Use [ \t] to avoid matching across newlines
+    // Allow comma, semicolon, brackets, URL chars (~!@), or whitespace before number
     // Direction letter must not be followed by another letter (avoids "Ska", "Viktig", etc.)
     // Direction letter before number must be preceded by word boundary, whitespace, or newline
-    degs: /(?:^|[ \t\n\r])([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![ \t]*\d)(?![a-zåäöA-ZÅÄÖ]))?/gi,
+    degs: /(?:^|[,;\[\]~!@ \t\n\r])([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![ \t]*\d)(?![a-zåäöA-ZÅÄÖ]))?/gi,
     
     // Plain number (meters or large coordinates)
     // Use [ \t] to avoid matching across newlines
@@ -627,12 +615,25 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
     
     var snippet = new Snippet(parser);
     
-    // Adjust index and text to skip leading whitespace/newlines in match
-    var leadingWhitespace = bestMatch[0].match(/^[\s\n\r]*/)[0].length;
-    snippet.text = bestMatch[0].substring(leadingWhitespace);
+    // Adjust index and text to skip leading separators (whitespace, commas, semicolons, brackets, URL chars) in match
+    var leadingSeparators = bestMatch[0].match(/^[,;\[\]~!@ \s\n\r]*/)[0].length;
+    snippet.text = bestMatch[0].substring(leadingSeparators);
     snippet.encodedText = snippet.text;
     snippet.format = bestPattern.format;
-    snippet.index = originalTextPosition + bestMatch.index + leadingWhitespace;
+    
+    // Calculate initial index
+    var initialIndex = originalTextPosition + bestMatch.index + leadingSeparators;
+    
+    // Continue skipping any additional whitespace/newlines in original text
+    // (pattern may not have matched all consecutive whitespace)
+    if (parser && parser.originalText) {
+        while (initialIndex < parser.originalText.length && 
+               /[\s\n\r]/.test(parser.originalText[initialIndex])) {
+            initialIndex++;
+        }
+    }
+    
+    snippet.index = initialIndex;
     snippet._skipLength = bestMatch[0].length; // Store match length for skipping invalid matches
     snippet.lineNo = parser ? parser.lineNoFromIndex(snippet.index) : 0;
     
@@ -774,18 +775,20 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
             // First is lat, second is lon
             snippet._lat = dir1 === 'S' ? -deg1 : deg1;
             snippet._lon = (dir2 === 'W' || dir2 === 'V') ? -deg2 : deg2;
+            snippet.directionLetter = dir1 + dir2;
         } else if (isEW1 && isNS2) {
             // First is lon, second is lat
             snippet._lat = dir2 === 'S' ? -deg2 : deg2;
             snippet._lon = (dir1 === 'W' || dir1 === 'V') ? -deg1 : deg1;
+            snippet.directionLetter = dir2 + dir1;
         } else {
             // Fallback: assume first is lat, second is lon
             snippet._lat = deg1;
             snippet._lon = deg2;
+            snippet.directionLetter = dir1 + dir2;
         }
         
         snippet.number = snippet._lat;
-        snippet.directionLetter = "";
         snippet._hasExplicitDirections = true; // Mark as having explicit direction letters
         var decimals1 = (bestMatch[2].match(/[,.](\\d+)/) || ['',''])[1].length;
         var decimals2 = (bestMatch[4].match(/[,.](\\d+)/) || ['',''])[1].length;
@@ -802,21 +805,27 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         // Apply direction signs
         var isNS1 = dir1.match(/^[NS]/);
         var isEW2 = dir2.match(/^[EWVÖ]/);
+        var isEW1 = dir1.match(/^[EWVÖ]/);
+        var isNS2 = dir2.match(/^[NS]/);
         
         if (isNS1 && isEW2) {
             // First is lat, second is lon
             snippet._lat = dir1 === 'S' ? -deg1 : deg1;
             snippet._lon = (dir2 === 'W' || dir2 === 'V') ? -deg2 : deg2;
-            snippet._directionLetter1 = dir1;
-            snippet._directionLetter2 = dir2;
+            snippet.directionLetter = dir1 + dir2;
+        } else if (isEW1 && isNS2) {
+            // First is lon, second is lat
+            snippet._lat = dir2 === 'S' ? -deg2 : deg2;
+            snippet._lon = (dir1 === 'W' || dir1 === 'V') ? -deg1 : deg1;
+            snippet.directionLetter = dir2 + dir1;
         } else {
             // Fallback: assume first is lat, second is lon
             snippet._lat = deg1;
             snippet._lon = deg2;
+            snippet.directionLetter = dir1 + dir2;
         }
         
         snippet.number = snippet._lat;
-        snippet.directionLetter = "";
         snippet._hasExplicitDirections = true; // Mark as having explicit direction letters
         snippet.noOfDecimals = 0;
         
@@ -1049,6 +1058,24 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
             return snippet;
         }
         
+        // Check if this looks like a list number followed by coordinates
+        // Pattern: small number (1-99) at start of line followed by larger coordinate
+        if (degs < 100 && mins > degs) {
+            var lineNo = parser ? parser.lineNoFromIndex(originalTextPosition + bestMatch.index) : -1;
+            if (lineNo >= 0 && parser && parser.lines) {
+                var lineText = parser.lines[lineNo];
+                var lineStart = parser.originalText.split(/\r?\n/).slice(0, lineNo).join('\n').length;
+                if (lineNo > 0) lineStart++;
+                var posInLine = originalTextPosition + bestMatch.index - lineStart;
+                // If at start of line (allowing for whitespace), treat as list number
+                if (posInLine <= 3) {
+                    snippet._invalid = true;
+                    snippet._skipLength = bestMatch[1].length + 1;
+                    return snippet;
+                }
+            }
+        }
+        
         var value = degs + mins/60 + secs/3600;
         
         snippet.number = value;
@@ -1080,7 +1107,7 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         if (lonDir === 'W') lon = -lon;
         
         snippet.number = lat;
-        snippet.directionLetter = "";
+        snippet.directionLetter = latDir + lonDir;
         snippet.noOfDecimals = 0;
         snippet._lat = lat;
         snippet._lon = lon;
@@ -1717,11 +1744,10 @@ Point.prototype._hasFormatSymbols = function() {
 };
 
 Point.prototype._hasDirectionLetters = function() {
-    var validDirections = ['N','S','E','W','Ö','V'];
     var hasN = this.N.parsedFrom && this.N.parsedFrom.directionLetter &&
-               validDirections.indexOf(this.N.parsedFrom.directionLetter.toUpperCase()) !== -1;
+               /[NSEWÖV]/i.test(this.N.parsedFrom.directionLetter);
     var hasE = this.E.parsedFrom && this.E.parsedFrom.directionLetter &&
-               validDirections.indexOf(this.E.parsedFrom.directionLetter.toUpperCase()) !== -1;
+               /[NSEWÖV]/i.test(this.E.parsedFrom.directionLetter);
     return hasN || hasE;
 };
 
@@ -1772,21 +1798,19 @@ Point.prototype._evaluatePrecision = function() {
     var eDecimals = this.E.parsedFrom.noOfDecimals || 0;
     var penalty = 0;
     
-    // För Decimalgrader: färre än 3 decimaler
+    // För Decimalgrader: färre än 2 decimaler (mycket låg precision)
     if (this.refsys.unit === CoordUnit.Degrees) {
         var format = this.N.parsedFrom.format;
         if (format === CoordFormat.Degs) {
-            if (nDecimals < 3 || eDecimals < 3) {
+            if (nDecimals < 2 || eDecimals < 2) {
                 penalty += 0.1;
             }
         }
     }
     
-    // Precisionsskillnad mellan koordinaterna
+    // Precisionsskillnad mellan koordinaterna (endast extrema skillnader)
     var diff = Math.abs(nDecimals - eDecimals);
-    if (diff >= 1 && diff <= 2) {
-        penalty += 0.1;
-    } else if (diff >= 3) {
+    if (diff >= 7) {
         penalty += 0.2;
     }
     
@@ -1838,11 +1862,16 @@ Point.prototype.rate = function(grouping, hints) {
         var nDecimals = this.N.parsedFrom ? this.N.parsedFrom.noOfDecimals : 0;
         var eDecimals = this.E.parsedFrom ? this.E.parsedFrom.noOfDecimals : 0;
         var hasDirectionN = this.N.parsedFrom && this.N.parsedFrom.directionLetter && 
-                           ['N','S','E','W','Ö','V'].indexOf(this.N.parsedFrom.directionLetter.toUpperCase()) !== -1;
+                           /[NSEWÖV]/i.test(this.N.parsedFrom.directionLetter);
         var hasDirectionE = this.E.parsedFrom && this.E.parsedFrom.directionLetter &&
-                           ['N','S','E','W','Ö','V'].indexOf(this.E.parsedFrom.directionLetter.toUpperCase()) !== -1;
+                           /[NSEWÖV]/i.test(this.E.parsedFrom.directionLetter);
         
-        if (nDecimals === 0 && eDecimals === 0 && !hasDirectionN && !hasDirectionE) {
+        // Check if format is inherently valid without decimals (DMS, DDMM, etc.)
+        var nFormat = this.N.parsedFrom ? this.N.parsedFrom.format.name : '';
+        var eFormat = this.E.parsedFrom ? this.E.parsedFrom.format.name : '';
+        var isStructuredFormat = /minuter|sekunder/i.test(nFormat) || /minuter|sekunder/i.test(eFormat);
+        
+        if (nDecimals === 0 && eDecimals === 0 && !hasDirectionN && !hasDirectionE && !isStructuredFormat) {
             this._rating = 0;
             this._ratingLog.push("Decimalgrader utan decimaler OCH utan väderstreck");
             return this._rating;
@@ -2020,8 +2049,8 @@ function CF(text, opts) {
 }
 
 // Metadata
-CF.version = "5.0-beta.5";
-CF.build = "20260103-115833"; // Timestamp-based build number
+CF.version = "5.0-beta.6";
+CF.build = "20260112-205912"; // Timestamp-based build number
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
@@ -2149,6 +2178,28 @@ CF.prototype._snippetsToCoords = function() {
             continue;
         }
         
+        // Skip snippets that look like list numbers
+        // Pattern: 1-2 digit number at start of line, followed by space and coordinate-like pattern
+        if (snippet.parsedFrom && snippet.parsedFrom.parser) {
+            var lineNo = snippet.parsedFrom.lineNo;
+            var lineText = snippet.parsedFrom.parser.lines[lineNo];
+            var snippetPos = snippet.parsedFrom.index;
+            var lineStart = snippet.parsedFrom.parser.originalText.split(/\r?\n/).slice(0, lineNo).join('\n').length;
+            if (lineNo > 0) lineStart++; // Account for newline
+            var posInLine = snippetPos - lineStart;
+            
+            // If snippet is at start of line and is a small number (1-99)
+            if (posInLine <= 3 && snippet.text.match(/^\d{1,2}$/)) {
+                var num = parseInt(snippet.text, 10);
+                // Check if there's a coordinate-like pattern after this number
+                var afterSnippet = lineText.substring(posInLine + snippet.text.length);
+                if (num < 100 && afterSnippet.match(/^\s+\d{2,3}\s+\d+[,.]\d+/)) {
+                    this._log("Skipping list number: " + snippet.text);
+                    continue;
+                }
+            }
+        }
+        
         var coord = Coord.fromSnippet(snippet);
         if (coord) {
             this._coords.push(coord);
@@ -2245,6 +2296,31 @@ CF.prototype._coordsToPoints = function() {
             }
             if (hasCoordsBetween) continue;
             
+            // Don't pair coordinates from different lines unless they're part of a multi-line format
+            var c1Line = c1.parsedFrom ? c1.parsedFrom.lineNo : -1;
+            var c2Line = c2.parsedFrom ? c2.parsedFrom.lineNo : -1;
+            if (c1Line !== c2Line && c1Line >= 0 && c2Line >= 0) {
+                // Allow pairing across consecutive lines only (for lat/lon on separate lines)
+                if (Math.abs(c1Line - c2Line) > 1) continue;
+                
+                // Check if there's text between them suggesting they're separate
+                var parser = c1.parsedFrom ? c1.parsedFrom.parser : null;
+                if (parser && parser.lines && c2Line === c1Line + 1) {
+                    var lineText = parser.lines[c1Line];
+                    var nextLineText = parser.lines[c2Line];
+                    
+                    // Count commas that separate values (not decimal commas)
+                    // A separator comma is followed by optional space and then a non-decimal digit pattern
+                    // Decimal comma: "30,5" - comma between single digits
+                    // Separator comma: "30,5 19" or "value1,value2" - comma with space or multiple digits after
+                    var c1SepCommas = (lineText.match(/,\s*(?=\d{2,}|\D)/g) || []).length;
+                    var c2SepCommas = (nextLineText.match(/,\s*(?=\d{2,}|\D)/g) || []).length;
+                    
+                    // If both lines have multiple separator commas, they're likely separate CSV rows
+                    if (c1SepCommas >= 2 && c2SepCommas >= 2) continue;
+                }
+            }
+            
             // Check if these coords are from a CSV line with X,Y header
             var csvSwapNeeded = false;
             if (c1.parsedFrom && c1.parsedFrom.parser && c1.parsedFrom.parser.csvColumnMapping) {
@@ -2302,11 +2378,25 @@ CF.prototype._groupPoints = function() {
         var lineNo = point.N.parsedFrom ? point.N.parsedFrom.lineNo : -1;
         
         if (lastLineNo >= 0 && lineNo > lastLineNo + 1) {
-            // Gap detected, start new group
-            if (currentGroup.length > 0) {
-                this._groups.push(currentGroup);
+            // Check if there's an empty line between lastLineNo and lineNo
+            var hasEmptyLine = false;
+            var parser = point.N.parsedFrom ? point.N.parsedFrom.parser : null;
+            if (parser && parser.lines) {
+                for (var j = lastLineNo + 1; j < lineNo; j++) {
+                    if (parser.lines[j].trim() === '') {
+                        hasEmptyLine = true;
+                        break;
+                    }
+                }
             }
-            currentGroup = [];
+            
+            if (hasEmptyLine) {
+                // Empty line detected, start new group
+                if (currentGroup.length > 0) {
+                    this._groups.push(currentGroup);
+                }
+                currentGroup = [];
+            }
         }
         
         currentGroup.push(point);
