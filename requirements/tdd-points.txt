@@ -133,7 +133,6 @@ Input: "https://kartor.eniro.se/?c=58.111111,12.222222&g=59.333333,13.444444&z=1
 Expected:
 - Count: 2
 
-
 ## CoordFinder Test: Flera URL-parametrar med koordinater
 Test-ID: tdd-135
 Method: pointsIn()
@@ -141,7 +140,20 @@ Input: "https://kartor.eniro.se/?c=57.715560,11.973150&g=58.123456,12.345678&z=1
 Expected:
 - Count: 2
 
-# DATAFORMAT
+## CoordFinder Test: pointIn returnerar första punkten i URL med flera parametrar
+Test-ID: tdd-141
+Method: pointIn()
+Input: "https://example.com/?c=58.123456,12.345678&q=%2259.234567%2013.456789%22"
+Expected: 58.123456 12.345678
+
+## CoordFinder Test: pointIn ignorerar ogiltiga parametrar och returnerar första giltiga
+Test-ID: tdd-142
+Method: pointIn()
+Input: "https://example.com/?c=invalid,data&g=58.123456,12.345678&q=%2259.234567%2013.456789%22"
+Expected: 58.123456 12.345678
+
+
+# Dataformat 
 
 ## CoordFinder Test: GeoJSON koordinater
 Test-ID: tdd-014
@@ -840,6 +852,22 @@ Test-ID: tdd-137
 Method: pointIn()
 Input: "N 58 E 19"
 Expected: 58.0 19.0
+
+## CoordFinder Test: Blandade DM-format med och utan minuter
+Test-ID: tdd-144
+Method: pointsIn()
+Input: 
+N 58 35 E 19 20
+N 58 E 19
+59 21
+Expected:
+- Count: 2
+
+## CoordFinder Test: Väderstreck före med höga värden och enkel decimal
+Test-ID: tdd-143
+Method: pointIn()
+Input: "E168.0 N83.0"
+Expected: 83.0 168.0
 
 ## CoordFinder Test: Extremt glest format med DMS
 Test-ID: tdd-094
