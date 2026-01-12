@@ -100,9 +100,13 @@ Stöd för decimalgrader med flexibel formattering:
 
 **Precision:**
 
-- **Med väderstreck:** Heltal är OK och tolkas som grader (`N60 E19` giltigt)
-- **Utan väderstreck:** Minst 1 decimal krävs för DD-format (`60.0 19.0` OK, `60 19` tolkas som DM)
-- Heltal utan väderstreck och utan decimaler har låg rating
+- **Med väderstreck:** Heltal tolkas som **grader i DM/DMS-format**
+  - `N60 E19` → 60°00’ N, 19°00’ E (giltigt, rating påverkas inte)
+  - `N57 E12` → 57°00’ N, 12°00’ E (giltigt)
+- **Utan väderstreck:** Minst 1 decimal krävs för DD-format
+  - `60.0 19.0` → DD-format (giltigt)
+  - `60 19` → Tolkas som DM-format (60°19’), inte DD
+  - `57 12` → Kan tolkas som DM (57°12’) men har låg rating (tvetydig)
 
 ### 2. Grader och minuter (DM)
 
@@ -543,7 +547,7 @@ Resultatet klampas till intervallet [0.0, 1.0]
 
 Dessa villkor resulterar i omedelbar avvisning (rating = -1 eller 0) INNAN rating-algoritmen körs:
 
-1. **Decimalgrader utan decimaler OCH utan väderstreck:** Koordinater i DD-format utan väderstreck MÅSTE ha decimaler (t.ex. `57 12` utan väderstreck och decimaler är ogiltigt som DD, kan tolkas som DM-format). Med väderstreck är heltal OK: `N57 E12` är giltigt.
+1. **Decimalgrader (DD) utan decimaler OCH utan väderstreck:** Värden utan decimaler och utan väderstreck tolkas som DM-format (grader+minuter), inte DD. Exempel: `57 12` kan tolkas som 57°12’, inte 57.0° 12.0°. Med väderstreck tolkas heltal som grader: `N57 E12` = 57°00’ N, 12°00’ E.
 1. **Värden utanför alla bounding boxes:** Koordinater som inte passar inom någon definierad referenssystems bounding box
 1. **Extremt olika format i samma par:** Blandar inkompatibla format (även om -0.6 extrema avdraget hanterar kantfall)
 
