@@ -539,7 +539,14 @@ Snippet.prototype.textBefore = function(maxChars, showEllipse) {
     var lineText = this.parser.lineText(this.lineNo);
     var lineStart = this.parser.originalText.indexOf(lineText);
     var relativeIndex = this.index - lineStart;
-    var before = lineText.substring(0, relativeIndex);
+    
+    // Include whitespace at start of snippet if present
+    var endIndex = relativeIndex;
+    if (this.text && this.text.length > 0 && /\s/.test(this.text[0])) {
+        endIndex++;
+    }
+    
+    var before = lineText.substring(0, endIndex);
     
     if (maxChars && before.length > maxChars) {
         // Take last maxChars characters, ellipsis is extra
@@ -549,8 +556,6 @@ Snippet.prototype.textBefore = function(maxChars, showEllipse) {
         if (showEllipse) {
             before = "…" + before;
         }
-    } else {
-        before = before.trim();
     }
     return before;
 };
@@ -570,9 +575,8 @@ Snippet.prototype.textAfter = function(maxChars, showEllipse) {
         if (showEllipse) {
             after = after + "…";
         }
-    } else {
-        after = after.trim();
     }
+    // Don't trim - preserve leading whitespace
     return after;
 };
 
@@ -1428,14 +1432,26 @@ Point.prototype.original = function() {
     return this.reprojectedFrom || this;
 };
 
-Point.prototype.textBefore = function(maxChars) {
+Point.prototype.textBefore = function(opts) {
     var first = this.first();
-    return first ? first.textBefore(maxChars) : "";
+    if (!first) return "";
+    
+    // Handle both number (legacy) and options object
+    var maxChars = typeof opts === 'number' ? opts : (opts && opts.maxchars);
+    var showEllipse = opts && opts.ellipse !== false; // default true
+    
+    return first.textBefore(maxChars, showEllipse);
 };
 
-Point.prototype.textAfter = function(maxChars) {
+Point.prototype.textAfter = function(opts) {
     var last = this.last();
-    return last ? last.textAfter(maxChars) : "";
+    if (!last) return "";
+    
+    // Handle both number (legacy) and options object
+    var maxChars = typeof opts === 'number' ? opts : (opts && opts.maxchars);
+    var showEllipse = opts && opts.ellipse !== false; // default true
+    
+    return last.textAfter(maxChars, showEllipse);
 };
 
 Point.prototype.originalText = function(opts) {
@@ -1818,31 +1834,19 @@ Point.prototype.maxErrorBounds = function() {
     var lat = this.latitude();
     var lng = this.longitude();
     
-    if (this.refsys && this.refsys.unit === CoordUnit.Meters) {
-        // For meter-based systems, errors are already in meters
-        var errors = this.maxErrors();
-        
-        // Convert meter errors to degree errors using geodetic functions
-        var latError = errors.N / GeoUtils.metersPerDegreeLat(lat);
-        var lngError = errors.E / GeoUtils.metersPerDegreeLon(lat);
-        
-        return new BoundingBox(
-            lat - latError,
-            lng - lngError,
-            lat + latError,
-            lng + lngError
-        );
-    } else {
-        // For degree-based systems, errors are in degrees
-        var errors = this.maxErrors();
-        
-        return new BoundingBox(
-            lat - errors.N,
-            lng - errors.E,
-            lat + errors.N,
-            lng + errors.E
-        );
-    }
+    // maxErrors() returns errors in meters, convert to degrees
+    var errors = this.maxErrors();
+    
+    // Convert meter errors to degree errors using geodetic functions
+    var latError = errors.N / GeoUtils.metersPerDegreeLat(lat);
+    var lngError = errors.E / GeoUtils.metersPerDegreeLon(lat);
+    
+    return new BoundingBox(
+        lat - latError,
+        lng - lngError,
+        lat + latError,
+        lng + lngError
+    );
 };
 
 Point.prototype.clone = function() {
