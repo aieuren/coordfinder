@@ -482,13 +482,13 @@ var Patterns = {
     // Negative lookahead for z to avoid matching zoom parameters like "13.3z"
     // Use [ \t] to avoid matching across newlines
     // Direction letter must not be followed by another letter (avoids "Ska", "Viktig", etc.)
-    // Direction letter before number must be preceded by word boundary or whitespace
-    degs: /(?:^|[ \t])([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![ \t]*\d)(?![a-zåäöA-ZÅÄÖ]))?/gi,
+    // Direction letter before number must be preceded by word boundary, whitespace, or newline
+    degs: /(?:^|[ \t\n\r])([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![ \t]*\d)(?![a-zåäöA-ZÅÄÖ]))?/gi,
     
     // Plain number (meters or large coordinates)
     // Use [ \t] to avoid matching across newlines
-    // Direction letter before number must be preceded by word boundary or whitespace
-    plain: /(?:^|[ \t])([NSEWÖV])?[ \t]*(\d{5,})[ \t]*([NSEWÖV])?/gi
+    // Direction letter before number must be preceded by word boundary, whitespace, or newline
+    plain: /(?:^|[ \t\n\r])([NSEWÖV])?[ \t]*(\d{5,})[ \t]*([NSEWÖV])?/gi
 };
 
 Patterns.allPatterns = [
@@ -629,7 +629,10 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
     snippet.text = bestMatch[0];
     snippet.encodedText = bestMatch[0];
     snippet.format = bestPattern.format;
-    snippet.index = originalTextPosition + bestMatch.index;
+    
+    // Adjust index to skip leading whitespace/newlines in match
+    var leadingWhitespace = bestMatch[0].match(/^[\s\n\r]*/)[0].length;
+    snippet.index = originalTextPosition + bestMatch.index + leadingWhitespace;
     snippet._skipLength = bestMatch[0].length; // Store match length for skipping invalid matches
     snippet.lineNo = parser ? parser.lineNoFromIndex(snippet.index) : 0;
     
