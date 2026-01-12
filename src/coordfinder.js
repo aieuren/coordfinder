@@ -482,11 +482,13 @@ var Patterns = {
     // Negative lookahead for z to avoid matching zoom parameters like "13.3z"
     // Use [ \t] to avoid matching across newlines
     // Direction letter must not be followed by another letter (avoids "Ska", "Viktig", etc.)
-    degs: /([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![ \t]*\d)(?![a-zåäöA-ZÅÄÖ]))?/gi,
+    // Direction letter before number must be preceded by word boundary or whitespace
+    degs: /(?:^|[ \t])([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![ \t]*\d)(?![a-zåäöA-ZÅÄÖ]))?/gi,
     
     // Plain number (meters or large coordinates)
     // Use [ \t] to avoid matching across newlines
-    plain: /([NSEWÖV])?[ \t]*(\d{5,})[ \t]*([NSEWÖV])?/gi
+    // Direction letter before number must be preceded by word boundary or whitespace
+    plain: /(?:^|[ \t])([NSEWÖV])?[ \t]*(\d{5,})[ \t]*([NSEWÖV])?/gi
 };
 
 Patterns.allPatterns = [
@@ -1438,12 +1440,23 @@ Point.prototype.textAfter = function(maxChars) {
 
 Point.prototype.originalText = function(opts) {
     if (!this.N || !this.E) return "";
-    var first = this.first();
-    if (!first.parsedFrom || !first.parsedFrom.parser) return "";
     
-    // Return the full line where the coordinate was found
-    var lineNo = first.parsedFrom.lineNo;
-    return first.parsedFrom.parser.lineText(lineNo);
+    // Get parsedFrom for both coordinates
+    var nParsed = this.N.parsedFrom;
+    var eParsed = this.E.parsedFrom;
+    
+    if (!nParsed || !eParsed || !nParsed.parser) return "";
+    
+    // Extract the coordinate text from original text
+    var originalText = nParsed.parser.originalText;
+    var startIndex = Math.min(nParsed.index, eParsed.index);
+    var endIndex = Math.max(
+        nParsed.index + nParsed.text.length,
+        eParsed.index + eParsed.text.length
+    );
+    
+    var coordText = originalText.substring(startIndex, endIndex);
+    return coordText.trim();
 };
 
 Point.prototype.context = function(opts) {

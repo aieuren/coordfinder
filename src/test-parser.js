@@ -270,13 +270,18 @@ MarkdownTestParser.prototype._parseExpectedValue = function(test, value) {
     }
     
     // Handle quoted string (ASCII and Unicode quotes)
+    // Remove matching quotes from start and end
     var firstChar = value.charCodeAt(0);
     var lastChar = value.charCodeAt(value.length - 1);
     var hasQuotes = (
         (firstChar === 34 && lastChar === 34) ||  // "..."
         (firstChar === 39 && lastChar === 39) ||  // '...'
-        (firstChar === 8220 && lastChar === 8221) ||  // "..."
-        (firstChar === 8216 && lastChar === 8217)     // '...'
+        (firstChar === 8220 && lastChar === 8221) ||  // "..." (left and right)
+        (firstChar === 8221 && lastChar === 8221) ||  // "..." (both right)
+        (firstChar === 8220 && lastChar === 8220) ||  // "..." (both left)
+        (firstChar === 8216 && lastChar === 8217) ||  // '...' (left and right)
+        (firstChar === 8217 && lastChar === 8217) ||  // '...' (both right)
+        (firstChar === 8216 && lastChar === 8216)     // '...' (both left)
     );
     
     if (hasQuotes) {
@@ -327,13 +332,18 @@ MarkdownTestParser.prototype._parseValue = function(str) {
     if (str.toLowerCase() === 'false') return false;
     
     // Handle quoted string (ASCII and Unicode quotes)
+    // Remove matching quotes from start and end
     var firstChar = str.charCodeAt(0);
     var lastChar = str.charCodeAt(str.length - 1);
     var hasQuotes = (
         (firstChar === 34 && lastChar === 34) ||  // "..."
         (firstChar === 39 && lastChar === 39) ||  // '...'
-        (firstChar === 8220 && lastChar === 8221) ||  // "..."
-        (firstChar === 8216 && lastChar === 8217)     // '...'
+        (firstChar === 8220 && lastChar === 8221) ||  // "..." (left and right)
+        (firstChar === 8221 && lastChar === 8221) ||  // "..." (both right)
+        (firstChar === 8220 && lastChar === 8220) ||  // "..." (both left)
+        (firstChar === 8216 && lastChar === 8217) ||  // '...' (left and right)
+        (firstChar === 8217 && lastChar === 8217) ||  // '...' (both right)
+        (firstChar === 8216 && lastChar === 8216)     // '...' (both left)
     );
     
     if (hasQuotes) {
