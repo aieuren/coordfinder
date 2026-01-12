@@ -126,7 +126,7 @@ MIT License
 - **📖 Documentation:** https://aieuren.github.io/coordfinder/docs/README.md
 - **🎮 Interactive Demo:** https://aieuren.github.io/coordfinder/examples/demo.html
 - **🧪 Test Runner:** https://aieuren.github.io/coordfinder/tests/verification-test-runner.html
-- **Version:** 5.0-beta.2
+- **Version:** 5.0-beta.6
 - **Author:** Bernt Rane, Claude & Ona
 
 **Note:** Version, author, and license are defined in `src/coordfinder.js` as `CF.version`, `CF.author`, and `CF.license`. HTML pages read these dynamically.
