@@ -89,7 +89,8 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
         }
         
         // Method (optional, for CoordFinder tests)
-        if (state === 'test' && trimmed.match(/^Method:\s*(.+)$/)) {
+        // Allow Method: in both 'test' and 'input' states (for flexibility in test ordering)
+        if ((state === 'test' || state === 'input') && trimmed.match(/^Method:\s*(.+)$/)) {
             currentTest.method = RegExp.$1.trim();
             // Determine test type from method if type is CoordFinder
             if (currentTest.type === 'CoordFinder') {
