@@ -286,7 +286,7 @@ Expected:
 Test-ID: tdd-textbef-001
 Method: textBefore()
 Input: “Koordinat vid hamnen är 58.41234 12.56789 och position mätt med GPS.”
-Expected: “Koordinat vid hamnen är”
+Expected: “Koordinat vid hamnen är ”
 
 ## Point Test: Utan text före
 Test-ID: tdd-textbef-002
@@ -343,8 +343,8 @@ Expected: “ och sedan…”
 ## Point Test: Med maxchars lång
 Test-ID: tdd-textaft-004
 Method: textAfter(maxchars=30)
-Input: “58.41234 12.56789 vid norra udden”
-Expected: “ vid norra udden”
+Input: “58.41234 12.56789 vid norra udden.”
+Expected: “ vid norra udden.”
 
 ## Point Test: Text med specialtecken efter
 Test-ID: tdd-textaft-005
@@ -367,7 +367,7 @@ Test-ID: tdd-origtxt-002
 Method: originalText()
 Input: Position N 58°24’44.2” E 12°34’4.4” rapporterad.”
 Expected:
-”N 58°24’44.2” E 12°34’4.4””
+N 58°24’44.2” E 12°34’4.4”
 
 ## Point Test: Med maxchars
 Test-ID: tdd-origtxt-003
@@ -407,9 +407,9 @@ Test-ID: tdd-ctx-002
 Method: context(maxchars=15)
 Input: “Den gamla fyren står vid 58.41234 12.56789 på det gamla Stora grundet”
 Expected:
-- Contains: “…a fyren står vid”
+- Contains: “…a fyren står vid ”
 - Contains: “58.41234 12.56789”
-- Contains: “på det gamla St…”
+- Contains: “ på det gamla St…”
 
 ## Point Test: Kort text före och efter
 Test-ID: tdd-ctx-003
