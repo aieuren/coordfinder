@@ -453,7 +453,8 @@ var Patterns = {
     veryCompactDM: /(\d{4})([NSEWÖV])(\d{5})([NSEWÖV])/gi,
     
     // Compact DDMM with decimal: 5930.5N-01815.2E or 59 30N - 018 15E
-    compactDDMM: /(\d{2})\s*(\d{2}(?:[,.]\d+)?)\s*([NSEWÖV])\s*-?\s*(\d{2,3})\s*(\d{2}(?:[,.]\d+)?)\s*([NSEWÖV])/gi,
+    // Use [ \t] to avoid matching across newlines
+    compactDDMM: /(\d{2})[ \t]*(\d{2}(?:[,.]\d+)?)[ \t]*([NSEWÖV])[ \t]*-?[ \t]*(\d{2,3})[ \t]*(\d{2}(?:[,.]\d+)?)[ \t]*([NSEWÖV])/gi,
     
     // Plain DDMM pairs: 5930 1815 or 6007 0530 (no direction letters)
     plainDDMM: /\b(\d{4})\s+(\d{4})\b/gi,
@@ -2083,7 +2084,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.6";
-CF.build = "20260112-223657"; // Auto-updated by update-build.sh
+CF.build = "20260112-230007"; // Auto-updated by update-build.sh
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
