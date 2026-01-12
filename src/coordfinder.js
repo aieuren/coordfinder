@@ -2387,17 +2387,28 @@ CF.prototype.foundRatings = function() {
         }
     }
     
-    ratings.sort(function(a, b) { return b - a; });
+    // Sort lägst till högst (ascending)
+    ratings.sort(function(a, b) { return a - b; });
     this._foundRatings = ratings;
     return ratings;
 };
 
 // Get index into foundRatings array
+// Returns index of lowest rating that is >= given rating
 CF.prototype.ratingIndex = function(rating) {
     var ratings = this.foundRatings();
-    for (var i = 0; i < ratings.length; i++) {
-        if (ratings[i] <= rating) return i;
+    
+    // If no rating provided, use default
+    if (rating === undefined || rating === null) {
+        rating = CF.ratingDefault;
     }
+    
+    // Find first rating >= given rating (since sorted ascending)
+    for (var i = 0; i < ratings.length; i++) {
+        if (ratings[i] >= rating) return i;
+    }
+    
+    // If all ratings are lower, return last index
     return ratings.length - 1;
 };
 
