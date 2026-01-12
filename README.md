@@ -129,6 +129,6 @@ MIT License
 - **Version:** 5.0-beta.6
 - **Author:** Bernt Rane, Claude & Ona
 
-**Note:** Version, author, and license are defined in `src/coordfinder.js` as `CF.version`, `CF.author`, and `CF.license`. HTML pages read these dynamically.
+**Note:** Version and build are defined in `src/coordfinder.js` as `CF.version` and `CF.build`. Test pages display these to verify GitHub Pages deployment.
 
-**Build number:** Run `./update-build.sh` before committing to update `CF.build` with current git commit hash. This helps identify exact deployed version.
+**Build number:** Automatically updated by `./update-build.sh` script. The build number (timestamp format YYYYMMDD-HHMMSS) helps verify that GitHub Pages has deployed the latest version.
