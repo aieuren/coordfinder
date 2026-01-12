@@ -935,7 +935,7 @@ Input: 58 13
 58.412 12.568
 58.4123 12.5679
 58.41234 12.56789
-- Expected: 1
+Expected: 1
 
 
 # CoordFinder.groups()
