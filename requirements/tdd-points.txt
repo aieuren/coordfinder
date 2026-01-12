@@ -69,6 +69,13 @@ Input: "N 65.58 Ö 22.14"
 Expected:
 65.58 22.14
 
+## CoordFinder Test: Väderstreck före med extrem longitud
+Test-ID: tdd-136
+Method: pointIn()
+Input: "E175.5 N82.3"
+Expected: 82.3 175.5
+
+
 # MINUSTECKEN SOM SEPARATOR
 
 ## CoordFinder Test: Grader-minuter format
@@ -100,6 +107,39 @@ Method: pointIn()
 Input: "map/59.329440/18.064510"
 Expected:
 59.32944 18.06451
+
+## CoordFinder Test: URL c-parameter med WGS84
+Test-ID: tdd-132
+Method: pointIn()
+Input: "https://kartor.eniro.se/?c=58.123456,12.345678&z=14"
+Expected: 58.123456 12.345678
+
+## CoordFinder Test: URL g-parameter med WGS84
+Test-ID: tdd-133
+Method: pointIn()
+Input: "https://kartor.eniro.se/?g=59.234567,13.456789&z=15"
+Expected: 59.234567 13.456789
+
+## CoordFinder Test: URL-encodade koordinater med mellanslag
+Test-ID: tdd-134
+Method: pointIn()
+Input: "https://example.com/?q=%2258.12345%2012.34567%22"
+Expected: 58.12345 12.34567
+
+## CoordFinder Test: Flera URL-parametrar ger separata punkter
+Test-ID: tdd-135
+Method: pointsIn()
+Input: "https://kartor.eniro.se/?c=58.111111,12.222222&g=59.333333,13.444444&z=13"
+Expected:
+- Count: 2
+
+
+## CoordFinder Test: Flera URL-parametrar med koordinater
+Test-ID: tdd-135
+Method: pointsIn()
+Input: "https://kartor.eniro.se/?c=57.715560,11.973150&g=58.123456,12.345678&z=13"
+Expected:
+- Count: 2
 
 # DATAFORMAT
 
@@ -165,6 +205,25 @@ Expected:
 - Count: 1
 - CRS: SWEREF99TM
 
+## CoordFinder Test: SWEREF kommaseparerad med mellanslag
+Test-ID: tdd-138
+Method: pointIn()
+Input: "6550000, 350000"
+Expected:
+- N.value: 6550000
+- E.value: 350000
+- refsys: SWEREF99TM
+
+## CoordFinder Test: SWEREF x-separator över flera rader
+Test-ID: tdd-139
+Method: pointsIn()
+Input: "6550000 x 450000
+6620000 x 520000
+6680000 x 580000"
+Expected:
+- Count: 3
+
+
 # RT90
 
 ## CoordFinder Test: RT90 2.5 gon V
@@ -181,6 +240,15 @@ Method: pointsIn()
 Input: "X: 6580000, Y: 1540000"
 Expected:
 - Count: 1
+- CRS: RT90_25gonV
+
+## CoordFinder Test: RT90 Y,X ordning med tre decimaler
+Test-ID: tdd-140
+Method: pointIn()
+Input: "1580000.123, 7450000.456"
+Expected:
+- N.value: 7450000.456
+- E.value: 1580000.123
 - CRS: RT90_25gonV
 
 # SPECIALFALL OCH KANTFALL
@@ -436,10 +504,10 @@ Expected:
 ## CoordFinder Test: CSV med XYZ och ID-kolumner
 Test-ID: tdd-057b
 Method: pointsIn()
-Input: "
+Input:
 X,Y,id
 18.06491,59.32894,1
-19.54321,60.12345,2"
+19.54321,60.12345,2
 Expected:
 - Count: 2
 - Bounds: 59.0 18.0 61.0 20.0
@@ -766,6 +834,12 @@ Method: pointIn()
 Implements test-IDs: test-0027
 Input: N60 E19
 Expected: 60.0 19.0
+
+## CoordFinder Test: Väderstreck med endast heltalsgrader, inga minuter
+Test-ID: tdd-137
+Method: pointIn()
+Input: "N 58 E 19"
+Expected: 58.0 19.0
 
 ## CoordFinder Test: Extremt glest format med DMS
 Test-ID: tdd-094
