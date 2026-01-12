@@ -1742,18 +1742,19 @@ Point.prototype._evaluateSeparator = function() {
     
     var nIndex = this.N.parsedFrom.index;
     var eIndex = this.E.parsedFrom.index;
-    var nLength = this.N.parsedFrom.text.length;
+    var nText = this.N.parsedFrom.text;
     
     // Get text between coordinates
     var parser = this.N.parsedFrom.parser;
     if (!parser) return 0;
     
-    var between = parser.originalText.substring(nIndex + nLength, eIndex);
+    // Calculate end of N coordinate (trimming trailing whitespace from snippet)
+    var nEnd = nIndex + nText.trimEnd().length;
+    var between = parser.originalText.substring(nEnd, eIndex);
     
-    // No separator
+    // No separator or only whitespace
     if (between.length === 0 || /^\s*$/.test(between)) {
-        if (between.length === 0) return 0.2;
-        return 0; // Whitespace is normal
+        return 0; // Whitespace or no separator is normal
     }
     
     // Unusual separator (semicolon, slash, etc.)
