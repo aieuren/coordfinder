@@ -626,12 +626,12 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
     if (!bestMatch) return null;
     
     var snippet = new Snippet(parser);
-    snippet.text = bestMatch[0];
-    snippet.encodedText = bestMatch[0];
-    snippet.format = bestPattern.format;
     
-    // Adjust index to skip leading whitespace/newlines in match
+    // Adjust index and text to skip leading whitespace/newlines in match
     var leadingWhitespace = bestMatch[0].match(/^[\s\n\r]*/)[0].length;
+    snippet.text = bestMatch[0].substring(leadingWhitespace);
+    snippet.encodedText = snippet.text;
+    snippet.format = bestPattern.format;
     snippet.index = originalTextPosition + bestMatch.index + leadingWhitespace;
     snippet._skipLength = bestMatch[0].length; // Store match length for skipping invalid matches
     snippet.lineNo = parser ? parser.lineNoFromIndex(snippet.index) : 0;
@@ -807,6 +807,8 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
             // First is lat, second is lon
             snippet._lat = dir1 === 'S' ? -deg1 : deg1;
             snippet._lon = (dir2 === 'W' || dir2 === 'V') ? -deg2 : deg2;
+            snippet._directionLetter1 = dir1;
+            snippet._directionLetter2 = dir2;
         } else {
             // Fallback: assume first is lat, second is lon
             snippet._lat = deg1;
@@ -1703,9 +1705,111 @@ Point.prototype.ratingLog = function() {
     return this._ratingLog.join('\n');
 };
 
+Point.prototype._hasFormatSymbols = function() {
+    // Check for degree, minute, second symbols in original text
+    if (!this.N.parsedFrom || !this.E.parsedFrom) return false;
+    var text = this.N.parsedFrom.text + ' ' + this.E.parsedFrom.text;
+    return /[°º'′´`"″\u2019\u201D]/.test(text);
+};
+
+Point.prototype._hasDirectionLetters = function() {
+    var validDirections = ['N','S','E','W','Ö','V'];
+    var hasN = this.N.parsedFrom && this.N.parsedFrom.directionLetter &&
+               validDirections.indexOf(this.N.parsedFrom.directionLetter.toUpperCase()) !== -1;
+    var hasE = this.E.parsedFrom && this.E.parsedFrom.directionLetter &&
+               validDirections.indexOf(this.E.parsedFrom.directionLetter.toUpperCase()) !== -1;
+    return hasN || hasE;
+};
+
+Point.prototype._hasTechnicalContext = function() {
+    // Check for technical prefixes or URL patterns
+    if (!this.N.parsedFrom || !this.E.parsedFrom) return false;
+    var parser = this.N.parsedFrom.parser;
+    if (!parser) return false;
+    
+    var text = parser.originalText;
+    // Check for prefixes like X:, Y:, Lat:, Long:, Point(, @...z
+    return /\b(X|Y|Lat|Long|Latitude|Longitude|N|E|Point)\s*[:(\[]/.test(text) ||
+           /@\d+[.,]\d+[.,]\d+z/.test(text);
+};
+
+Point.prototype._evaluateSeparator = function() {
+    if (!this.N.parsedFrom || !this.E.parsedFrom) return 0;
+    
+    var nIndex = this.N.parsedFrom.index;
+    var eIndex = this.E.parsedFrom.index;
+    var nLength = this.N.parsedFrom.text.length;
+    
+    // Get text between coordinates
+    var parser = this.N.parsedFrom.parser;
+    if (!parser) return 0;
+    
+    var between = parser.originalText.substring(nIndex + nLength, eIndex);
+    
+    // No separator
+    if (between.length === 0 || /^\s*$/.test(between)) {
+        if (between.length === 0) return 0.2;
+        return 0; // Whitespace is normal
+    }
+    
+    // Unusual separator (semicolon, slash, etc.)
+    if (/[;\/\\|]/.test(between)) {
+        return 0.1;
+    }
+    
+    return 0; // Normal separator (space, comma, newline, tab)
+};
+
+Point.prototype._evaluatePrecision = function() {
+    if (!this.N.parsedFrom || !this.E.parsedFrom) return 0;
+    
+    var nDecimals = this.N.parsedFrom.noOfDecimals || 0;
+    var eDecimals = this.E.parsedFrom.noOfDecimals || 0;
+    var penalty = 0;
+    
+    // För Decimalgrader: färre än 3 decimaler
+    if (this.refsys.unit === CoordUnit.Degrees) {
+        var format = this.N.parsedFrom.format;
+        if (format === CoordFormat.Degs) {
+            if (nDecimals < 3 || eDecimals < 3) {
+                penalty += 0.1;
+            }
+        }
+    }
+    
+    // Precisionsskillnad mellan koordinaterna
+    var diff = Math.abs(nDecimals - eDecimals);
+    if (diff >= 1 && diff <= 2) {
+        penalty += 0.1;
+    } else if (diff >= 3) {
+        penalty += 0.2;
+    }
+    
+    // EXTREM formatinkompatibilitet
+    var nValue = Math.abs(this.N.value);
+    var eValue = Math.abs(this.E.value);
+    
+    // En i DD-intervall, en i meter-intervall
+    var nIsDD = nValue <= 180;
+    var eIsDD = eValue <= 180;
+    var nIsMeter = nValue > 10000;
+    var eIsMeter = eValue > 10000;
+    
+    if ((nIsDD && eIsMeter) || (nIsMeter && eIsDD)) {
+        penalty += 0.6;
+    }
+    
+    // En med 5+ decimaler, en med 0 decimaler
+    if ((nDecimals >= 5 && eDecimals === 0) || (eDecimals >= 5 && nDecimals === 0)) {
+        penalty += 0.6;
+    }
+    
+    return penalty;
+};
+
 Point.prototype.rate = function(grouping, hints) {
     this._ratingLog = [];
-    var score = 0.5;
+    var score = 1.0; // Start from perfect score
     
     if (!this.N || !this.E) {
         this._rating = 0;
@@ -1713,44 +1817,65 @@ Point.prototype.rate = function(grouping, hints) {
         return this._rating;
     }
     
-    // Validate coordinate ranges for WGS84
+    // Diskvalificeringsregler
     if (this.refsys.unit === CoordUnit.Degrees) {
         var lat = this.N.value;
         var lon = this.E.value;
         
-        // Latitude must be between -90 and 90
-        if (Math.abs(lat) > 90) {
+        // Validate coordinate ranges
+        if (Math.abs(lat) > 90 || Math.abs(lon) > 180) {
             this._rating = 0;
-            this._ratingLog.push("Invalid latitude: " + lat + " (must be -90 to 90)");
+            this._ratingLog.push("Värden utanför alla bounding boxes");
             return this._rating;
         }
         
-        // Longitude must be between -180 and 180
-        if (Math.abs(lon) > 180) {
+        // Decimalgrader utan decimaler OCH utan väderstreck
+        var nDecimals = this.N.parsedFrom ? this.N.parsedFrom.noOfDecimals : 0;
+        var eDecimals = this.E.parsedFrom ? this.E.parsedFrom.noOfDecimals : 0;
+        var hasDirectionN = this.N.parsedFrom && this.N.parsedFrom.directionLetter && 
+                           ['N','S','E','W','Ö','V'].indexOf(this.N.parsedFrom.directionLetter.toUpperCase()) !== -1;
+        var hasDirectionE = this.E.parsedFrom && this.E.parsedFrom.directionLetter &&
+                           ['N','S','E','W','Ö','V'].indexOf(this.E.parsedFrom.directionLetter.toUpperCase()) !== -1;
+        
+        if (nDecimals === 0 && eDecimals === 0 && !hasDirectionN && !hasDirectionE) {
             this._rating = 0;
-            this._ratingLog.push("Invalid longitude: " + lon + " (must be -180 to 180)");
+            this._ratingLog.push("Decimalgrader utan decimaler OCH utan väderstreck");
             return this._rating;
         }
     }
     
-    // Check if coordinates have direction letters
-    if (this.N.parsedFrom && this.N.parsedFrom.directionLetter) {
-        score += 0.2;
-        this._ratingLog.push("+0.2 for N direction letter");
-    }
-    if (this.E.parsedFrom && this.E.parsedFrom.directionLetter) {
-        score += 0.2;
-        this._ratingLog.push("+0.2 for E direction letter");
+    // 1. Avdrag för saknade formatindikatorer
+    var hasFormatSymbols = this._hasFormatSymbols();
+    var hasDirectionLetters = this._hasDirectionLetters();
+    var hasTechnicalContext = this._hasTechnicalContext();
+    
+    if (!hasFormatSymbols && !hasDirectionLetters && !hasTechnicalContext) {
+        score -= 0.3;
+        this._ratingLog.push("-0.3 saknar formatsymboler, väderstreck och teknisk kontext");
+    } else if (!hasFormatSymbols && (hasDirectionLetters || hasTechnicalContext)) {
+        score -= 0.1;
+        this._ratingLog.push("-0.1 saknar formatsymboler");
+    } else if (!hasDirectionLetters && hasFormatSymbols) {
+        score -= 0.1;
+        this._ratingLog.push("-0.1 saknar väderstreck");
     }
     
-    // Check if coordinates are in same line
-    if (this.N.parsedFrom && this.E.parsedFrom && 
-        this.N.parsedFrom.lineNo === this.E.parsedFrom.lineNo) {
-        score += 0.1;
-        this._ratingLog.push("+0.1 for same line");
+    // 2. Avdrag för separatortyp
+    var separatorPenalty = this._evaluateSeparator();
+    score -= separatorPenalty;
+    if (separatorPenalty > 0) {
+        this._ratingLog.push("-" + separatorPenalty + " för separator");
     }
     
-    this._rating = Math.min(1.0, score);
+    // 3. Avdrag för precisionsproblem
+    var precisionPenalty = this._evaluatePrecision();
+    score -= precisionPenalty;
+    if (precisionPenalty > 0) {
+        this._ratingLog.push("-" + precisionPenalty + " för precision");
+    }
+    
+    // Klamp till [0.0, 1.0]
+    this._rating = Math.max(0.0, Math.min(1.0, score));
     return this._rating;
 };
 
@@ -2061,6 +2186,20 @@ CF.prototype._coordsToPoints = function() {
             lonCoord.value = lon;
             lonCoord.axis = snippet._ambiguousOrder ? CoordAxis.Unknown : CoordAxis.Easting;
             lonCoord.parsedFrom = snippet;
+            
+            // Preserve direction letters for rating system
+            if (snippet._directionLetter1) {
+                // Create a pseudo-snippet for N with direction letter
+                var nSnippet = Object.create(snippet);
+                nSnippet.directionLetter = snippet._directionLetter1;
+                latCoord.parsedFrom = nSnippet;
+            }
+            if (snippet._directionLetter2) {
+                // Create a pseudo-snippet for E with direction letter
+                var eSnippet = Object.create(snippet);
+                eSnippet.directionLetter = snippet._directionLetter2;
+                lonCoord.parsedFrom = eSnippet;
+            }
             
             // Determine reference system from coordinate values
             // If ambiguous order, allow testing both X,Y and Y,X
