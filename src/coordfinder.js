@@ -310,6 +310,21 @@ function TextParser(text) {
 }
 
 TextParser.prototype._encode = function(text) {
+    // URL-decode if text contains URL-encoded characters
+    if (text.indexOf('%') !== -1) {
+        try {
+            // Try to decode, but keep original if decoding fails
+            var decoded = decodeURIComponent(text);
+            text = decoded;
+        } catch (e) {
+            // Keep original text if decoding fails
+        }
+    }
+    
+    // Remove quotes around coordinate-like patterns in URLs
+    // Pattern: "DD.DDD DD.DDD" -> DD.DDD DD.DDD
+    text = text.replace(/"(\d{1,3}\.\d+\s+\d{1,3}\.\d+)"/g, '$1');
+    
     // Normalize whitespace but preserve newlines for coordinate separation
     // Replace multiple spaces/tabs with single space, but keep newlines
     text = text.replace(/[ \t]+/g, ' ').replace(/\n+/g, '\n');
@@ -404,8 +419,8 @@ var Patterns = {
     // Direction pair with symbols: N 60° 30,5' V 019° 15,25' or S 35° 30' V 70° 40'
     directionPairDM: /([NSEWÖV])[ \t]+(\d{1,3})[ \t]*[°º][ \t]*(\d{1,2}(?:[,.]?\d+)?)[ \t]*['′´`]?[ \t]+([NSEWÖV])[ \t]+(\d{1,3})[ \t]*[°º][ \t]*(\d{1,2}(?:[,.]?\d+)?)[ \t]*['′´`]?/gi,
     
-    // Extremely compact with direction: N60 E19 or S35 W70
-    extremelyCompact: /\b([NSEWÖV])(\d{1,3})[ \t]+([NSEWÖV])(\d{1,3})\b/gi,
+    // Extremely compact with direction: N60 E19 or S35 W70 or N 58 E 19 (with optional space after direction)
+    extremelyCompact: /\b([NSEWÖV])[ \t]*(\d{1,3})[ \t]+([NSEWÖV])[ \t]*(\d{1,3})\b/gi,
     
     // Direction before decimal degrees: E19.5 N60.5 or N60.5 E19.5 or N 56.5 E 12.0
     // Use [ \t] to avoid matching across newlines
@@ -414,10 +429,13 @@ var Patterns = {
     // URL parameters: x=540000&y=6580000 or y=6580000&x=540000
     urlParams: /[?&]?([xy])\s*=\s*(-?\d+(?:\.\d+)?)\s*&\s*([xy])\s*=\s*(-?\d+(?:\.\d+)?)/gi,
     
-    // Large number pairs (RT90/SWEREF): 6480082.101, 1372031.843 or 6480082 1372031
-    // Accepts comma (with optional space) or whitespace separator
+    // URL parameters with WGS84 coordinates: c=58.123,12.345 or g=59.234,13.456
+    urlParamsWGS84: /[?&]([cg])\s*=\s*(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)/gi,
+    
+    // Large number pairs (RT90/SWEREF): 6480082.101, 1372031.843 or 6480082 1372031 or 6550000 x 450000
+    // Accepts comma, semicolon, 'x', or whitespace separator
     // Leading whitespace included to match before plain pattern
-    largePairs: /\s*(\d{6,}(?:\.\d+)?)\s*(?:,\s*|;\s*|\s+)(\d{6,}(?:\.\d+)?)\b/gi,
+    largePairs: /\s*(\d{6,}(?:\.\d+)?)\s*(?:,\s*|;\s*|x\s*|\s+)(\d{6,}(?:\.\d+)?)\b/gi,
     
     // Prefix formats with large numbers: N: 6504089 E: 278978 or Y: 1570600, X: 7546077
     prefixLargeNumbers: /([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})[\s,;]+([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})/gi,
@@ -468,10 +486,10 @@ var Patterns = {
     // Negative lookahead for ) to avoid matching list numbers like "2)"
     // Negative lookahead for ' ´ ′ " ″ \u201C \u201D to avoid matching DM/DMS like "30.5'" or "18.3""
     // Negative lookahead for z to avoid matching zoom parameters like "13.3z"
-    // Allow comma, semicolon, brackets, URL chars (~!@), or whitespace before number
+    // Allow comma, semicolon, brackets, URL chars (~!@=), or whitespace before number
     // Direction letter must not be followed by another letter (avoids "Ska", "Viktig", etc.)
     // Direction letter before number must be preceded by word boundary, whitespace, or newline
-    degs: /(?:^|[,;\[\]~!@ \t\n\r])([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![ \t]*\d)(?![a-zåäöA-ZÅÄÖ]))?/gi,
+    degs: /(?:^|[,;\[\]~!@= \t\n\r])([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![ \t]*\d)(?![a-zåäöA-ZÅÄÖ]))?/gi,
     
     // Plain number (meters or large coordinates)
     // Use [ \t] to avoid matching across newlines
@@ -490,6 +508,7 @@ Patterns.allPatterns = [
     {regex: Patterns.extremelyCompact, format: CoordFormat.Degs, handler: 'extremelyCompact'},
     {regex: Patterns.urlCoords, format: CoordFormat.Degs, handler: 'url'},
     {regex: Patterns.urlParams, format: CoordFormat.Meters, handler: 'urlParams'},
+    {regex: Patterns.urlParamsWGS84, format: CoordFormat.Degs, handler: 'urlParamsWGS84'},
     {regex: Patterns.largePairs, format: CoordFormat.Meters, handler: 'largePairs'},
     {regex: Patterns.prefixLargeNumbers, format: CoordFormat.Meters, handler: 'prefixLargeNumbers'},
     {regex: Patterns.singlePrefixLarge, format: CoordFormat.Meters, handler: 'singlePrefixLarge'},
@@ -616,7 +635,7 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
     var snippet = new Snippet(parser);
     
     // Adjust index and text to skip leading separators (whitespace, commas, semicolons, brackets, URL chars) in match
-    var leadingSeparators = bestMatch[0].match(/^[,;\[\]~!@ \s\n\r]*/)[0].length;
+    var leadingSeparators = bestMatch[0].match(/^[,;\[\]~!@= \s\n\r]*/)[0].length;
     snippet.text = bestMatch[0].substring(leadingSeparators);
     snippet.encodedText = snippet.text;
     snippet.format = bestPattern.format;
@@ -864,6 +883,20 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet.noOfDecimals = 0;
         snippet._lon = x;
         snippet._lat = y;
+        
+    } else if (bestPattern.handler === 'urlParamsWGS84') {
+        // Format: c=58.123,12.345 or g=59.234,13.456 (WGS84 coordinates in URL)
+        var lat = parseFloat(bestMatch[2]);
+        var lon = parseFloat(bestMatch[3]);
+        
+        snippet.number = lat;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = Math.max(
+            (bestMatch[2].match(/\.(\d+)/) || ['',''])[1].length,
+            (bestMatch[3].match(/\.(\d+)/) || ['',''])[1].length
+        );
+        snippet._lat = lat;
+        snippet._lon = lon;
         
     } else if (bestPattern.handler === 'largePairs') {
         // Format: Could be either X,Y or Y,X order - test both against bounding boxes
