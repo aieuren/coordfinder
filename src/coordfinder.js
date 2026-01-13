@@ -432,10 +432,10 @@ var Patterns = {
     // URL parameters with WGS84 coordinates: c=58.123,12.345 or g=59.234,13.456
     urlParamsWGS84: /[?&]([cg])\s*=\s*(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)/gi,
     
-    // Large number pairs (RT90/SWEREF): 6480082.101, 1372031.843 or 6480082 1372031 or 6550000 x 450000
-    // Accepts comma, semicolon, 'x', or whitespace separator
+    // Large number pairs (RT90/SWEREF): 6480082.101, 1372031.843 or 6550000,123 350000,456 or 6480082 1372031 or 6550000 x 450000
+    // Accepts decimal point or comma (max 3 decimals), and comma+space/semicolon/'x'/whitespace as separator
     // Leading whitespace included to match before plain pattern
-    largePairs: /\s*(\d{6,}(?:\.\d+)?)\s*(?:,\s*|;\s*|x\s*|\s+)(\d{6,}(?:\.\d+)?)\b/gi,
+    largePairs: /\s*(\d{6,}(?:[,.]\d{1,3})?)\s*(?:,\s+|;\s*|x\s*|\s+)(\d{6,}(?:[,.]\d{1,3})?)\b/gi,
     
     // Prefix formats with large numbers: N: 6504089 E: 278978 or Y: 1570600, X: 7546077
     prefixLargeNumbers: /([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})[\s,;]+([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})/gi,
@@ -901,14 +901,15 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         
     } else if (bestPattern.handler === 'largePairs') {
         // Format: Could be either X,Y or Y,X order - test both against bounding boxes
-        var val1 = parseFloat(bestMatch[1]);
-        var val2 = parseFloat(bestMatch[2]);
+        // Convert decimal comma to point
+        var val1 = parseFloat(bestMatch[1].replace(',', '.'));
+        var val2 = parseFloat(bestMatch[2].replace(',', '.'));
         
         snippet.number = val1;
         snippet.directionLetter = "";
         snippet.noOfDecimals = Math.max(
-            (bestMatch[1].match(/\.(\d+)/) || ['',''])[1].length,
-            (bestMatch[2].match(/\.(\d+)/) || ['',''])[1].length
+            (bestMatch[1].match(/[,.](\d+)/) || ['',''])[1].length,
+            (bestMatch[2].match(/[,.](\d+)/) || ['',''])[1].length
         );
         snippet._lat = val1;  // Tentative - will test both orders
         snippet._lon = val2;
@@ -2092,7 +2093,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.6";
-CF.build = "20260113-033949"; // Auto-updated by update-build.sh
+CF.build = "20260113-035435"; // Auto-updated by update-build.sh
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
