@@ -226,6 +226,16 @@ Expected:
 - E.value: 350000
 - refsys: SWEREF99TM
 
+## CoordFinder Test: SWEREF med 6 siffror i E-värde
+Test-ID: tdd-148
+Method: pointIn()
+Implements test-IDs: test-0072
+Input: "6550000, 308000"
+Expected:
+- N.value: 6550000
+- E.value: 308000
+- refsys: SWEREF99TM
+
 ## CoordFinder Test: SWEREF x-separator över flera rader
 Test-ID: tdd-139
 Method: pointsIn()
@@ -699,6 +709,20 @@ Implements test-IDs: test-0031
 Input: 59-18N 014-52E
 Expected: 59.300 14.867
 
+## CoordFinder Test: Minustecken som separator med decimalkomma
+Test-ID: tdd-145
+Method: pointIn()
+Implements test-IDs: test-0032
+Input: "58-45,5N 012-30,8E"
+Expected: 58.758 12.513
+
+## CoordFinder Test: Minustecken som separator med decimalpunkt
+Test-ID: tdd-146
+Method: pointIn()
+Implements test-IDs: test-0033
+Input: "58-45.5N 012-30.8E"
+Expected: 58.758 12.513
+
 ## CoordFinder Test: Leaflet bounds array korrekt ordning
 Test-ID: tdd-076
 Method: pointsIn()
@@ -812,6 +836,16 @@ Implements test-IDs: test-0014
 Input: -35.5 140.25
 Expected: -35.5 140.25
 
+## CoordFinder Test: RT90 Y,X ordning med olika antal decimaler
+Test-ID: tdd-149
+Method: pointIn()
+Implements test-IDs: test-0080
+Input: "1580000.123, 7450000.45"
+Expected:
+- N.value: 7450000.45
+- E.value: 1580000.123
+- refsys: RT90_25gonV
+
 ## CoordFinder Test: Sydvästra kvadranten båda negativa
 Test-ID: tdd-089
 Method: pointIn()
@@ -868,6 +902,18 @@ Test-ID: tdd-143
 Method: pointIn()
 Input: "E168.0 N83.0"
 Expected: 83.0 168.0
+
+## CoordFinder Test: Flera E-före-N koordinater med höga värden
+Test-ID: tdd-147
+Method: pointsIn()
+Implements test-IDs: test-0056
+Input: 
+E58.0 N13.0 första punkten
+E168.0 N83.0 andra punkten
+E15.5 N60.5 tredje punkten
+Expected:
+- Count: 3
+- Bounds: 13 15.5 83 168
 
 ## CoordFinder Test: Extremt glest format med DMS
 Test-ID: tdd-094
