@@ -275,6 +275,16 @@ Expected:
 - E.value: 350000.456
 - refsys: SWEREF99TM
 
+## CoordFinder Test: SWEREF med väderstreck utan decimaler och utan mellanslag
+Test-ID: tdd-155
+Method: pointIn()
+Implements test-IDs: test-0072
+Input: "N6550000 E350000"
+Expected:
+- N.value: 6550000
+- E.value: 350000
+- refsys: SWEREF99TM
+
 
 # RT90
 
@@ -1155,6 +1165,8 @@ Input: Pkt Lat. N Long. O Anmärkning
 4 60 45,5 19 30,1 Punkt 0,25’ SSO fyr
 Expected:
 - Count: 4
+
+https://www.dropbox.com/scl/fi/feb6e1kaxxd7fua1byex7/tdd-points.txt?rlkey=djhk1z6ttyfnrdd6zriv7lqfg&st=05mpkm0d&dl=0
 
 
 ## CoordFinder Test: Hitta.se URL med zoom-parameter
