@@ -292,9 +292,16 @@ MarkdownTestParser.prototype._parseExpectedValue = function(test, value) {
     }
     
     // Try to parse as lat lon pair (for backward compatibility)
+    // But only for Points tests (pointsIn), not Point tests (pointIn)
     var parts = value.split(/\s+/);
     if (parts.length >= 2 && !isNaN(parseFloat(parts[0])) && !isNaN(parseFloat(parts[1]))) {
-        // This is a lat lon pair
+        // For Point tests (method: pointIn()), store as string in expected
+        if (test.type === 'Point' || test.method === 'pointIn()') {
+            test.expected = value;
+            test.expectedType = 'string';
+            return;
+        }
+        // For Points tests, store in coords array
         if (!test.coords) test.coords = [];
         test.coords.push({
             lat: parseFloat(parts[0]),
