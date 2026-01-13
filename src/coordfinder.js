@@ -495,7 +495,8 @@ var Patterns = {
     // Plain number (meters or large coordinates)
     // Use [ \t] to avoid matching across newlines
     // Direction letter before number must be preceded by word boundary, whitespace, or newline
-    plain: /(?:^|[ \t\n\r])([NSEWÖV])?[ \t]*(\d{5,})[ \t]*([NSEWÖV])?/gi
+    // Supports optional decimals (max 3 decimal places)
+    plain: /(?:^|[ \t\n\r])([NSEWÖV])?[ \t]*(\d{5,}(?:[,.]\d{1,3})?)[ \t]*([NSEWÖV])?/gi
 };
 
 Patterns.allPatterns = [
@@ -2093,7 +2094,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.6";
-CF.build = "20260113-035435"; // Auto-updated by update-build.sh
+CF.build = "20260113-041151"; // Auto-updated by update-build.sh
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
@@ -2132,7 +2133,8 @@ CF.prototype.parse = function(text, opts) {
     
     // Pre-process: Remove CRS names that contain direction letters
     // e.g., "RT90 2.5 gon V" -> "RT90 2.5 gon" to avoid "V" being parsed as West
-    this._text = this._text.replace(/\bgon\s+[VW]\b/gi, 'gon');
+    // Also handle "gon V:" with colon
+    this._text = this._text.replace(/\bgon\s+[VW]\b:?/gi, 'gon');
     
     this._parser = new TextParser(this._text);
     this._snippets = [];

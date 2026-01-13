@@ -58,9 +58,15 @@ MethodTest.prototype.run = function() {
                 
                 // Check count
                 if (this.expected.count !== undefined && actual.length !== this.expected.count) {
-                    return new TestResult(this, false, 
-                        "Expected " + this.expected.count + " point(s), found " + actual.length,
-                        actual.length, this.expected.count);
+                    var msg = "Expected " + this.expected.count + " point(s), found " + actual.length;
+                    if (actual.length > 0) {
+                        msg += "\n   Found points:";
+                        for (var i = 0; i < actual.length; i++) {
+                            msg += "\n   - " + actual[i].latitude().toFixed(3) + ", " + 
+                                   actual[i].longitude().toFixed(3);
+                        }
+                    }
+                    return new TestResult(this, false, msg, actual.length, this.expected.count);
                 }
                 
                 // Check bounds if specified
