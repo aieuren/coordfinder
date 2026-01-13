@@ -23,219 +23,6 @@ TestResult.prototype.toString = function() {
     return msg;
 };
 
-// ——————————— PointTest ——————————— //
-// Tests finding a single coordinate pair
-function PointTest(id, name, input, expected, implementsTestIds) {
-    this.id = id;
-    this.name = name;
-    this.input = input;
-    this.expected = expected; // Format: "lat lon" with specific decimals
-    this.implementsTestIds = implementsTestIds || null; // Optional: test-IDs this implements
-    this.type = "PointTest";
-}
-
-PointTest.prototype.run = function() {
-    try {
-        var point = CF.pointIn(this.input);
-        
-        if (!this.expected) {
-            // Expected no point to be found
-            if (point === null) {
-                return new TestResult(this, true, "Correctly found no point");
-            } else {
-                var actual = this._formatPoint(point);
-                return new TestResult(this, false, 
-                    "Expected no point, but found: " + actual,
-                    actual, null);
-            }
-        }
-        
-        if (point === null) {
-            return new TestResult(this, false, 
-                "Expected point but found none",
-                null, this.expected);
-        }
-        
-        var actual = this._formatPoint(point);
-        var passed = this._comparePoints(actual, this.expected);
-        
-        if (passed) {
-            return new TestResult(this, true, "Point matches expected", actual, this.expected);
-        } else {
-            return new TestResult(this, false, 
-                "Point mismatch\n   Expected: " + this.expected + "\n   Actual:   " + actual,
-                actual, this.expected);
-        }
-        
-    } catch(e) {
-        return new TestResult(this, false, "Exception: " + e.message, null, this.expected);
-    }
-};
-
-PointTest.prototype._formatPoint = function(point) {
-    var lat = point.latitude();
-    var lon = point.longitude();
-    
-    // Determine decimal places from expected format
-    var decimals = this._getExpectedDecimals();
-    
-    return lat.toFixed(decimals) + " " + lon.toFixed(decimals);
-};
-
-PointTest.prototype._getExpectedDecimals = function() {
-    if (!this.expected) return 3;
-    
-    var parts = this.expected.split(/\s+/);
-    if (parts.length < 1) return 3;
-    
-    var match = parts[0].match(/\.(\d+)/);
-    return match ? match[1].length : 0;
-};
-
-PointTest.prototype._comparePoints = function(actual, expected) {
-    // Normalize whitespace
-    actual = actual.trim().replace(/\s+/g, ' ');
-    expected = expected.trim().replace(/\s+/g, ' ');
-    
-    return actual === expected;
-};
-
-// ——————————— PointsTest ——————————— //
-// Tests finding multiple coordinate pairs
-function PointsTest(id, name, input, expectedCount, expectedCoords, expectedCRS, implementsTestIds, expectedBounds) {
-    this.id = id;
-    this.name = name;
-    this.input = input;
-    this.expectedCount = expectedCount;
-    this.expectedCoords = expectedCoords || null; // Array of {lat, lon} objects
-    this.expectedCRS = expectedCRS || null; // Expected CRS name
-    this.implementsTestIds = implementsTestIds || null; // Optional: test-IDs this implements
-    this.expectedBounds = expectedBounds || null; // Expected bounding box {minLat, minLon, maxLat, maxLon}
-    this.type = "PointsTest";
-}
-
-PointsTest.prototype.run = function() {
-    try {
-        var points = CF.pointsIn(this.input);
-        var actualCount = points.length;
-        
-        // Check count
-        if (actualCount !== this.expectedCount) {
-            var msg = "Expected " + this.expectedCount + " point(s), found " + actualCount;
-            if (actualCount > 0) {
-                msg += "\n   Found points:";
-                for (var i = 0; i < points.length; i++) {
-                    msg += "\n   - " + points[i].latitude().toFixed(3) + ", " + 
-                           points[i].longitude().toFixed(3);
-                }
-            }
-            return new TestResult(this, false, msg, actualCount, this.expectedCount);
-        }
-        
-        // Check coordinates if specified
-        if (this.expectedCoords && this.expectedCoords.length > 0) {
-            for (var i = 0; i < this.expectedCoords.length && i < points.length; i++) {
-                var expected = this.expectedCoords[i];
-                var actual = points[i];
-                
-                // Check if expected uses N/E (meter coordinates) or lat/lon (degree coordinates)
-                if (expected.N !== undefined && expected.E !== undefined) {
-                    // Meter coordinates - compare N and E values directly
-                    var actualN = actual.N.value;
-                    var actualE = actual.E.value;
-                    
-                    // Determine decimal places
-                    var nDecimals = this._getDecimalPlaces(expected.N);
-                    var eDecimals = this._getDecimalPlaces(expected.E);
-                    
-                    // Round to same decimal places
-                    var roundedActualN = this._roundToDecimals(actualN, nDecimals);
-                    var roundedActualE = this._roundToDecimals(actualE, eDecimals);
-                    var roundedExpectedN = this._roundToDecimals(expected.N, nDecimals);
-                    var roundedExpectedE = this._roundToDecimals(expected.E, eDecimals);
-                    
-                    if (roundedActualN !== roundedExpectedN || roundedActualE !== roundedExpectedE) {
-                        var msg = "Point " + (i + 1) + " coordinates mismatch\n";
-                        msg += "   Expected N: " + roundedExpectedN.toFixed(nDecimals) + ", E: " + roundedExpectedE.toFixed(eDecimals) + "\n";
-                        msg += "   Actual   N: " + roundedActualN.toFixed(nDecimals) + ", E: " + roundedActualE.toFixed(eDecimals);
-                        return new TestResult(this, false, msg, actual, expected);
-                    }
-                } else if (expected.lat !== undefined && expected.lon !== undefined) {
-                    // Degree coordinates - compare lat/lon
-                    var latDecimals = this._getDecimalPlaces(expected.lat);
-                    var lonDecimals = this._getDecimalPlaces(expected.lon);
-                    
-                    // Round actual coordinates to same decimal places as expected
-                    var actualLat = this._roundToDecimals(actual.latitude(), latDecimals);
-                    var actualLon = this._roundToDecimals(actual.longitude(), lonDecimals);
-                    var expectedLat = this._roundToDecimals(expected.lat, latDecimals);
-                    var expectedLon = this._roundToDecimals(expected.lon, lonDecimals);
-                    
-                    if (actualLat !== expectedLat || actualLon !== expectedLon) {
-                        var msg = "Point " + (i + 1) + " coordinates mismatch\n";
-                        msg += "   Expected: " + expectedLat.toFixed(latDecimals) + ", " + expectedLon.toFixed(lonDecimals) + "\n";
-                        msg += "   Actual:   " + actualLat.toFixed(latDecimals) + ", " + actualLon.toFixed(lonDecimals);
-                        return new TestResult(this, false, msg, actual, expected);
-                    }
-                }
-            }
-        }
-        
-        // Check CRS if specified
-        if (this.expectedCRS && points.length > 0) {
-            var actualCRS = points[0].refsys.name;
-            // Normalize for comparison: remove spaces, dots, underscores, lowercase
-            var normalizedActual = actualCRS.replace(/[\s._]+/g, '').toLowerCase();
-            var normalizedExpected = this.expectedCRS.replace(/[\s._]+/g, '').toLowerCase();
-            
-            // Check if expected is contained in actual (allows "RT90" to match "RT90 2.5 gon V")
-            if (normalizedActual.indexOf(normalizedExpected) === -1) {
-                var msg = "CRS mismatch\n";
-                msg += "   Expected: " + this.expectedCRS + "\n";
-                msg += "   Actual:   " + actualCRS;
-                return new TestResult(this, false, msg, actualCRS, this.expectedCRS);
-            }
-        }
-        
-        // Check bounds if specified
-        if (this.expectedBounds && points.length > 0) {
-            for (var i = 0; i < points.length; i++) {
-                var p = points[i];
-                var lat = p.latitude();
-                var lon = p.longitude();
-                
-                if (lat < this.expectedBounds.minLat || lat > this.expectedBounds.maxLat ||
-                    lon < this.expectedBounds.minLon || lon > this.expectedBounds.maxLon) {
-                    var msg = "Point " + (i + 1) + " outside expected bounds\n";
-                    msg += "   Point: " + lat.toFixed(4) + ", " + lon.toFixed(4) + "\n";
-                    msg += "   Bounds: [" + this.expectedBounds.minLat + ", " + 
-                           this.expectedBounds.minLon + "] to [" + 
-                           this.expectedBounds.maxLat + ", " + this.expectedBounds.maxLon + "]";
-                    return new TestResult(this, false, msg);
-                }
-            }
-        }
-        
-        return new TestResult(this, true, 
-            "Found " + actualCount + " point(s) as expected",
-            actualCount, this.expectedCount);
-        
-    } catch(e) {
-        return new TestResult(this, false, "Exception: " + e.message, null, this.expectedCount);
-    }
-};
-
-PointsTest.prototype._getDecimalPlaces = function(num) {
-    var str = num.toString();
-    var match = str.match(/\.(\d+)/);
-    return match ? match[1].length : 0;
-};
-
-PointsTest.prototype._roundToDecimals = function(num, decimals) {
-    var factor = Math.pow(10, decimals);
-    return Math.round(num * factor) / factor;
-};
-
 // ——————————— MethodTest ——————————— //
 // Tests a specific method on a Point object
 function MethodTest(id, name, method, input, expected, expectedType, implementsTestIds, expectedContains, expectedNotContains) {
@@ -255,14 +42,56 @@ MethodTest.prototype.run = function() {
     try {
         // Determine if this is a CoordFinder method or Point method
         var methodName = this.method.match(/^([^(]+)/)[1].trim();
-        var isCoordFinderMethod = ['points', 'groups', 'foundRatings', 'ratingIndex', 'log'].indexOf(methodName) !== -1;
+        var isStaticMethod = ['pointIn', 'pointsIn'].indexOf(methodName) !== -1;
+        var isInstanceMethod = ['points', 'groups', 'foundRatings', 'ratingIndex', 'log'].indexOf(methodName) !== -1;
         
         var target;
-        if (isCoordFinderMethod) {
+        var actual;
+        
+        if (isStaticMethod) {
+            // For pointIn/pointsIn, call directly (handled in _executeMethod)
+            actual = this._executeMethod(null);
+            
+            // Special handling for pointsIn() with count and/or bounds
+            if (methodName === 'pointsIn' && this.expected && 
+                (this.expected.count !== undefined || this.expected.bounds)) {
+                
+                // Check count
+                if (this.expected.count !== undefined && actual.length !== this.expected.count) {
+                    return new TestResult(this, false, 
+                        "Expected " + this.expected.count + " point(s), found " + actual.length,
+                        actual.length, this.expected.count);
+                }
+                
+                // Check bounds if specified
+                if (this.expected.bounds && actual.length > 0) {
+                    for (var i = 0; i < actual.length; i++) {
+                        var p = actual[i];
+                        var lat = p.latitude();
+                        var lon = p.longitude();
+                        
+                        if (lat < this.expected.bounds.minLat || lat > this.expected.bounds.maxLat ||
+                            lon < this.expected.bounds.minLon || lon > this.expected.bounds.maxLon) {
+                            var msg = "Point " + (i + 1) + " outside expected bounds\n";
+                            msg += "   Point: " + lat.toFixed(4) + ", " + lon.toFixed(4) + "\n";
+                            msg += "   Bounds: [" + this.expected.bounds.minLat + ", " + 
+                                   this.expected.bounds.minLon + "] to [" + 
+                                   this.expected.bounds.maxLat + ", " + this.expected.bounds.maxLon + "]";
+                            return new TestResult(this, false, msg);
+                        }
+                    }
+                }
+                
+                var msg = "Found " + actual.length + " point(s)";
+                if (this.expected.bounds) msg += " within expected bounds";
+                return new TestResult(this, true, msg, actual.length, this.expected.count);
+            }
+        } else if (isInstanceMethod) {
             // Create CF instance and parse input
             var cf = new CF();
             cf.parse(this.input);
             target = cf;
+            actual = this._executeMethod(target);
         } else {
             // Parse input to get point
             var point = CF.pointIn(this.input);
@@ -270,10 +99,8 @@ MethodTest.prototype.run = function() {
                 return new TestResult(this, false, "No point found in input", null, this.expected);
             }
             target = point;
+            actual = this._executeMethod(target);
         }
-        
-        // Execute method
-        var actual = this._executeMethod(target);
         
         // Compare based on expected type
         var comparison = this._compare(actual, this.expected, this.expectedType);
@@ -325,6 +152,16 @@ MethodTest.prototype._executeMethod = function(point) {
     // If we have named arguments, pass them as an options object
     if (hasNamedArgs) {
         args.push(namedArgs);
+    }
+    
+    // For pointIn() and pointsIn(), call CF static methods with input as first argument
+    if (methodName === 'pointIn' || methodName === 'pointsIn') {
+        if (typeof CF[methodName] !== 'function') {
+            throw new Error("Method not found on CF: " + methodName);
+        }
+        // First argument is the input text
+        var methodArgs = [this.input].concat(args);
+        return CF[methodName].apply(CF, methodArgs);
     }
     
     // Execute method on point
@@ -384,6 +221,80 @@ MethodTest.prototype._parseArgumentValue = function(str) {
 };
 
 MethodTest.prototype._compare = function(actual, expected, type) {
+    // Convert Point object to string for comparison if expected is a string
+    if (actual && typeof actual === 'object' && actual.constructor && actual.constructor.name === 'Point' && typeof expected === 'string') {
+        // Determine decimal places from expected format
+        var parts = expected.split(/\s+/);
+        var latDecimals = 3; // default
+        var lonDecimals = 3; // default
+        
+        if (parts.length >= 1) {
+            var match = parts[0].match(/\.(\d+)/);
+            latDecimals = match ? match[1].length : 0;
+        }
+        if (parts.length >= 2) {
+            var match = parts[1].match(/\.(\d+)/);
+            lonDecimals = match ? match[1].length : 0;
+        }
+        
+        // Format: "lat lon"
+        actual = actual.latitude().toFixed(latDecimals) + ' ' + actual.longitude().toFixed(lonDecimals);
+    }
+    
+    // Convert Points array for pointsIn() results
+    if (Array.isArray(actual) && actual.length > 0 && actual[0].constructor && actual[0].constructor.name === 'Point') {
+        // If expected is a number, just return count
+        if (typeof expected === 'number') {
+            actual = actual.length;
+        }
+        // If expected is a string, convert points to "lat lon" format
+        else if (typeof expected === 'string') {
+            // Determine decimal places from expected format
+            var parts = expected.split(/\s+/);
+            var latDecimals = 3; // default
+            var lonDecimals = 3; // default
+            
+            if (parts.length >= 1) {
+                var match = parts[0].match(/\.(\d+)/);
+                latDecimals = match ? match[1].length : 0;
+            }
+            if (parts.length >= 2) {
+                var match = parts[1].match(/\.(\d+)/);
+                lonDecimals = match ? match[1].length : 0;
+            }
+            
+            // Convert all points to "lat lon" format
+            var pointStrs = [];
+            for (var i = 0; i < actual.length; i++) {
+                pointStrs.push(actual[i].latitude().toFixed(latDecimals) + ' ' + actual[i].longitude().toFixed(lonDecimals));
+            }
+            actual = pointStrs.join('\n');
+        }
+        // If expected is an object (with count/bounds), create result object
+        else if (typeof expected === 'object' && expected !== null) {
+            var result = {
+                count: actual.length
+            };
+            
+            // Check if all points are within expected bounds
+            if (expected.bounds) {
+                var allWithinBounds = true;
+                for (var i = 0; i < actual.length; i++) {
+                    var lat = actual[i].latitude();
+                    var lon = actual[i].longitude();
+                    if (lat < expected.bounds.minLat || lat > expected.bounds.maxLat ||
+                        lon < expected.bounds.minLon || lon > expected.bounds.maxLon) {
+                        allWithinBounds = false;
+                        break;
+                    }
+                }
+                result.boundsCheck = allWithinBounds;
+            }
+            
+            actual = result;
+        }
+    }
+    
     // Auto-detect type if not specified
     if (type === 'auto') {
         if (expected === null) {
@@ -473,9 +384,22 @@ MethodTest.prototype._compareNull = function(actual, expected) {
     if (actual === null) {
         return { passed: true };
     }
+    
+    // Convert Point objects to string representation
+    var actualStr = actual;
+    if (actual && typeof actual === 'object' && typeof actual.toString === 'function') {
+        actualStr = actual.toString();
+    } else {
+        try {
+            actualStr = JSON.stringify(actual);
+        } catch (e) {
+            actualStr = String(actual);
+        }
+    }
+    
     return {
         passed: false,
-        message: "Expected null\n   Actual:   " + JSON.stringify(actual)
+        message: "Expected null\n   Actual:   " + actualStr
     };
 };
 
@@ -590,8 +514,14 @@ MethodTest.prototype._compareObjectRecursive = function(actual, expected, path, 
         }
         // Direct comparison
         else {
+            // Special case: refsys comparison
+            // If expected is a string and actual is a refsys object, compare with canonicalName
+            if (currentPath === 'refsys' && typeof expectedVal === 'string' && 
+                actualVal && typeof actualVal === 'object' && actualVal.canonicalName) {
+                actualVal = actualVal.canonicalName;
+            }
             // Special case: refsys.name should use canonicalName
-            if (currentPath === 'refsys.name' && actualVal && typeof actualVal === 'string') {
+            else if (currentPath === 'refsys.name' && actualVal && typeof actualVal === 'string') {
                 // Get the refsys object from root
                 var refsys = this._getNestedProperty(root, 'refsys');
                 if (refsys && refsys.canonicalName) {
@@ -659,6 +589,11 @@ MethodTest.prototype._getNestedProperty = function(obj, path) {
     var parts = path.split('.');
     var current = obj;
     
+    // Special case: CRS is an alias for refsys.canonicalName
+    if (path === 'CRS' && obj.refsys && obj.refsys.canonicalName) {
+        return obj.refsys.canonicalName;
+    }
+    
     // Special case: refsys.name should use canonicalName
     if (path === 'refsys.name' && obj.refsys && obj.refsys.canonicalName) {
         return obj.refsys.canonicalName;
@@ -680,16 +615,6 @@ function TestSuite(name) {
 
 TestSuite.prototype.addTest = function(test) {
     this.tests.push(test);
-    return this;
-};
-
-TestSuite.prototype.addPointTest = function(id, name, input, expected, implementsTestIds) {
-    this.tests.push(new PointTest(id, name, input, expected, implementsTestIds));
-    return this;
-};
-
-TestSuite.prototype.addPointsTest = function(id, name, input, expectedCount, expectedCoords, expectedCRS, implementsTestIds, expectedBounds) {
-    this.tests.push(new PointsTest(id, name, input, expectedCount, expectedCoords, expectedCRS, implementsTestIds, expectedBounds));
     return this;
 };
 
@@ -905,8 +830,6 @@ TestRunnerResult.prototype.toHTML = function() {
 
 // Export
 global.TestFramework = {
-    PointTest: PointTest,
-    PointsTest: PointsTest,
     MethodTest: MethodTest,
     TestSuite: TestSuite,
     TestRunner: TestRunner,

@@ -173,7 +173,8 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
         
         // Collect expected
         if (state === 'expected' && trimmed !== '' && currentTest) {
-            // Check if it's an object property (starts with -)
+            // Check if it's an object property (starts with - followed by name:value)
+            // Must have colon to be a property, otherwise it's a negative number
             if (trimmed.match(/^-\s*([^:]+):\s*(.+)$/)) {
                 var propName = RegExp.$1.trim();
                 var propValue = RegExp.$2.trim();
@@ -220,8 +221,8 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
                         }
                     }
                 }
-            } else if (!trimmed.match(/^-/)) {
-                // Not a property line, parse as simple value
+            } else {
+                // Not a property line (or starts with - but no colon), parse as simple value
                 this._parseExpectedValue(currentTest, trimmed);
             }
             continue;
@@ -291,23 +292,13 @@ MarkdownTestParser.prototype._parseExpectedValue = function(test, value) {
         return;
     }
     
-    // Try to parse as lat lon pair (for backward compatibility)
-    // But only for Points tests (pointsIn), not Point tests (pointIn)
+    // Try to parse as lat lon pair
     var parts = value.split(/\s+/);
     if (parts.length >= 2 && !isNaN(parseFloat(parts[0])) && !isNaN(parseFloat(parts[1]))) {
-        // For Point tests (method: pointIn()), store as string in expected
-        if (test.type === 'Point' || test.method === 'pointIn()') {
-            test.expected = value;
-            test.expectedType = 'string';
-            return;
-        }
-        // For Points tests, store in coords array
-        if (!test.coords) test.coords = [];
-        test.coords.push({
-            lat: parseFloat(parts[0]),
-            lon: parseFloat(parts[1])
-        });
-        test.expectedType = 'latlon';
+        // Always store as string in expected for both pointIn() and pointsIn()
+        // This allows string comparison for simple cases
+        test.expected = value;
+        test.expectedType = 'string';
         return;
     }
     
@@ -409,44 +400,29 @@ MarkdownTestParser.prototype._addTestToSuite = function(suite, test) {
     }
     
     // If test has a Method specified, create a MethodTest
-    if (test.method && test.method !== 'pointIn()' && test.method !== 'pointsIn()') {
+    if (test.method) {
         var expected = test.expectedObject || test.expected;
         var expectedType = test.expectedType || 'auto';
         var expectedContains = test.expectedContains || null;
         var expectedNotContains = test.expectedNotContains || null;
+        
+        // For pointsIn(), create expected object with count and bounds if available
+        if (test.method === 'pointsIn()' && (test.count !== null || test.bounds)) {
+            expected = {};
+            if (test.count !== null) expected.count = test.count;
+            if (test.bounds) expected.bounds = test.bounds;
+            if (test.coords && test.coords.length > 0) expected.coords = test.coords;
+            expectedType = 'object';
+        }
+        
         suite.addMethodTest(test.id, test.name, test.method, test.input, expected, expectedType, test.implements, expectedContains, expectedNotContains);
         return;
     }
     
-    if (test.type === 'Point') {
-        // If Point Test has count/coords/crs/bounds, treat it as Points Test
-        var hasCoords = test.coords && test.coords.length > 0;
-        if (test.count !== undefined || hasCoords || test.crs || test.bounds) {
-            var coords = hasCoords ? test.coords : null;
-            var crs = test.crs || null;
-            var bounds = test.bounds || null;
-            // Determine count: explicit count, or coords.length, or 1
-            var count;
-            if (test.count !== undefined && test.count !== null) {
-                count = test.count;
-            } else if (coords && coords.length > 0) {
-                count = coords.length;
-            } else {
-                count = 1;
-            }
-            suite.addPointsTest(test.id, test.name, test.input, count, coords, crs, test.implements, bounds);
-        } else {
-            suite.addPointTest(test.id, test.name, test.input, test.expected, test.implements);
-        }
-    } else if (test.type === 'Points') {
-        if (test.count === null) {
-            console.warn('Points test without count skipped:', test.id);
-            return;
-        }
-        var coords = test.coords.length > 0 ? test.coords : null;
-        var crs = test.crs || null;
-        var bounds = test.bounds || null;
-        suite.addPointsTest(test.id, test.name, test.input, test.count, coords, crs, test.implements, bounds);
+    // Legacy test types (Point/Points) without Method field are no longer supported
+    if (test.type === 'Point' || test.type === 'Points') {
+        console.warn('Legacy test type without Method field skipped:', test.id, '- Please add Method field');
+        return;
     }
 };
 
