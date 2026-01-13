@@ -255,6 +255,26 @@ Expected:
 - E.value: 350000.456
 - refsys: SWEREF99TM
 
+## CoordFinder Test: SWEREF med väderstreck och decimalkomma utan mellanslag
+Test-ID: tdd-152
+Method: pointIn()
+Implements test-IDs: test-0072
+Input: "N6550000,123 E350000,456"
+Expected:
+- N.value: 6550000.123
+- E.value: 350000.456
+- refsys: SWEREF99TM
+
+## CoordFinder Test: SWEREF med väderstreck och decimalpunkt utan mellanslag
+Test-ID: tdd-153
+Method: pointIn()
+Implements test-IDs: test-0072
+Input: "N6550000.123 E350000.456"
+Expected:
+- N.value: 6550000.123
+- E.value: 350000.456
+- refsys: SWEREF99TM
+
 
 # RT90
 
@@ -291,6 +311,17 @@ Input: "1580000.123, 7450000.45"
 Expected:
 - N.value: 7450000.45
 - E.value: 1580000.123
+- refsys: RT90_25gonV
+
+## CoordFinder Test: RT90 Y,X efter beskrivande text med kolon
+Test-ID: tdd-154
+Method: pointIn()
+Implements test-IDs: test-0080
+Input: "RT90 2.5 gon V:
+1570600.890, 7546077.69"
+Expected:
+- N.value: 7546077.69
+- E.value: 1570600.890
 - refsys: RT90_25gonV
 
 
