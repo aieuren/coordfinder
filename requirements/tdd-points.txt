@@ -245,6 +245,16 @@ Input: "6550000 x 450000
 Expected:
 - Count: 3
 
+## CoordFinder Test: SWEREF med decimalkomma och mellanslag
+Test-ID: tdd-150
+Method: pointIn()
+Implements test-IDs: test-0072
+Input: "6550000,123 350000,456"
+Expected:
+- N.value: 6550000.123
+- E.value: 350000.456
+- refsys: SWEREF99TM
+
 
 # RT90
 
@@ -272,6 +282,17 @@ Expected:
 - N.value: 7450000.456
 - E.value: 1580000.123
 - CRS: RT90_25gonV
+
+## CoordFinder Test: RT90 Y,X ordning med olika antal decimaler
+Test-ID: tdd-151
+Method: pointIn()
+Implements test-IDs: test-0080
+Input: "1580000.123, 7450000.45"
+Expected:
+- N.value: 7450000.45
+- E.value: 1580000.123
+- refsys: RT90_25gonV
+
 
 # SPECIALFALL OCH KANTFALL
 
