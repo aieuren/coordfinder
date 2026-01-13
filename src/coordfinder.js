@@ -423,8 +423,8 @@ var Patterns = {
     extremelyCompact: /\b([NSEWÖV])[ \t]*(\d{1,3})[ \t]+([NSEWÖV])[ \t]*(\d{1,3})\b/gi,
     
     // Direction before decimal degrees: E19.5 N60.5 or N60.5 E19.5 or N 56.5 E 12.0
-    // Use [ \t] to avoid matching across newlines
-    directionBeforeDegs: /\b([NSEWÖV])[ \t]*(-?\d{1,3}[,.]\d+)[ \t]+([NSEWÖV])[ \t]*(-?\d{1,3}[,.]\d+)\b/gi,
+    // Include optional leading separator to match earlier than degs pattern
+    directionBeforeDegs: /(?:^|[,;\[\]~!@= \t\n\r])([NSEWÖV])[ \t]*(-?\d{1,3}[,.]\d+)[ \t]+([NSEWÖV])[ \t]*(-?\d{1,3}[,.]\d+)\b/gi,
     
     // URL parameters: x=540000&y=6580000 or y=6580000&x=540000
     urlParams: /[?&]?([xy])\s*=\s*(-?\d+(?:\.\d+)?)\s*&\s*([xy])\s*=\s*(-?\d+(?:\.\d+)?)/gi,
@@ -463,8 +463,8 @@ var Patterns = {
     // Use [ \t] to avoid matching across newlines
     degsMinsSecs: /([NSEWÖV])?[ \t]*(\d+)[ \t]*[°º][ \t]*(\d+)[ \t]*['′´`\u2019][ \t]*(\d+(?:[,.]?\d+)?)[ \t]*["″\u201D]?[ \t]*([NSEWÖV])?/gi,
     
-    // Grader-minuter med minustecken: 58-30 or 6230-1545 or 5820N-1145E
-    degsMinus: /([NSEWÖV])?(\d{2,4})([NSEWÖV])?-(\d{2,4})([NSEWÖV])?/gi,
+    // Grader-minuter med minustecken: 58-30 or 58-45,5N or 58-45.5N or 6230-1545 or 5820N-1145E
+    degsMinus: /([NSEWÖV])?(\d{2,4})([NSEWÖV])?-(\d{1,2}(?:[,.]?\d+)?)([NSEWÖV])?/gi,
     
     // Degrees and minutes: 59°19.736'N or 59°19,736'N
     // Use [ \t] to avoid matching across newlines
@@ -1147,7 +1147,7 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet._lon = lon;
         
     } else if (bestPattern.handler === 'degsMinus') {
-        // Format: 58-30 or 6230-1545 or 5820N-1145E
+        // Format: 58-30 or 58-45,5N or 58-45.5N or 6230-1545 or 5820N-1145E
         var dirBefore = bestMatch[1] || "";
         var part1 = bestMatch[2];
         var dirMiddle = bestMatch[3] || "";
@@ -1156,14 +1156,22 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         
         snippet.directionLetter = dirBefore || dirMiddle || dirAfter;
         
-        if ((part1.length === 2 || part1.length === 3) && part2.length === 2) {
-            // 58-30 or 014-52 format (DD-MM or DDD-MM)
+        if ((part1.length === 2 || part1.length === 3) && part2.length >= 2 && part2.length <= 5) {
+            // 58-30 or 014-52 or 58-45,5 or 58-45.5 format (DD-MM or DDD-MM with optional decimals)
             var degs = parseInt(part1, 10);
-            var mins = parseInt(part2, 10);
+            var mins = parseFloat(part2.replace(',', '.'));
             var decimalValue = degs + mins/60;
-            // Round to 3 decimals for integer minutes (per kravspec 9.2)
-            snippet.number = Math.round(decimalValue * 1000) / 1000;
-            snippet.noOfDecimals = 3;
+            
+            // Determine decimal places based on minutes precision
+            var minsDecimals = 0;
+            var match = part2.match(/[,.](\d+)/);
+            if (match) {
+                minsDecimals = match[1].length;
+            }
+            // Calculate decimals: minutes with N decimals -> DD with ~N+2 decimals
+            var targetDecimals = minsDecimals > 0 ? minsDecimals + 2 : 3;
+            snippet.number = parseFloat(decimalValue.toFixed(targetDecimals));
+            snippet.noOfDecimals = targetDecimals;
         } else if (part1.length === 4 && part2.length === 4) {
             // 6230-1545 or 5820N-1145E format (DDMM-DDMM) - contains BOTH coordinates!
             var lat1 = parseInt(part1.substring(0, 2), 10);
@@ -2084,7 +2092,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.6";
-CF.build = "20260113-031514"; // Auto-updated by update-build.sh
+CF.build = "20260113-033949"; // Auto-updated by update-build.sh
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
