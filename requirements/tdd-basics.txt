@@ -374,7 +374,7 @@ Test-ID: tdd-xxxxxxx
 Method: pointIn()
 Input: N 58°24’44.234567” E 12°34’4.456789”
 Expected:
-58,4122873797 12,5679046636
+58.4122873797 12.5679046636
 
 
 ## Point Test: Med maxchars
