@@ -169,7 +169,8 @@ Input: "<gml:pos>59.32894 18.06491</gml:pos>"
 Expected:
 59.32894 18.06491
 
-# FLERRADIGA OCH LISTOR
+
+# Flera rader
 
 ## CoordFinder Test: Tvåradiga koordinater
 Test-ID: tdd-016
@@ -179,6 +180,9 @@ Input: |
   Long: 19.54321
 Expected:
 60.12345 19.54321
+
+
+# Listor
 
 ## CoordFinder Test: Numrerad lista
 Test-ID: tdd-017
@@ -190,6 +194,38 @@ Input: |
 Expected:
 - Count: 3
 - Bounds: 57.5 12.25 58.0 12.75
+
+## CoordFinder Test: Numrerad lista med olika format
+Test-ID: tdd-054
+Method: pointsIn()
+Input: 
+1. 5930.0N-01800.0E
+2. 5935.0N-01805.0E
+3. 59 40N - 018 10E
+Expected:
+- Count: 3
+
+## CoordFinder Test: Kort onumrerad lista 
+Test-ID: tdd-166
+Method: pointsIn()
+Implements test-IDs: test-0049
+Input: 
+58 54,05 	10 50,10 	Punkt A
+58 53,95 	10 51,51 	Punkt B
+Expected:
+- Count: 2
+
+## CoordFinder Test: Kort numrerad lista 
+Test-ID: tdd-167
+Method: pointsIn()
+Implements test-IDs: test-0049
+Input: 
+Pkt 	Lat. N 	Long. O 	Anmärkning 
+1 	58 54,05 	10 50,10 	Punkt A
+2 	58 53,95 	10 51,51
+Expected:
+- Count: 2
+
 
 # SWEREF 99 TM
 
@@ -208,6 +244,16 @@ Input: "7350000 x 850000"
 Expected:
 - Count: 1
 - CRS: SWEREF99TM
+
+## CoordFinder Test: SWEREF med väderstreck utan decimaler och utan mellanslag
+Test-ID: tdd-155
+Method: pointIn()
+Implements test-IDs: test-0072
+Input: "N6520000 E385000"
+Expected:
+- N.value: 6520000
+- E.value: 385000
+- refsys: SWEREF99TM
 
 ## CoordFinder Test: SWEREF i text
 Test-ID: tdd-020
@@ -284,6 +330,17 @@ Expected:
 - N.value: 6550000
 - E.value: 350000
 - refsys: SWEREF99TM
+
+## CoordFinder Test: SWEREF väderstreck med decimalkomma följt av annan rad
+Test-ID: tdd-159
+Method: pointsIn()
+Implements test-IDs: test-0072
+Input: 
+N6520000,123 E385000,456
+6560000 420000
+Expected:
+- Count: 2
+- Bounds: 6520000 385000 6560000 420000
 
 
 # RT90
@@ -551,15 +608,6 @@ Method: pointIn()
 Input: "5930.5N-01815.2E"
 Expected: 59.50833 18.25333
 
-## CoordFinder Test: Numrerad lista med olika format
-Test-ID: tdd-054
-Method: pointsIn()
-Input: "1. 5930.0N-01800.0E
-2. 5935.0N-01805.0E
-3. 59 40N - 018 10E"
-Expected:
-- Count: 3
-
 ## CoordFinder Test: Google Maps URL med data-parametrar
 Test-ID: tdd-055
 Method: pointIn()
@@ -644,6 +692,18 @@ Expected:
 - N.value: 6504089
 - E.value: 278978
 - refsys: SWEREF99TM
+
+## CoordFinder Test: SWEREF flera likadana N-värden med olika format
+Test-ID: tdd-158
+Method: pointsIn()
+Implements test-IDs: test-0072
+Input: "N6520000.123 E385000.456
+N6520000,123 E385000,456
+N6520000 E385000
+6520000 385000"
+Expected:
+- Count: 4
+
 
 ## CoordFinder Test: WKT Point med SWEREF-koordinater
 Test-ID: tdd-062
@@ -1176,6 +1236,17 @@ Input: "Rad	Lat. N	Long. E
 Expected:
 - Count: 2
 
+## CoordFinder Test: Tabell med två-siffriga radnummer och tabs
+Test-ID: tdd-157
+Method: pointsIn()
+Implements test-IDs: test-0049
+Input: "Pkt	Lat. N	Long. E
+9	59 12,34	11 23,45
+10	59 23,45	11 34,56
+11	59 34,56	11 45,67
+12	59 45,67	11 56,78"
+Expected:
+- Count: 4
 
 
 ## CoordFinder Test: Hitta.se URL med zoom-parameter
@@ -1286,29 +1357,3 @@ Expected:
 - Count: 4
 - Bounds: 60.0 19.0 62.0 21.0
 
-## CoordFinder Test: Numrerad lista 
-Test-ID: tdd-131
-Method: pointsIn()
-Implements test-IDs: test-00zz
-Input: 
-
-Trålfiskeområdets yttre (västra) gräns sammanfaller med trål-
-gränsen enligt 1 kap. 5 § och bilaga 4. Området avgränsas i
-norr, öster och söder av räta linjer mellan följande punkter.
-Pkt Lat. N Long. O Anmärkning
-1 58 54,05 10 50,10 Punkt på trålgränsen
-2 58 53,95 10 51,51
-3 58 51,94 10 51,51
-4 58 51,96 10 54,03
-5 58 50,37 10 54,64
-6 58 48,97 10 54,37
-7 58 48,59 10 56,47
-8 58 45,16 10 56,98
-9 58 44,64 10 56,38
-10 58 45,15 10 54,64
-11 58 45,99 10 53,97
-12 58 45,42 10 53,15
-13 58 45,22 10 51,32 Punkt på trålgränsen
-Expected:
-- Count: 13
-- Bounds: 58 10 59 11
