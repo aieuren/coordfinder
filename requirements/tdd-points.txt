@@ -236,7 +236,7 @@ Pkt 	Lat. N 	Long. E 	Anmärkning
 13 	61 34,56 	13 45,67 	Slutpunkt
 Expected:
 - Count: 13
-- Bounds: 59.2 11.4 61.6 13.8
+- Bounds: 59.0 11.3 61.6 13.8
 
 ## CoordFinder Test: Kort numrerad lista utan punkter
 Test-ID: tdd-167
