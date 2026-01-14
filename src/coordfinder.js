@@ -462,7 +462,7 @@ var Patterns = {
     
     // Degrees, minutes, seconds: 59°19'44.2"N or 59°19'44"N or 60°30'45.5" (seconds marker optional at end)
     // Use [ \t] to avoid matching across newlines
-    degsMinsSecs: /([NSEWÖV])?[ \t]*(\d+)[ \t]*[°º][ \t]*(\d+)[ \t]*['′´`\u2019][ \t]*(\d+(?:[,.]?\d+)?)[ \t]*["″\u201D]?[ \t]*([NSEWÖV])?/gi,
+    degsMinsSecs: /([NSEWÖV])?[ \t]*(\d+)[ \t]*[°º][ \t]*(\d+)[ \t]*['′´`\u2019][ \t]*(\d+(?:[,.]?\d+)?)[ \t]*["″\u201D]?[ \t]*([NSEWÖV])?(?![a-zåäöA-ZÅÄÖ])/gi,
     
     // Grader-minuter med minustecken: 58-30 or 58-45,5N or 58-45.5N or 6230-1545 or 5820N-1145E
     degsMinus: /([NSEWÖV])?(\d{2,4})([NSEWÖV])?-(\d{1,2}(?:[,.]?\d+)?)([NSEWÖV])?/gi,
@@ -2095,7 +2095,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.6";
-CF.build = "20260114-204845"; // Auto-updated by update-build.sh
+CF.build = "20260114-205009"; // Auto-updated by update-build.sh
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
