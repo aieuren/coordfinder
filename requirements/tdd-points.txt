@@ -268,16 +268,6 @@ Expected:
 - Count: 1
 - CRS: SWEREF99TM
 
-## CoordFinder Test: SWEREF med väderstreck utan decimaler och utan mellanslag
-Test-ID: tdd-155
-Method: pointIn()
-Implements test-IDs: test-0072
-Input: "N6520000 E385000"
-Expected:
-- N.value: 6520000
-- E.value: 385000
-- refsys: SWEREF99TM
-
 ## CoordFinder Test: SWEREF i text
 Test-ID: tdd-020
 Method: pointsIn()
@@ -348,10 +338,10 @@ Expected:
 Test-ID: tdd-155
 Method: pointIn()
 Implements test-IDs: test-0072
-Input: "N6550000 E350000"
+Input: "N6520000 E385000"
 Expected:
-- N.value: 6550000
-- E.value: 350000
+- N.value: 6520000
+- E.value: 385000
 - refsys: SWEREF99TM
 
 ## CoordFinder Test: SWEREF väderstreck med decimalkomma följt av annan rad
@@ -364,6 +354,17 @@ N6520000,123 E385000,456
 Expected:
 - Count: 2
 - Bounds: 6520000 385000 6560000 420000
+
+## CoordFinder Test: SWEREF väderstreck utan mellanslag följt av kommaseparerad rad
+Test-ID: tdd-169
+Method: pointsIn()
+Implements test-IDs: test-0072
+Input:
+N6520000 E385000
+6460000, 310000
+Expected:
+- Count: 2
+- Bounds: 6460000 310000 6520000 385000
 
 
 # RT90
