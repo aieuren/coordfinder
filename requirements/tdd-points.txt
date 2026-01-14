@@ -739,6 +739,17 @@ Expected:
 - Count: 2
 - Bounds: 6474375 211254 6474376 211255
 
+## CoordFinder Test: SWEREF väderstreck med punkt-decimal följt av annan rad
+Test-ID: tdd-171
+Method: pointsIn()
+Implements test-IDs: test-0072
+Input:
+N6474375.153 E211254.086
+6474375 211254
+Expected:
+- Count: 2
+- Bounds: 6474375 211254 6474376 211255
+
 
 ## CoordFinder Test: WKT Point med SWEREF-koordinater
 Test-ID: tdd-062
