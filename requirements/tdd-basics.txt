@@ -1,4 +1,4 @@
-=== TDD Test Suite - CoordFinder Other Functions ===
+=== CoordFinder TDD Test Suite - Basic Functions ===
 
 # Point.latitude()
 
@@ -367,14 +367,23 @@ Test-ID: tdd-origtxt-002
 Method: originalText()
 Input: Position N 58°24’44.2” E 12°34’4.4” rapporterad.”
 Expected:
-N 58°24’44.2” E 12°34’4.4”
+”N 58°24’44.2” E 12°34’4.4””
+
+## CoordFinder Test: Tillf test, ska flyttas!!!
+Test-ID: tdd-xxxxxxx
+Method: pointIn()
+Input: N 58°24’44.234567” E 12°34’4.456789”
+Expected:
+58,4122873797 12,5679046636
+
 
 ## Point Test: Med maxchars
 Test-ID: tdd-origtxt-003
 Method: originalText(maxchars=20, ellipse=true)
-Input: “En mycket lång beskrivning av position N 58°24’44.234567” E 12°34’4.456789” som användes i rapporten.”
+Input:
+En mycket lång beskrivning av position N 58°24’44.234567” E 12°34’4.456789” som användes i rapporten.
 Expected:
-N 58°24’44.234567” E 12°34’4.456789”
+”N 58°24’44.234567” E 12°34’4.456789””
 
 ## Point Test: Kort text ingen ellipse
 Test-ID: tdd-origtxt-004
@@ -407,9 +416,9 @@ Test-ID: tdd-ctx-002
 Method: context(maxchars=15)
 Input: “Den gamla fyren står vid 58.41234 12.56789 på det gamla Stora grundet”
 Expected:
-- Contains: “…a fyren står vid ”
+- Contains: “…fyren står vid ”
 - Contains: “58.41234 12.56789”
-- Contains: “ på det gamla St…”
+- Contains: “ på det gamla S…”
 
 ## Point Test: Kort text före och efter
 Test-ID: tdd-ctx-003
