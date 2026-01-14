@@ -326,8 +326,9 @@ TextParser.prototype._encode = function(text) {
     text = text.replace(/"(\d{1,3}\.\d+\s+\d{1,3}\.\d+)"/g, '$1');
     
     // Normalize whitespace but preserve newlines for coordinate separation
-    // Replace multiple spaces/tabs with single space, but keep newlines
-    text = text.replace(/[ \t]+/g, ' ').replace(/\n+/g, '\n');
+    // Replace multiple spaces with single space, but keep tabs and newlines
+    // (tabs are important for maintaining correct text positions)
+    text = text.replace(/  +/g, ' ').replace(/\n+/g, '\n');
     
     // Note: List number removal disabled to preserve text indices
     // List numbers are filtered out during coordinate pairing instead
@@ -2094,7 +2095,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.6";
-CF.build = "20260113-073333"; // Auto-updated by update-build.sh
+CF.build = "20260114-053410"; // Auto-updated by update-build.sh
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
