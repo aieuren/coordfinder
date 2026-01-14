@@ -229,22 +229,29 @@ MethodTest.prototype._parseArgumentValue = function(str) {
 MethodTest.prototype._compare = function(actual, expected, type) {
     // Convert Point object to string for comparison if expected is a string
     if (actual && typeof actual === 'object' && actual.constructor && actual.constructor.name === 'Point' && typeof expected === 'string') {
-        // Determine decimal places from expected format
+        // Determine decimal places and separator from expected format
         var parts = expected.split(/\s+/);
         var latDecimals = 3; // default
         var lonDecimals = 3; // default
+        var useComma = expected.indexOf(',') >= 0; // Check if expected uses comma as decimal separator
         
         if (parts.length >= 1) {
-            var match = parts[0].match(/\.(\d+)/);
+            var match = parts[0].match(/[,.](\d+)/);
             latDecimals = match ? match[1].length : 0;
         }
         if (parts.length >= 2) {
-            var match = parts[1].match(/\.(\d+)/);
+            var match = parts[1].match(/[,.](\d+)/);
             lonDecimals = match ? match[1].length : 0;
         }
         
-        // Format: "lat lon"
-        actual = actual.latitude().toFixed(latDecimals) + ' ' + actual.longitude().toFixed(lonDecimals);
+        // Format: "lat lon" with appropriate decimal separator
+        var latStr = actual.latitude().toFixed(latDecimals);
+        var lonStr = actual.longitude().toFixed(lonDecimals);
+        if (useComma) {
+            latStr = latStr.replace('.', ',');
+            lonStr = lonStr.replace('.', ',');
+        }
+        actual = latStr + ' ' + lonStr;
     }
     
     // Convert Points array for pointsIn() results
