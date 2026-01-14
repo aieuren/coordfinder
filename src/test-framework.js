@@ -279,7 +279,7 @@ MethodTest.prototype._compare = function(actual, expected, type) {
         // If expected is an object (with count/bounds), create result object
         else if (typeof expected === 'object' && expected !== null) {
             var result = {
-                count: actual.length
+                Count: actual.length
             };
             
             // Check if all points are within expected bounds

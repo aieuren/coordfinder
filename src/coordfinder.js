@@ -1843,11 +1843,11 @@ Point.prototype._evaluatePrecision = function() {
     var eDecimals = this.E.parsedFrom.noOfDecimals || 0;
     var penalty = 0;
     
-    // För Decimalgrader: färre än 2 decimaler (mycket låg precision)
+    // För Decimalgrader: färre än 3 decimaler (låg precision)
     if (this.refsys.unit === CoordUnit.Degrees) {
         var format = this.N.parsedFrom.format;
         if (format === CoordFormat.Degs) {
-            if (nDecimals < 2 || eDecimals < 2) {
+            if (nDecimals < 3 || eDecimals < 3) {
                 penalty += 0.1;
             }
         }
@@ -2095,7 +2095,7 @@ function CF(text, opts) {
 
 // Metadata
 CF.version = "5.0-beta.6";
-CF.build = "20260114-064421"; // Auto-updated by update-build.sh
+CF.build = "20260114-201801"; // Auto-updated by update-build.sh
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
