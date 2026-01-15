@@ -260,13 +260,13 @@ RefSys.WGS84NorthernEurope = new RefSys("WGS84 i norra Europa", 4326, CoordUnit.
 
 RefSys.SWEREF99TM = new RefSys("SWEREF99 TM", 3006, CoordUnit.Meters, 
     new BoundingBox(6100000, 200000, 7700000, 1000000), 
-    "+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
+    "+proj=tmerc +lat_0=0 +lon_0=15 +k=0.9996 +x_0=500000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
     "",
     "SWEREF99TM");
 
 RefSys.RT90_25gonV = new RefSys("RT90 2.5 gon V", 3021, CoordUnit.Meters, 
     new BoundingBox(6100000, 1200000, 7700000, 1900000), 
-    "+proj=tmerc +lat_0=0 +lon_0=15.80827777777778 +k=1 +x_0=1500000 +y_0=0 +ellps=bessel +units=m +no_defs",
+    "+proj=tmerc +lat_0=0 +lon_0=15.8082777777778 +k=1 +x_0=1500000 +y_0=0 +ellps=bessel +towgs84=414.1,41.3,603.1,-0.855,2.141,-7.023,0 +units=m +no_defs",
     "",
     "RT90_25gonV");
 
@@ -2077,7 +2077,7 @@ Point.prototype.setAsFound = function() {
 };
 
 Point.prototype.asDebugText = function() {
-    return this.log();
+    return "DEPRECATED";
 };
 
 // ——————————— CoordFinder (CF) ——————————— //
@@ -2509,11 +2509,11 @@ CF.prototype.unusedCoords = function() {
 
 // Get log
 CF.prototype.log = function(logtext) {
-    if (logtext) {
-        this._log(logtext);
-        return this;
-    }
-    return this._logEntries.join('\n');
+    return "DEPRECATED";
+};
+
+CF.prototype.asDebugText = function() {
+    return "DEPRECATED";
 };
 
 // Get sorted array of found ratings

@@ -222,6 +222,11 @@ MethodTest.prototype._parseArgumentValue = function(str) {
         return str.substring(1, str.length - 1);
     }
     
+    // Try to resolve as RefSys constant (for reprojectTo)
+    if (typeof CF !== 'undefined' && CF.RefSys && CF.RefSys[str]) {
+        return CF.RefSys[str];
+    }
+    
     // Return as string
     return str;
 };
