@@ -2091,6 +2091,11 @@ function CF(text, opts) {
     this._unusedCoords = [];
     this._logEntries = [];
     this._foundRatings = null;
+    
+    // Auto-parse if text is provided
+    if (text) {
+        this.parse(text, opts);
+    }
 }
 
 // Metadata

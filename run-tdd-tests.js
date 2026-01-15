@@ -2,6 +2,13 @@
 
 const fs = require('fs');
 
+// Try to load proj4 (optional dependency)
+try {
+    global.proj4 = require('proj4');
+} catch(e) {
+    // proj4 not available, reprojection will not work
+}
+
 // Load coordfinder
 eval(fs.readFileSync('src/coordfinder.js', 'utf-8'));
 
@@ -9,11 +16,13 @@ eval(fs.readFileSync('src/coordfinder.js', 'utf-8'));
 eval(fs.readFileSync('src/test-framework.js', 'utf-8'));
 eval(fs.readFileSync('src/test-parser.js', 'utf-8'));
 
-console.log('Running TDD tests from tdd-basics.txt...\n');
+// Get test file from command line argument or use default
+const testFile = process.argv[2] || 'requirements/tdd-basics.txt';
+console.log('Running TDD tests from ' + testFile + '...\n');
 
 try {
     const parser = new MarkdownTestParser();
-    const suites = parser.parseFile('requirements/tdd-basics.txt');
+    const suites = parser.parseFile(testFile);
     
     const runner = new TestFramework.TestRunner();
     for (let i = 0; i < suites.length; i++) {
