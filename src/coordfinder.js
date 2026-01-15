@@ -1,7 +1,7 @@
 /**
  * CoordFinder - Coordinate Parser and Converter
  * 
- * @version 5.0-beta.6
+ * @version 5.0-beta.7
  * @author Bernt Rane, Claude & Ona
  * @license MIT
  * @description Parses and converts coordinates between different formats and reference systems.
