@@ -1014,49 +1014,20 @@ Expected:
 
 # log()
 
-## CoordFinder Test: Loggutskrift för WGS84
+## CoordFinder Test: Loggutskrift
 Test-ID: tdd-log-001
 Method: log()
-Input: “58.41234 12.56789”
-Expected:
-- Contains: “WGS84”
-- Contains: “58.41234”
-- Contains: “12.56789”
+Input: “”
+Expected: ”DEPRECATED”
 
-## CoordFinder Test: Loggutskrift för DMS
+## Point Test: Loggutskrift
 Test-ID: tdd-log-002
 Method: log()
-Input: “58°24’44.4”N 12°34’4.4”E”
-Expected:
-- Contains: “degrees” eller “minutes” eller “seconds”
+Input: “”
+Expected: ”DEPRECATED”
 
-## CoordFinder Test: Loggutskrift för SWEREF99TM
+## Point Test: Debugutskrift
 Test-ID: tdd-log-003
-Method: log()
-Input: “6450123 320456”
-Expected:
-- Contains: “SWEREF99TM”
-
-## CoordFinder Test: Loggutskrift för RT90
-Test-ID: tdd-log-004
-Method: log()
-Input: “6450123 1320456”
-Expected:
-- Contains: “RT90”
-
-## CoordFinder Test: Loggutskrift för flera punkter
-Test-ID: tdd-log-005
-Method: log()
-Input: “58.41234 12.56789
-60.50 15.30
-6450123 320456”
-Expected:
-- Contains: “3”
-
-## CoordFinder Test: Loggutskrift med kontext
-Test-ID: tdd-log-006
-Method: log()
-Input: “Fyren vid 58.41234 12.56789 renoveras”
-Expected:
-- Contains: “Fyren vid” 
-
+Method: asDebugText()
+Input: “”
+Expected: ”DEPRECATED”
