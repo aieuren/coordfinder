@@ -1,7 +1,7 @@
 # CoordFinder - Kravspecifikation
 
-Version: 5.0-beta.5  
-Datum: 2026-01-12
+Version: 5.0-beta
+Datum: 2026-01-15
 Baserad på: Interface, TDD-tester och implementation
 
 ## Syfte
@@ -819,7 +819,7 @@ Koordinater kan grupperas textuellt:
 - Baserat på textstruktur (tomma rader)
 - Med bounding box för gruppen
 
-### Kontext och loggning
+### Kontext
 
 För varje punkt:
 
@@ -827,252 +827,28 @@ För varje punkt:
 - `textAfter(opts)` - Text efter koordinaten
 - `originalText(opts)` - Ursprunglig text
 - `context(opts)` - Sammanhängande kontext
-- `log()` - Logg över hur punkten skapades
-- `asDebugText()` - Detaljerad debug-information
+
+**DEPRECATED:**
+
+- `asDebugText()` - Returnerar `"DEPRECATED"` (behålls för bakåtkompatibilitet)
 
 ## Loggning och debugging
 
-Två loggfunktioner tillhandahålls för att förstå och debugga parsing-processen.
+**DEPRECATED:** Loggfunktionerna är deprecated och kommer att tas bort i framtida versioner.
 
-### CoordFinder.log() - Parsing-översikt
+### CoordFinder.log() - DEPRECATED
 
-Returnerar en svenskspråkig logg över hela parsing-processen från input-text till funna koordinatpar.
+Returnerar strängen `"DEPRECATED"`.
 
-#### Syfte
-
-Beskriva parsing-processen inklusive mellansteg, bildade koordinatpar, bortvalda resultat och oanvända koordinater.
-
-#### Loggstruktur
-
-Loggen följer denna sekvens:
-
-**1. Sökning efter koordinat-liknande texter**
-
-Om inga hittades:
-
-```
-Letade efter koordinatliknande texter...
-...men hittade inga.
-```
-
-Om några hittades:
-
-```
-Letade efter koordinatliknande texter...
-...och hittade [antal].
- 
-```
-
-(Tom rad efter antalet)
-
-**2. Format-hints (om identifierade)**
-
-Om parsing-processen identifierat specifika format-indikatorer:
-
-```
-Texten innehåller frasen "<gml:" vilket tyder på formatet Geographic Markup Language, GML. 
-Förutsätter därför att longitudkoordinaten kommer före latitud.
-```
-
-Eller:
-
-```
-Texten innehåller en rad som börjar med WKT, vilket tyder på formatet Well-known Text (WKT). 
-Då bör longitudkoordinaten komma före latitud.
-```
-
-**3. Matchning till koordinatpar**
-
-Försök att para ihop:
-
-```
-Försökte tolka texterna och sätta ihop dem två och två till giltiga koordinatpar...
-```
-
-Om inga par kunde skapas:
-
-```
-...men fick inte till några koordinatpar.
- 
-```
-
-Om par skapades och några accepterades:
-
-```
-...och fick fram [antal] koordinatpar:
-- På rad [radnr]: "[text1]" och "[text2]" kan bli [formaterad koordinat] (trovärdighet [nivå] av 10)
-- På rad [radnr]: "[text1]" och på rad [radnr2]: "[text2]" kan bli [formaterad koordinat] (trovärdighet [nivå] av 10)
-```
-
-Exempel:
-
-```
-...och fick fram 2 koordinatpar:
-- På rad 1: "59.123" och "18.456" kan bli N 59.123 E 18.456 (trovärdighet 8 av 10)
-- På rad 3: "N 6356776" och "E 340228" kan bli N 6356776 E 340228 (trovärdighet 10 av 10)
-```
-
-Om par skapades men inga accepterades:
-
-```
-...och fick fram [antal] koordinatpar.
- 
-```
-
-**4. Bortvalda koordinatpar (om tillämpligt)**
-
-Om rating-nivå ≤ 10:
-
-```
-Sorterade bort [antal] koordinatpar som hade en trovärdighet lägre än [nivå] på en skala från 1 till 10:
-- På rad [radnr]: "[text1]" och "[text2]" kan bli [formaterad koordinat] (trovärdighet [nivå] av 10)
-```
-
-Om rating-nivå > 10 (extremt hög tröskel):
-
-```
-Sorterade dock sedan bort alla [antal] hittade koordinatpar:
-- På rad [radnr]: "[text1]" och "[text2]" kan bli [formaterad koordinat] (trovärdighet [nivå] av 10)
-```
-
-Exempel:
-
-```
-Sorterade bort 1 koordinatpar som hade en trovärdighet lägre än 7 på en skala från 1 till 10:
-- På rad 2: "59" och "18" kan bli N 59 E 18 (trovärdighet 3 av 10)
-```
-
-**5. Oanvända koordinater (om tillämpligt)**
-
-Om exakt 1 oanvänd koordinat:
-
-```
-En möjlig koordinattext kunde inte användas i något koordinatpar och blev därför över:
-- På rad [radnr]: "[text]"
-```
-
-Om flera oanvända koordinater:
-
-```
-Det blev [antal] textbitar över som inte kunde användas till något koordinatpar:
-- På rad [radnr]: "[text1]"
-- På rad [radnr]: "[text2]"
-```
-
-#### Format för koordinatpar-detaljer
-
-Varje listat koordinatpar följer mönstret:
-
-- **Om på samma rad:** `På rad [nr]: "[första texten]" och "[andra texten]" kan bli [tolkad koordinat] (trovärdighet [nivå] av 10)`
-- **Om på olika rader:** `På rad [nr1]: "[första texten]" och på rad [nr2]: "[andra texten]" kan bli [tolkad koordinat] (trovärdighet [nivå] av 10)`
-
-Den tolkade koordinaten visas med riktningsbokstäver före koordinatvärdena (t.ex. “N 59.123 E 18.456”).
-
-#### Specialfall
-
-**Ingen input-text:**
-
-```
-Ingen text att leta koordinater i.
-```
-
-**Stegvis avbrytning:**
-Loggen avslutas vid första relevanta negativa resultatet:
-
-- Inga koordinat-liknande texter → Avsluta efter steg 1
-- Inga koordinatpar kunde bildas → Avsluta efter steg 3
-
-#### Terminologi
-
-Använd konsekvent:
-
-- “koordinatliknande texter” - för initialt funna textstycken
-- “koordinatpar” - för matchade par av koordinater
-- “trovärdighet” - för rating/confidence
-- “textbitar” - för oanvända koordinater (plural)
-- “koordinattext” - för oanvänd koordinat (singular)
-- Skala “från 1 till 10” - för trovärdighet
-
-#### Output-format
-
-- **Format:** Flerradig textsträng med newline-separering
-- **Språk:** Svenska
-- **Stil:** Narrativ med “…” för att fortsätta meningar över flera rader
-- **Trovärdighet:** Rating (internt 0.0-1.0) presenteras som nivå 0-10 genom `Math.round(rating * 10)`
+Behålls endast för bakåtkompatibilitet.
 
 -----
 
-### Point.log() - Enskild punkts ursprung
+### Point.log() - DEPRECATED
 
-Returnerar en kortfattad, svenskspråkig logg som beskriver hur en enskild punkt skapades från parsad text.
+Returnerar strängen `"DEPRECATED"`.
 
-**Primärt use case:** Används av `CoordFinder.log()` för att beskriva varje funnet koordinatpar. Kan också anropas direkt på en punkt för att se dess ursprung.
-
-#### Syfte
-
-Beskriva varifrån punktens två koordinater kommer och hur de tolkades, i kompakt format.
-
-#### Output-format
-
-**Om båda koordinaterna är på samma rad:**
-
-```
-- På rad [radnr]: "[första texten]" och "[andra texten]" kan bli [tolkad koordinat] (trovärdighet [nivå] av 10)
-```
-
-Exempel:
-
-```
-- På rad 1: "59.123" och "18.456" kan bli N 59.123 E 18.456 (trovärdighet 8 av 10)
-```
-
-**Om koordinaterna är på olika rader:**
-
-```
-- På rad [radnr1]: "[första texten]" och på rad [radnr2]: "[andra texten]" kan bli [tolkad koordinat] (trovärdighet [nivå] av 10)
-```
-
-Exempel:
-
-```
-- På rad 1: "N 59.123" och på rad 3: "E 18.456" kan bli N 59.123 E 18.456 (trovärdighet 10 av 10)
-```
-
-#### Detaljerad beskrivning
-
-**Radnummer:** Hämtas från den parsade textens radnumrering (första raden = rad 1)
-
-**Textstycken:** Visar de ursprungliga textstyckena som tolkades, trimmed (utan inledande/avslutande mellanslag)
-
-**Tolkad koordinat:** Visar den färdiga koordinaten i format med riktningsbokstäver före värden
-
-- Formateras med `{directionLetter: 'before'}` som option
-- Exempel: “N 59.123 E 18.456”
-
-**Trovärdighet:** Visar punktens rating på skala 0-10
-
-- Beräknas genom `Math.round(rating * 10)` där rating är 0.0-1.0
-- Presenteras som “trovärdighet [nivå] av 10”
-
-**Ordning:** Koordinaterna presenteras i den ordning de först hittades i texten (första koordinaten först, sista koordinaten sist)
-
-#### Specialfall
-
-**Tom punkt eller saknade koordinater:**  
-Om punkten saknar N- eller E-koordinat, returnera tom sträng `""`.
-
-**Samma radnummer:**  
-Avgörs genom att jämföra `N.parsedFrom.lineNo` med `E.parsedFrom.lineNo`.
-
-#### Format-specifikation
-
-- **Format:** Enradig textsträng (ingen avslutande newline)
-- **Språk:** Svenska
-- **Inleds med:** Bindestreck och mellanslag “- “
-- **Terminologi:**
-  - “På rad [nr]” - för radnummer
-  - “kan bli” - för att visa tolkad koordinat
-  - “trovärdighet [nivå] av 10” - för rating
+Behålls endast för bakåtkompatibilitet.
 
 ## Testning
 
