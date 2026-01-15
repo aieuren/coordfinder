@@ -436,7 +436,7 @@ var Patterns = {
     // Large number pairs (RT90/SWEREF): 6480082.101, 1372031.843 or 6550000,123 350000,456 or 6480082 1372031 or 6550000 x 450000
     // Accepts decimal point or comma (max 3 decimals), and comma+space/semicolon/'x'/whitespace as separator
     // Leading whitespace included to match before plain pattern
-    largePairs: /\s*(\d{6,}(?:[,.]\d{1,3})?)\s*(?:,\s+|;\s*|x\s*|\s+)(\d{6,}(?:[,.]\d{1,3})?)\b/gi,
+    largePairs: /[ \t]*(\d{6,}(?:[,.]\d{1,3})?)[ \t]*(?:,[ \t]+|;[ \t]*|x[ \t]*|[ \t]+)(\d{6,}(?:[,.]\d{1,3})?)\b/gi,
     
     // Prefix formats with large numbers: N: 6504089 E: 278978 or Y: 1570600, X: 7546077
     prefixLargeNumbers: /([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})[\s,;]+([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})/gi,

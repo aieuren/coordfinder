@@ -71,15 +71,28 @@ MethodTest.prototype.run = function() {
                 
                 // Check bounds if specified
                 if (this.expected.bounds && actual.length > 0) {
+                    // Detect if bounds are in meters (SWEREF/RT90) or degrees (WGS84)
+                    // Meters: values > 1000, Degrees: values < 360
+                    var boundsInMeters = this.expected.bounds.minLat > 1000 || this.expected.bounds.maxLat > 1000;
+                    
                     for (var i = 0; i < actual.length; i++) {
                         var p = actual[i];
-                        var lat = p.latitude();
-                        var lon = p.longitude();
+                        var coord1, coord2;
                         
-                        if (lat < this.expected.bounds.minLat || lat > this.expected.bounds.maxLat ||
-                            lon < this.expected.bounds.minLon || lon > this.expected.bounds.maxLon) {
+                        if (boundsInMeters) {
+                            // Use N/E coordinates directly
+                            coord1 = p.N ? p.N.value : 0;
+                            coord2 = p.E ? p.E.value : 0;
+                        } else {
+                            // Use lat/lon
+                            coord1 = p.latitude();
+                            coord2 = p.longitude();
+                        }
+                        
+                        if (coord1 < this.expected.bounds.minLat || coord1 > this.expected.bounds.maxLat ||
+                            coord2 < this.expected.bounds.minLon || coord2 > this.expected.bounds.maxLon) {
                             var msg = "Point " + (i + 1) + " outside expected bounds\n";
-                            msg += "   Point: " + lat.toFixed(4) + ", " + lon.toFixed(4) + "\n";
+                            msg += "   Point: " + coord1.toFixed(4) + ", " + coord2.toFixed(4) + "\n";
                             msg += "   Bounds: [" + this.expected.bounds.minLat + ", " + 
                                    this.expected.bounds.minLon + "] to [" + 
                                    this.expected.bounds.maxLat + ", " + this.expected.bounds.maxLon + "]";
