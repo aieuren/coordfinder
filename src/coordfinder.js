@@ -2094,8 +2094,8 @@ function CF(text, opts) {
 }
 
 // Metadata
-CF.version = "5.0-beta.6";
-CF.build = "20260114-205009"; // Auto-updated by update-build.sh
+CF.version = "5.0-beta.7";
+CF.build = "20260115-185512"; // Auto-updated by update-build.sh
 CF.author = "Bernt Rane, Claude & Ona";
 CF.license = "MIT";
 CF.ratingDefault = 0.5;
