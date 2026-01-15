@@ -1023,11 +1023,11 @@ Expected: ”DEPRECATED”
 ## Point Test: Loggutskrift
 Test-ID: tdd-log-002
 Method: log()
-Input: “”
+Input: “57.42 12.23”
 Expected: ”DEPRECATED”
 
 ## Point Test: Debugutskrift
 Test-ID: tdd-log-003
 Method: asDebugText()
-Input: “”
+Input: “57.42 12.23”
 Expected: ”DEPRECATED”
