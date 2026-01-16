@@ -491,7 +491,7 @@ var Patterns = {
     // Allow comma, semicolon, brackets, URL chars (~!@=), or whitespace before number
     // Direction letter must not be followed by another letter (avoids "Ska", "Viktig", etc.)
     // Direction letter before number must be preceded by word boundary, whitespace, or newline
-    degs: /(?:^|[,;\[\]~!@= \t\n\r])([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![ \t]*\d)(?![a-zåäöA-ZÅÄÖ]))?/gi,
+    degs: /(?:^|[,;\[\]~!@= \t\n\r])([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![a-zåäöA-ZÅÄÖ]))?/gi,
     
     // Plain number (meters or large coordinates)
     // Use [ \t] to avoid matching across newlines
@@ -1532,6 +1532,11 @@ Point.prototype.textAfter = function(opts) {
 };
 
 Point.prototype.originalText = function(opts) {
+    opts = opts || {};
+    var maxChars = opts.maxchars || opts.maxChars || 0;
+    var ellipse = opts.ellipse !== undefined ? opts.ellipse : false;
+    var html = opts.html || false;
+    
     if (!this.N || !this.E) return "";
     
     // Get parsedFrom for both coordinates
@@ -1540,35 +1545,106 @@ Point.prototype.originalText = function(opts) {
     
     if (!nParsed || !eParsed || !nParsed.parser) return "";
     
-    // Extract the coordinate text from original text
-    // Returns text from start of first digit to end of last digit
-    // including everything in between (separators, spaces, newlines)
     var originalText = nParsed.parser.originalText;
     
-    // Find the start of the first digit in each snippet
-    var nStart = nParsed.index;
-    var nMatch = nParsed.text.match(/\d/);
-    if (nMatch) {
-        nStart += nMatch.index;
+    // Extract coordinate values (without prefix/labels)
+    var getCoordStart = function(parsed) {
+        var text = parsed.text;
+        var index = parsed.index;
+        
+        // Look for prefix patterns like "N:", "Latitude:", "E:", "Longitude:", "n:", etc.
+        var prefixMatch = text.match(/^([A-ZÅÄÖa-zåäö]+)\s*:\s*/);
+        if (prefixMatch) {
+            return index + prefixMatch[0].length;
+        }
+        
+        return index;
+    };
+    
+    var nStart = getCoordStart(nParsed);
+    var nEnd = nParsed.index + nParsed.text.length;
+    
+    var eStart = getCoordStart(eParsed);
+    var eEnd = eParsed.index + eParsed.text.length;
+    
+    // Check if both coordinates are from the same snippet (coordinate pair)
+    if (nParsed.index === eParsed.index && nParsed.text === eParsed.text) {
+        // Coordinate pair - extract individual values
+        var pairText = nParsed.text;
+        var separatorMatch = pairText.match(/(\d+(?:[,.]\d+)?)\s*[,;\s]+\s*(\d+(?:[,.]\d+)?)/);
+        if (separatorMatch) {
+            var firstCoord = separatorMatch[1];
+            var secondCoord = separatorMatch[2];
+            
+            if (maxChars === 0) {
+                // Default: replace separator with space
+                var result = firstCoord + " " + secondCoord;
+                if (html) {
+                    result = "<b>" + firstCoord + "</b><i> </i><b>" + secondCoord + "</b>";
+                }
+                return result;
+            }
+            // With maxChars > 0, include context before/after
+            // Fall through to normal handling
+        }
     }
     
-    var eStart = eParsed.index;
-    var eMatch = eParsed.text.match(/\d/);
-    if (eMatch) {
-        eStart += eMatch.index;
+    // Use snippet boundaries but remove prefix from start
+    var firstStart, firstEnd, firstCoord, secondStart, secondEnd, secondCoord;
+    if (nStart < eStart) {
+        firstStart = nStart;
+        firstEnd = nEnd;
+        secondStart = eStart;
+        secondEnd = eEnd;
+    } else {
+        firstStart = eStart;
+        firstEnd = eEnd;
+        secondStart = nStart;
+        secondEnd = nEnd;
     }
     
-    // Start from the earliest digit
-    var startIndex = Math.min(nStart, eStart);
+    // Extract coordinate texts from original
+    firstCoord = originalText.substring(firstStart, firstEnd);
+    secondCoord = originalText.substring(secondStart, secondEnd);
     
-    // End at the last character of the last snippet
-    var endIndex = Math.max(
-        nParsed.index + nParsed.text.length,
-        eParsed.index + eParsed.text.length
-    );
+    // Extract parts
+    var textBefore = originalText.substring(0, firstStart);
+    var textBetween = originalText.substring(firstEnd, secondStart);
+    var textAfter = originalText.substring(secondEnd);
     
-    // Return without trimming - preserve original text exactly
-    return originalText.substring(startIndex, endIndex);
+    // Handle based on maxChars
+    if (maxChars === 0) {
+        // Default: only coordinates with space between
+        var result = firstCoord + " " + secondCoord;
+        if (html) {
+            result = "<b>" + firstCoord + "</b><i> </i><b>" + secondCoord + "</b>";
+        }
+        return result;
+    }
+    
+    // maxChars > 0: include context, truncate each part separately
+    var truncate = function(text, max, addEllipse) {
+        if (text.length <= max) return text;
+        if (!addEllipse) return text;
+        
+        // Truncate with ellipse
+        var halfMax = Math.floor(max / 2);
+        return text.substring(0, halfMax) + "…" + text.substring(text.length - halfMax);
+    };
+    
+    // Truncate each part
+    var before = truncate(textBefore, maxChars, ellipse);
+    var between = truncate(textBetween, maxChars, ellipse);
+    var after = truncate(textAfter, maxChars, ellipse);
+    
+    // Combine
+    var result = before + firstCoord + between + secondCoord + after;
+    
+    if (html) {
+        result = "<i>" + before + "</i><b>" + firstCoord + "</b><i>" + between + "</i><b>" + secondCoord + "</b><i>" + after + "</i>";
+    }
+    
+    return result;
 };
 
 Point.prototype.context = function(opts) {
