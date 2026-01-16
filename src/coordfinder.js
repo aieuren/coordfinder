@@ -1571,7 +1571,8 @@ Point.prototype.originalText = function(opts) {
     if (nParsed.index === eParsed.index && nParsed.text === eParsed.text) {
         // Coordinate pair - extract individual values
         var pairText = nParsed.text;
-        var separatorMatch = pairText.match(/(\d+(?:[,.]\d+)?)\s*[,;\s]+\s*(\d+(?:[,.]\d+)?)/);
+        // Match with optional prefix like "X:", "N:", etc.
+        var separatorMatch = pairText.match(/(?:[A-ZÅÄÖa-zåäö]+\s*:\s*)?(\d+(?:[,.]\d+)?)\s*[,;\s]+\s*(?:[A-ZÅÄÖa-zåäö]+\s*:\s*)?(\d+(?:[,.]\d+)?)/);
         if (separatorMatch) {
             var firstCoord = separatorMatch[1];
             var secondCoord = separatorMatch[2];

@@ -155,11 +155,12 @@ MethodTest.prototype._executeMethod = function(point) {
         var parts = this._splitArguments(argsStr);
         for (var i = 0; i < parts.length; i++) {
             var arg = parts[i].trim();
-            if (arg.includes('=')) {
-                // Named argument like format=degrees or maxchars=15
-                var eqParts = arg.split('=');
-                var name = eqParts[0].trim();
-                var value = this._parseArgumentValue(eqParts[1].trim());
+            // Check for named argument with = or : (e.g., maxchars=8 or maxchars: 8)
+            var separatorMatch = arg.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*[:=]\s*(.+)$/);
+            if (separatorMatch) {
+                // Named argument like format=degrees or maxchars: 8
+                var name = separatorMatch[1];
+                var value = this._parseArgumentValue(separatorMatch[2]);
                 namedArgs[name] = value;
                 hasNamedArgs = true;
             } else {
