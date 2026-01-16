@@ -1633,43 +1633,28 @@ Point.prototype.originalText = function(opts) {
     }
     
     // maxChars > 0: include context, truncate each part separately
-    // Note: maxChars includes the "..." in the count
+    // Note: maxChars does NOT include the "..." - it's the amount of text to keep
     var truncateBefore = function(text, max, addEllipse) {
         if (text.length <= max) return text;
-        if (addEllipse) {
-            // "..." + last part, total length = max
-            var textLength = max - 3; // Reserve 3 chars for "..."
-            return "..." + text.substring(text.length - textLength);
-        } else {
-            // Just last part
-            return text.substring(text.length - max);
-        }
+        // Keep last 'max' characters
+        var truncated = text.substring(text.length - max);
+        return addEllipse ? "..." + truncated : truncated;
     };
     
     var truncateBetween = function(text, max, addEllipse) {
         if (text.length <= max) return text;
-        if (addEllipse) {
-            // first part + "..." + last part, total length = max
-            var textLength = max - 3; // Reserve 3 chars for "..."
-            var halfText = Math.floor(textLength / 2);
-            return text.substring(0, halfText) + "..." + text.substring(text.length - halfText);
-        } else {
-            // Just parts
-            var halfMax = Math.floor(max / 2);
-            return text.substring(0, halfMax) + text.substring(text.length - halfMax);
-        }
+        // Keep 'max' characters total (half from start, half from end)
+        var halfMax = Math.floor(max / 2);
+        var firstPart = text.substring(0, halfMax);
+        var lastPart = text.substring(text.length - halfMax);
+        return addEllipse ? firstPart + "..." + lastPart : firstPart + lastPart;
     };
     
     var truncateAfter = function(text, max, addEllipse) {
         if (text.length <= max) return text;
-        if (addEllipse) {
-            // first part + "...", total length = max
-            var textLength = max - 3; // Reserve 3 chars for "..."
-            return text.substring(0, textLength) + "...";
-        } else {
-            // Just first part
-            return text.substring(0, max);
-        }
+        // Keep first 'max' characters
+        var truncated = text.substring(0, max);
+        return addEllipse ? truncated + "..." : truncated;
     };
     
     // Truncate each part
