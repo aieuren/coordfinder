@@ -276,8 +276,8 @@ Test-ID: tdd-reproj-006
 Method: reprojectTo(SWEREF99TM)
 Input: “6450123 1320456”
 Expected:
-- N.value: ~6446312
-- E.value: ~367925
+- N.value: 6446312
+- E.value: 367925
 - refsys.name: SWEREF99TM
 
 # Point.textBefore()
@@ -299,7 +299,7 @@ Expected: “”
 Test-ID: tdd-textbef-003
 Method: textBefore(maxchars=15)
 Input: “Detta är en extremt lång text som innehåller koordinat 58.41234 12.56789”
-Expected: “…ller koordinat “
+Expected: “...ller koordinat “
 
 ## Point Test: Med maxchars lång
 Test-ID: tdd-textbef-004
@@ -338,7 +338,7 @@ Expected: “”
 Test-ID: tdd-textaft-003
 Method: textAfter(maxchars=10)
 Input: “58.41234 12.56789 och sedan kommer mycket lång beskrivning”
-Expected: “ och sedan…”
+Expected: “ och sedan...”
 
 ## Point Test: Med maxchars lång
 Test-ID: tdd-textaft-004
@@ -355,49 +355,128 @@ Expected: “ (ungefärlig position)”
 
 # Point.originalText()
 
-## Point Test: Decimalgrader i text
+## Point Test: originalText decimalgrader
 Test-ID: tdd-origtxt-001
 Method: originalText()
-Input: “Båten låg vid 58.41234 12.56789 när olyckan hände.”
-Expected:
-”58.41234 12.56789”
+Input: En brygga på 60.12345 19.54321 har gått sönder.
+Expected: "60.12345 19.54321"
 
-## Point Test: DMS i text
+## Point Test: originalText DMS format
 Test-ID: tdd-origtxt-002
 Method: originalText()
-Input: Position N 58°24’44.2” E 12°34’4.4” rapporterad.”
-Expected:
-”N 58°24’44.2” E 12°34’4.4””
+Input: En brygga på N 60°15'30.5" E 19°20'45.3" har lagats.
+Expected: "N 60°15'30.5" E 19°20'45.3""
 
-## CoordFinder Test: Tillf test, ska flyttas!!!
-Test-ID: tdd-xxxxxxx
-Method: pointIn()
-Input: N 58°24’44.234567” E 12°34’4.456789”
-Expected:
-58.4122873797 12.5679046636
-
-
-## Point Test: Med maxchars
+## Point Test: originalText med väderstreck efter
 Test-ID: tdd-origtxt-003
-Method: originalText(maxchars=20, ellipse=true)
-Input:
-En mycket lång beskrivning av position N 58°24’44.234567” E 12°34’4.456789” som användes i rapporten.
-Expected:
-”N 58°24’44.234567” E 12°34’4.456789””
+Method: originalText()
+Input: Koordinater 60.123 N 19.456 E hittades
+Expected: "60.123 N 19.456 E"
 
-## Point Test: Kort text ingen ellipse
+## Point Test: originalText SWEREF kommaseparerad
 Test-ID: tdd-origtxt-004
-Method: originalText(maxchars=100)
-Input: “Pos 58.41 12.57”
-Expected:
-”58.41 12.57”
+Method: originalText()
+Input: Position: 6550000, 385000
+Expected: "6550000 385000"
 
-## Point Test: SWEREF i text
+## Point Test: originalText RT90
 Test-ID: tdd-origtxt-005
 Method: originalText()
-Input: “Punkten 6450123 320456 markerad på kartan.”
+Input: X: 6550000 Y: 1350000
+Expected: "6550000 1350000"
+
+## Point Test: originalText flerradigt lat/lon
+Test-ID: tdd-origtxt-006
+Method: originalText()
+Input:
+Latitude: 60.12345 N
+Longitude: 19.54321 E
+Expected: "60.12345 N 19.54321 E"
+
+## Point Test: originalText med maxchars inom text
+Test-ID: tdd-origtxt-007
+Method: originalText(maxchars: 8)
+Input: Ship at 60.5 N 19.3 E now
+Expected: "Ship at 60.5 N 19.3 E now"
+
+## Point Test: originalText med maxchars och ellipse
+Test-ID: tdd-origtxt-008
+Method: originalText(maxchars: 10, ellipse: true)
+Input: The vessel was located at coordinates 60.12345 N 19.54321 E near the island
+Expected: "...ordinates 60.12345 N 19.54321 E near the ...”
+
+## Point Test: originalText med HTML-formatering
+Test-ID: tdd-origtxt-009
+Method: originalText(maxchars: 8, html: true)
+Input: Found at 60.5 N 19.3 E today
+Expected: "<i>Found at </i><b>60.5 N</b><i> </i><b>19.3 E</b><i> today</i>"
+
+## Point Test: originalText från Google Maps URL
+Test-ID: tdd-origtxt-010
+Method: originalText()
+Input: https://maps.google.com/@60.12345,19.54321,15z
+Expected: "60.12345,19.54321"
+
+## Point Test: originalText från GeoJSON
+Test-ID: tdd-origtxt-011
+Method: originalText()
+Input: {"coordinates": [19.54321, 60.12345]}
+Expected: "19.54321, 60.12345"
+
+## Point Test: originalText kompakt DDMMSS
+Test-ID: tdd-origtxt-012
+Method: originalText()
+Input: 601230N0193015E
+Expected: "601230N 0193015E"
+
+## Point Test: originalText DM format utan symboler
+Test-ID: tdd-origtxt-013
+Method: originalText()
+Input: 60 30,5 19 15,25
+Expected: "60 30,5 19 15,25"
+
+## Point Test: originalText med minustecken separator
+Test-ID: tdd-origtxt-014
+Method: originalText()
+Input: 60-30N 019-15E
+Expected: "60-30N 019-15E"
+
+## Point Test: originalText WKT format
+Test-ID: tdd-origtxt-015
+Method: originalText()
+Input: POINT(19.54321 60.12345)
+Expected: "19.54321 60.12345"
+
+## Point Test: originalText med tab-separering
+Test-ID: tdd-origtxt-016
+Method: originalText()
+Input: Stockholm	60.12345	19.54321	Sweden
+Expected: "60.12345 19.54321"
+
+## Point Test: originalText utan maxchars på lång text
+Test-ID: tdd-origtxt-017
+Method: originalText()
+Input: En mycket lång text med koordinater 60.12345 N 19.54321 E som ska extraheras helt
+Expected: "60.12345 N 19.54321 E"
+
+## Point Test: originalText med ellipse false
+Test-ID: tdd-origtxt-018
+Method: originalText(maxchars: 8, ellipse: false)
+Input: The vessel was at 60.12345 N 19.54321 E yesterday
+Expected: " was at 60.12345 N 19.54321 E yesterd"
+
+## Point Test: originalText med text mellan koordinaterna
+Test-ID: tdd-origtxt-019
+Method: originalText()
+Input: Latitude 60.12345 N and longitude 19.54321 E recorded
+Expected: "60.12345 N 19.54321 E"
+
+## Point Test: originalText med längre text mellan koordinaterna
+Test-ID: tdd-origtxt-020
+Method: originalText(maxchars: 10, ellipse: true)
+Input: Området går från en latitud av N 60.12345 hela vägen söder ut och avgränsas i öster av Ö 19.54321. Inga uttrar har siktats för än.
 Expected:
-”6450123 320456”
+”...atitud av N 60.12345 hela...r av Ö 19.54321. Inga utt..."
 
 
 # Point.context()
@@ -416,9 +495,9 @@ Test-ID: tdd-ctx-002
 Method: context(maxchars=15)
 Input: “Den gamla fyren står vid 58.41234 12.56789 på det gamla Stora grundet”
 Expected:
-- Contains: “…fyren står vid ”
+- Contains: “...fyren står vid ”
 - Contains: “58.41234 12.56789”
-- Contains: “ på det gamla S…”
+- Contains: “ på det gamla S...”
 
 ## Point Test: Kort text före och efter
 Test-ID: tdd-ctx-003
