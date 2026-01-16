@@ -753,7 +753,13 @@ För att få information om var i texten koordinaten hittades:
 
 **originalText(opts)** - Ursprunglig koordinattext
 
-Returnerar koordinaterna med hantering av text mellan dem beroende på `maxchars`.
+Returnerar koordinaterna (själva koordinatvärdena, utan omgivande prefix/labels) med hantering av text mellan dem beroende på `maxchars`.
+
+**Vad räknas som “koordinaten”:**
+
+- Koordinatvärdet med väderstreck (t.ex. “59.32894 N”, “E 12.3”)
+- **INTE** prefix/labels som “Latitude:”, “Longitude:”, “N:”, “E:” etc.
+- Dessa prefix/labels betraktas som “text mellan koordinaterna” (om de ligger mellan) eller kontext (om de ligger före/efter)
 
 **Default-värden:**
 
@@ -792,12 +798,19 @@ När `html: true`:
 // Input: "Latitude: 59.32894 N\nLongitude: 18.06491 E"
 point.originalText()
 // → "59.32894 N 18.06491 E"
-// (radbrytning och "Longitude:" ersatta med mellanslag)
+// ("Latitude:", radbrytning och "Longitude:" hanteras som text mellan, ersätts med mellanslag)
+
+// Input: "N: 58.5\nE: 12.3"
+point.originalText()
+// → "58.5 12.3"
+// ("N:", radbrytning och "E:" hanteras som text mellan, ersätts med mellanslag)
+// OBS: Väderstreck som är DEL AV koordinaten inkluderas ("N 58.5"), 
+//      men prefix "N:" inkluderas INTE
 
 // Input: "Position: 59.5 N and also 12.3 E"
 point.originalText()
 // → "59.5 N 12.3 E"
-// ("and also" ersatt med mellanslag)
+// ("Position:", "and also" ersatta med mellanslag)
 
 // Med kontext - text mellan visas
 // Input: "Position 59.5 N and 12.3 E here"
