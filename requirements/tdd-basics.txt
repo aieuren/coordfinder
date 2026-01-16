@@ -406,7 +406,7 @@ Expected: ”...ordinates 60.12345 N 19.54321 E near the ...”
 
 ## Point Test: originalText med HTML-formatering
 Test-ID: tdd-origtxt-009
-Method: originalText(html=true)
+Method: originalText(maxchars=20,html=true)
 Input: Found at 60.5 N 19.3 E today
 Expected: "<i>Found at </i><b>60.5 N</b><i> </i><b>19.3 E</b><i> today</i>"
 
