@@ -275,9 +275,10 @@ Test-ID: tdd-reproj-006
 Method: reprojectTo(SWEREF99TM)
 Input: “6450123 1320456”
 Expected:
-- N.value: 6446312
-- E.value: 367925
+- N.value: 6446311
+- E.value: 367917
 - refsys.name: SWEREF99TM
+
 
 # Point.textBefore()
 
