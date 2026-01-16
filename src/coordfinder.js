@@ -1571,8 +1571,17 @@ Point.prototype.originalText = function(opts) {
     if (nParsed.index === eParsed.index && nParsed.text === eParsed.text) {
         // Coordinate pair - extract individual values
         var pairText = nParsed.text;
-        // Match with optional prefix like "X:", "N:", etc.
-        var separatorMatch = pairText.match(/(?:[A-ZÅÄÖa-zåäö]+\s*:\s*)?(\d+(?:[,.]\d+)?)\s*[,;\s]+\s*(?:[A-ZÅÄÖa-zåäö]+\s*:\s*)?(\d+(?:[,.]\d+)?)/);
+        var separatorMatch = null;
+        
+        // Try different patterns:
+        // 1. With separator: "X: 6550000 Y: 1350000" or "6550000, 385000"
+        separatorMatch = pairText.match(/(?:[A-ZÅÄÖa-zåäö]+\s*:\s*)?(\d+(?:[,.]\d+)?)\s*[,;\s]+\s*(?:[A-ZÅÄÖa-zåäö]+\s*:\s*)?(\d+(?:[,.]\d+)?)/);
+        
+        // 2. Compact with direction letters: "601230N0193015E"
+        if (!separatorMatch) {
+            separatorMatch = pairText.match(/(\d+[NSEWÖV])(\d+[NSEWÖV])/);
+        }
+        
         if (separatorMatch) {
             var firstCoord = separatorMatch[1];
             var secondCoord = separatorMatch[2];
@@ -1624,19 +1633,33 @@ Point.prototype.originalText = function(opts) {
     }
     
     // maxChars > 0: include context, truncate each part separately
-    var truncate = function(text, max, addEllipse) {
+    var truncateBefore = function(text, max, addEllipse) {
         if (text.length <= max) return text;
-        if (!addEllipse) return text;
-        
-        // Truncate with ellipse
+        // For text before: "..." + last part (or just last part if no ellipse)
+        var truncated = text.substring(text.length - max);
+        return addEllipse ? "..." + truncated : truncated;
+    };
+    
+    var truncateBetween = function(text, max, addEllipse) {
+        if (text.length <= max) return text;
+        // For text between: first part + "..." + last part (or just parts if no ellipse)
         var halfMax = Math.floor(max / 2);
-        return text.substring(0, halfMax) + "…" + text.substring(text.length - halfMax);
+        var firstPart = text.substring(0, halfMax);
+        var lastPart = text.substring(text.length - halfMax);
+        return addEllipse ? firstPart + "..." + lastPart : firstPart + lastPart;
+    };
+    
+    var truncateAfter = function(text, max, addEllipse) {
+        if (text.length <= max) return text;
+        // For text after: first part + "..." (or just first part if no ellipse)
+        var truncated = text.substring(0, max);
+        return addEllipse ? truncated + "..." : truncated;
     };
     
     // Truncate each part
-    var before = truncate(textBefore, maxChars, ellipse);
-    var between = truncate(textBetween, maxChars, ellipse);
-    var after = truncate(textAfter, maxChars, ellipse);
+    var before = truncateBefore(textBefore, maxChars, ellipse);
+    var between = truncateBetween(textBetween, maxChars, ellipse);
+    var after = truncateAfter(textAfter, maxChars, ellipse);
     
     // Combine
     var result = before + firstCoord + between + secondCoord + after;
