@@ -1,8 +1,7 @@
 # CoordFinder - Kravspecifikation
 
-Version: 5.0-beta
-Datum: 2026-01-15
-Baserad på: Interface, TDD-tester och implementation
+Version: 2026-01-16
+Baserad på: Tidigare implementation
 
 ## Syfte
 
@@ -756,20 +755,59 @@ För att få information om var i texten koordinaten hittades:
 
 Returnerar texten från början av första koordinaten till slutet av sista koordinaten, inklusive allt däremellan (separatorer, mellanslag, newlines).
 
+**Default-värden:**
+
+- `maxchars: 0` - Ingen extra kontext, bara koordinaterna
+- `ellipse: false` - Ingen “…” när text trunkeras
+- `html: false` - Ingen HTML-formatering
+
+**Kontrast med context():**
+`context()` använder samma funktion men med andra defaults (maxchars: 12, ellipse: true, html: true) och är designad för UI-visning, medan `originalText()` ger rådata.
+
 **Vad inkluderas:**
 
 - Båda koordinaterna i sin ursprungliga form
-- All text mellan koordinaterna
-- Newlines om koordinaterna är på olika rader
+- All text mellan koordinaterna (separatorer, mellanslag)
+- **Newlines bevaras** om koordinaterna är på olika rader
+- **Ingen trimning** - mellanslag före/efter koordinaterna bevaras inte (endast koordinaterna själva)
+
+**Beteende med maxchars:**
+
+- `maxchars: 0` (default) - Bara koordinaterna
+- `maxchars > 0` - Inkluderar omgivande kontext upp till maxchars tecken totalt
+- Med `ellipse: true` - Trunkerad text ersätts med “…”
+
+**HTML-formatering:**
+När `html: true`:
+
+- Koordinater formateras med `<b>` tags
+- Kontext formateras med `<i>` tags
+- Exempel: `"<i>Found at </i><b>59.5 N</b><i> </i><b>12.3 E</b><i> today</i>"`
 
 **Exempel:**
 
 ```javascript
 // Text: "Position: 58.5 N 12.3 E nearby"
-point.originalText() // → "58.5 N 12.3 E"
+point.originalText() 
+// → "58.5 N 12.3 E"
 
 // Text: "N: 58.5\nE: 12.3"
-point.originalText() // → "58.5\nE: 12.3" (från första siffran till sista)
+point.originalText() 
+// → "58.5\n12.3" (newline bevarad)
+
+// Med kontext
+// Text: "Ship at 59.5 N 12.3 E now"
+point.originalText({maxchars: 20})
+// → "Ship at 59.5 N 12.3 E now"
+
+// Med HTML
+point.originalText({maxchars: 15, html: true})
+// → "<i>Ship at </i><b>59.5 N</b><i> </i><b>12.3 E</b><i> now</i>"
+
+// URL-kontext
+// Text: "https://maps.google.com/@59.32894,18.06491,15z"
+point.originalText()
+// → "59.32894,18.06491"
 ```
 
 **context(opts)** - Sammanhängande kontext (före + koordinat + efter)
