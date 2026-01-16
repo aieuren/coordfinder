@@ -1,6 +1,5 @@
 === CoordFinder TDD Test Suite - Basic Functions ===
 
-
 # Point.latitude()
 
 ## Point Test: Decimalgrader grundformat
@@ -415,13 +414,13 @@ Expected: "<i>Found at </i><b>60.5 N</b><i> </i><b>19.3 E</b><i> today</i>"
 Test-ID: tdd-origtxt-010
 Method: originalText()
 Input: https://maps.google.com/@60.12345,19.54321,15z
-Expected: "60.12345,19.54321"
+Expected: "60.12345 19.54321"
 
 ## Point Test: originalText från GeoJSON
 Test-ID: tdd-origtxt-011
 Method: originalText()
 Input: {"coordinates": [19.54321, 60.12345]}
-Expected: "19.54321, 60.12345"
+Expected: "19.54321 60.12345"
 
 ## Point Test: originalText kompakt DDMMSS
 Test-ID: tdd-origtxt-012
