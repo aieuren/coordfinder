@@ -564,7 +564,7 @@ Snippet.prototype.textBefore = function(maxChars, showEllipse) {
         // Trim leading space if present
         before = before.trimStart();
         if (showEllipse) {
-            before = "…" + before;
+            before = "..." + before;
         }
     }
     return before;
@@ -583,7 +583,7 @@ Snippet.prototype.textAfter = function(maxChars, showEllipse) {
         // Trim trailing space if present
         after = after.trimEnd();
         if (showEllipse) {
-            after = after + "…";
+            after = after + "...";
         }
     }
     // Don't trim - preserve leading whitespace
@@ -2092,13 +2092,35 @@ Point.prototype.reprojectTo = function(toRefSys) {
         var toProj = proj4(toRefSys.projDef);
         var result = proj4(fromProj, toProj, [this.E.value, this.N.value]);
         
+        // Round to appropriate precision based on original coordinate precision
+        // to avoid increasing uncertainty (per requirements)
+        var nDecimals = (this.N.parsedFrom && this.N.parsedFrom.noOfDecimals) || 0;
+        var eDecimals = (this.E.parsedFrom && this.E.parsedFrom.noOfDecimals) || 0;
+        var maxDecimals = Math.max(nDecimals, eDecimals);
+        
+        // For meter-based systems, use same decimal precision as input
+        // For degree-based systems, calculate appropriate precision
+        var roundTo = maxDecimals;
+        if (toRefSys.unit === CoordUnit.Meters && this.refsys.unit === CoordUnit.Meters) {
+            // Meter to meter: keep same precision
+            roundTo = maxDecimals;
+        } else if (toRefSys.unit === CoordUnit.Degrees && this.refsys.unit === CoordUnit.Meters) {
+            // Meter to degrees: need more decimals for same precision
+            roundTo = Math.max(5, maxDecimals);
+        } else if (toRefSys.unit === CoordUnit.Meters && this.refsys.unit === CoordUnit.Degrees) {
+            // Degrees to meters: can use fewer decimals
+            roundTo = Math.max(0, maxDecimals - 5);
+        }
+        
+        var factor = Math.pow(10, roundTo);
+        
         var newPoint = new Point();
         newPoint.E = new Coord();
-        newPoint.E.value = result[0];
+        newPoint.E.value = Math.round(result[0] * factor) / factor;
         newPoint.E.axis = CoordAxis.Easting;
         
         newPoint.N = new Coord();
-        newPoint.N.value = result[1];
+        newPoint.N.value = Math.round(result[1] * factor) / factor;
         newPoint.N.axis = CoordAxis.Northing;
         
         newPoint.refsys = toRefSys;
