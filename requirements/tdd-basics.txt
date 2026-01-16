@@ -402,7 +402,7 @@ Expected: "Ship at 60.5 N 19.3 E now"
 Test-ID: tdd-origtxt-008
 Method: originalText(maxchars: 10, ellipse: true)
 Input: The vessel was located at coordinates 60.12345 N 19.54321 E near the island
-Expected: "...ordinates 60.12345 N 19.54321 E near the ...”
+Expected: ”...ordinates 60.12345 N 19.54321 E near the ...”
 
 ## Point Test: originalText med HTML-formatering
 Test-ID: tdd-origtxt-009
@@ -475,7 +475,7 @@ Test-ID: tdd-origtxt-020
 Method: originalText(maxchars: 10, ellipse: true)
 Input: Området går från en latitud av N 60.12345 hela vägen söder ut och avgränsas i öster av Ö 19.54321. Inga uttrar har siktats för än.
 Expected:
-”...atitud av N 60.12345 hela...r av Ö 19.54321. Inga utt..."
+”...atitud av N 60.12345 hela...r av Ö 19.54321. Inga utt...”
 
 
 # Point.context()
@@ -579,7 +579,7 @@ Expected: “S 34.9285 E 138.6007”
 Test-ID: tdd-astxt-009
 Method: asText(directionLetter=after)
 Input: “-34.9285 -118.2436”
-Expected: “34.9285 S 118.2436 W”
+Expected: ”34.9285 S 118.2436 W”
 
 ## Point Test: Compact format DM
 Test-ID: tdd-astxt-010
