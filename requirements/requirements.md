@@ -1,6 +1,6 @@
 # CoordFinder - Kravspecifikation
 
-Version: 2026-01-16
+Version: 2026-01-16  
 Baserad på: Tidigare implementation
 
 ## Syfte
@@ -753,29 +753,30 @@ För att få information om var i texten koordinaten hittades:
 
 **originalText(opts)** - Ursprunglig koordinattext
 
-Returnerar texten från början av första koordinaten till slutet av sista koordinaten, inklusive allt däremellan (separatorer, mellanslag, newlines).
+Returnerar koordinaterna med hantering av text mellan dem beroende på `maxchars`.
 
 **Default-värden:**
 
-- `maxchars: 0` - Ingen extra kontext, bara koordinaterna
+- `maxchars: 0` - Text mellan koordinater ersätts med ett mellanslag
 - `ellipse: false` - Ingen “…” när text trunkeras
 - `html: false` - Ingen HTML-formatering
 
 **Kontrast med context():**
 `context()` använder samma funktion men med andra defaults (maxchars: 12, ellipse: true, html: true) och är designad för UI-visning, medan `originalText()` ger rådata.
 
-**Vad inkluderas:**
+**Hantering av text mellan koordinater:**
 
-- Båda koordinaterna i sin ursprungliga form
-- All text mellan koordinaterna (separatorer, mellanslag)
-- **Newlines bevaras** om koordinaterna är på olika rader
-- **Ingen trimning** - mellanslag före/efter koordinaterna bevaras inte (endast koordinaterna själva)
+**Med maxchars = 0 (default):**
 
-**Beteende med maxchars:**
+- Text mellan koordinaterna **ersätts alltid med ett enkelt mellanslag** `" "`
+- All kontext försvinner
+- Resultat: bara koordinaterna med ett mellanslag emellan
 
-- `maxchars: 0` (default) - Bara koordinaterna
-- `maxchars > 0` - Inkluderar omgivande kontext upp till maxchars tecken totalt
-- Med `ellipse: true` - Trunkerad text ersätts med “…”
+**Med maxchars > 0:**
+
+- Text mellan koordinaterna **bevaras** (helt eller delvis)
+- Om avståndet ≤ maxchars+3: Hela texten mellan visas
+- Om avståndet > maxchars+3: Texten trunkeras med “…” i mitten (första halvan + “…” + andra halvan)
 
 **HTML-formatering:**
 När `html: true`:
@@ -787,27 +788,38 @@ När `html: true`:
 **Exempel:**
 
 ```javascript
-// Text: "Position: 58.5 N 12.3 E nearby"
-point.originalText() 
-// → "58.5 N 12.3 E"
+// Default (maxchars: 0) - text mellan ersätts med mellanslag
+// Input: "Latitude: 59.32894 N\nLongitude: 18.06491 E"
+point.originalText()
+// → "59.32894 N 18.06491 E"
+// (radbrytning och "Longitude:" ersatta med mellanslag)
 
-// Text: "N: 58.5\nE: 12.3"
-point.originalText() 
-// → "58.5\n12.3" (newline bevarad)
+// Input: "Position: 59.5 N and also 12.3 E"
+point.originalText()
+// → "59.5 N 12.3 E"
+// ("and also" ersatt med mellanslag)
 
-// Med kontext
-// Text: "Ship at 59.5 N 12.3 E now"
-point.originalText({maxchars: 20})
-// → "Ship at 59.5 N 12.3 E now"
+// Med kontext - text mellan visas
+// Input: "Position 59.5 N and 12.3 E here"
+point.originalText({maxchars: 10})
+// → "...tion 59.5 N and 12.3 E here"
+// (texten "and" inkluderas)
+
+// Långt avstånd mellan koordinater - trunkering
+// Input: "Position 59.5 N with lots of text in between coordinates 12.3 E here"
+point.originalText({maxchars: 10})
+// → "...tion 59.5 N with lo...dinates 12.3 E here"
+// (texten mellan trunkerad: "with lo" + "..." + "dinates")
 
 // Med HTML
 point.originalText({maxchars: 15, html: true})
 // → "<i>Ship at </i><b>59.5 N</b><i> </i><b>12.3 E</b><i> now</i>"
 
-// URL-kontext
-// Text: "https://maps.google.com/@59.32894,18.06491,15z"
+// URL-kontext (maxchars: 0 default)
+// Input: "https://maps.google.com/@59.32894,18.06491,15z"
 point.originalText()
-// → "59.32894,18.06491"
+// → "59.32894 18.06491"
+// (komma mellan koordinater ersatt med mellanslag)
 ```
 
 **context(opts)** - Sammanhängande kontext (före + koordinat + efter)
