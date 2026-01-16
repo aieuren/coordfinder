@@ -1541,15 +1541,34 @@ Point.prototype.originalText = function(opts) {
     if (!nParsed || !eParsed || !nParsed.parser) return "";
     
     // Extract the coordinate text from original text
+    // Returns text from start of first digit to end of last digit
+    // including everything in between (separators, spaces, newlines)
     var originalText = nParsed.parser.originalText;
-    var startIndex = Math.min(nParsed.index, eParsed.index);
+    
+    // Find the start of the first digit in each snippet
+    var nStart = nParsed.index;
+    var nMatch = nParsed.text.match(/\d/);
+    if (nMatch) {
+        nStart += nMatch.index;
+    }
+    
+    var eStart = eParsed.index;
+    var eMatch = eParsed.text.match(/\d/);
+    if (eMatch) {
+        eStart += eMatch.index;
+    }
+    
+    // Start from the earliest digit
+    var startIndex = Math.min(nStart, eStart);
+    
+    // End at the last character of the last snippet
     var endIndex = Math.max(
         nParsed.index + nParsed.text.length,
         eParsed.index + eParsed.text.length
     );
     
-    var coordText = originalText.substring(startIndex, endIndex);
-    return coordText.trim();
+    // Return without trimming - preserve original text exactly
+    return originalText.substring(startIndex, endIndex);
 };
 
 Point.prototype.context = function(opts) {
