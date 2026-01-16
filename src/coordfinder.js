@@ -491,7 +491,8 @@ var Patterns = {
     // Allow comma, semicolon, brackets, URL chars (~!@=), or whitespace before number
     // Direction letter must not be followed by another letter (avoids "Ska", "Viktig", etc.)
     // Direction letter before number must be preceded by word boundary, whitespace, or newline
-    degs: /(?:^|[,;\[\]~!@= \t\n\r])([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![a-zåäöA-ZÅÄÖ]))?/gi,
+    // Direction letter after number must not be followed by digit (to allow "N58" to be parsed separately)
+    degs: /(?:^|[,;\[\]~!@= \t\n\r])([NSEWÖV])?[ \t]*(-?\d{1,3}[,.]\d+)(?![ \t]*[)'´′"″\u2019\u201C\u201Dz])(?:[ \t]+([NSEWÖV])(?![a-zåäöA-ZÅÄÖ])(?!\d))?/gi,
     
     // Plain number (meters or large coordinates)
     // Use [ \t] to avoid matching across newlines
