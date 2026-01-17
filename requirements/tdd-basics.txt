@@ -471,8 +471,20 @@ Method: originalText()
 Input: Latitude 60.12345 N and longitude 19.54321 E recorded
 Expected: "60.12345 N 19.54321 E"
 
-## Point Test: originalText med längre text mellan koordinaterna
+## Point Test: originalText mellan koordinater kort avstånd ingen trunkering
 Test-ID: tdd-origtxt-020
+Method: originalText(maxchars: 10)
+Input: 60.5 N and 19.3 E
+Expected: "60.5 N and 19.3 E"
+
+## Point Test: originalText mellan koordinater långt avstånd med trunkering
+Test-ID: tdd-origtxt-020
+Method: originalText(maxchars: 10)
+Input: 60.5 N with lots of text in between coordinates 19.3 E
+Expected: "60.5 N with...ates 19.3 E"
+
+## Point Test: originalText med längre text mellan koordinaterna
+Test-ID: tdd-origtxt-021
 Method: originalText(maxchars=10, ellipse=true)
 Input: Området går från en latitud av N 60.12345 hela vägen söder ut och avgränsas i öster av Ö 19.54321. Inga uttrar har siktats för än.
 Expected:
@@ -514,13 +526,14 @@ Method: context()
 Input: “58.41234 12.56789 markerar gränsen”
 Expected:
 - Contains: “58.41234 12.56789”
-- Contains: “markerar gränsen”
+- Contains: “markerar”
 
 ## Point Test: Ingen text efter
 Test-ID: tdd-ctx-005
 Method: context()
 Input: “Gränspunkten ligger på 58.41234 12.56789”
 Expected:
+- Contains: “...”
 - Contains: “ligger på”
 - Contains: “58.41234 12.56789”
 
@@ -691,30 +704,30 @@ Test-ID: tdd-maxerrb-001
 Method: maxErrorBounds()
 Input: “58.412 12.568”
 Expected:
-- Nmin: ~58.4115
-- Nmax: ~58.4125
-- Emin: ~12.5675
-- Emax: ~12.5685
+- Nmin: 58.4115
+- Nmax: 58.4125
+- Emin: 12.5675
+- Emax: 12.5685
 
 ## Point Test: Returnerar bounds med hög precision
 Test-ID: tdd-maxerrb-002
 Method: maxErrorBounds()
 Input: “58.41234 12.56789”
 Expected:
-- Nmin: ~58.412335
-- Nmax: ~58.412345
-- Emin: ~12.567885
-- Emax: ~12.567895
+- Nmin: 58.412335
+- Nmax: 58.412345
+- Emin: 12.567885
+- Emax: 12.567895
 
 ## Point Test: Returnerar bounds med låg precision
 Test-ID: tdd-maxerrb-003
 Method: maxErrorBounds()
 Input: “58.4 12.6”
 Expected:
-- Nmin: ~58.35
-- Nmax: ~58.45
-- Emin: ~12.55
-- Emax: ~12.65
+- Nmin: 58.35
+- Nmax: 58.45
+- Emin: 12.55
+- Emax: 12.65
 
 ## Point Test: Bounds för DMS
 Test-ID: tdd-maxerrb-004
@@ -916,6 +929,37 @@ Input:
  Expected: true
 
 
+# Point.rating()
+
+## Point Test: Hög precision
+Test-ID: tdd-pointrating-001
+Input:
+N59.32894 E18.06491
+Method: rating()
+Expected: 0.9
+
+## Point Test: Medel precision
+Test-ID: tdd-pointrating-002
+Input:
+N59.329 E18.065
+Method: rating()
+Expected: 0.9
+
+## Point Test: Låg precision
+Test-ID: tdd-pointrating-003
+Input:
+N59.6 E18.9
+Method: rating()
+Expected: 0.8
+
+## Point Test: DMS precision
+Test-ID: tdd-pointrating-004
+Input:
+59°19’44.4”N 18°3’53.7”E
+Method: rating()
+Expected: 1.0
+
+
 # CoordFinder.points(rating)
 
 ## CoordFinder Test: Filtrera medelhög precision
@@ -965,6 +1009,23 @@ Input:
 6450000 320000
 Expected:
 - Count: 3
+
+## CoordFinder Test: Rating-ordning med utvalda punkter
+Test-ID: tdd-rating-p-005
+Input:
+N60 E19
+60 ̊ 30.5 19 ̊ 15.25
+N60.234 E19.876
+60.5 19.0
+N 60°30,5' E 19°15,25'
+Method: points(rating=0.5)
+Expected:
+- Inratingorder:
+  - "N 60°30,5' E 19°15,25'"
+  - "60 ̊ 30.5 19 ̊ 15.25"
+  - "N60.234 E19.876"
+  - "N60 E19"
+  - "60.5 19.0"
 
 
 # CoordFinder.foundRatings()
