@@ -813,8 +813,8 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         
         snippet.number = snippet._lat;
         snippet._hasExplicitDirections = true; // Mark as having explicit direction letters
-        var decimals1 = (bestMatch[2].match(/[,.](\\d+)/) || ['',''])[1].length;
-        var decimals2 = (bestMatch[4].match(/[,.](\\d+)/) || ['',''])[1].length;
+        var decimals1 = (bestMatch[2].match(/[,.](\d+)/) || ['',''])[1].length;
+        var decimals2 = (bestMatch[4].match(/[,.](\d+)/) || ['',''])[1].length;
         snippet.noOfDecimals = Math.max(decimals1, decimals2);
         
     } else if (bestPattern.handler === 'extremelyCompact') {
@@ -1535,7 +1535,8 @@ Point.prototype.textAfter = function(opts) {
 Point.prototype.originalText = function(opts) {
     opts = opts || {};
     var maxChars = opts.maxchars || opts.maxChars || 0;
-    var ellipse = opts.ellipse !== undefined ? opts.ellipse : false;
+    // Default ellipse: true when maxchars > 0, false otherwise
+    var ellipse = opts.ellipse !== undefined ? opts.ellipse : (maxChars > 0);
     var html = opts.html || false;
     
     if (!this.N || !this.E) return "";
@@ -2620,6 +2621,11 @@ CF.prototype.points = function(opts) {
             filtered.push(this._points[i]);
         }
     }
+    
+    // Sort by rating (highest first)
+    filtered.sort(function(a, b) {
+        return b.rating() - a.rating();
+    });
     
     return filtered;
 };
