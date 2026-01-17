@@ -1576,10 +1576,20 @@ Point.prototype.originalText = function(opts) {
         var separatorMatch = null;
         
         // Try different patterns:
-        // 1. With separator: "X: 6550000 Y: 1350000" or "6550000, 385000"
-        separatorMatch = pairText.match(/(?:[A-ZÅÄÖa-zåäö]+\s*:\s*)?(\d+(?:[,.]\d+)?)\s*[,;\s]+\s*(?:[A-ZÅÄÖa-zåäö]+\s*:\s*)?(\d+(?:[,.]\d+)?)/);
+        // 1. DM/DMS format with direction letters: "N 60°30,5' E 19°15,25'"
+        separatorMatch = pairText.match(/([NSEWÖV]\s*\d+[°º]\s*\d+(?:[,.]?\d+)?[''′]?(?:\s*\d+(?:[,.]?\d+)?[""″]?)?)\s+([NSEWÖV]\s*\d+[°º]\s*\d+(?:[,.]?\d+)?[''′]?(?:\s*\d+(?:[,.]?\d+)?[""″]?)?)/);
         
-        // 2. Compact with direction letters: "601230N0193015E"
+        // 2. Direction letters before numbers: "N60.234 E19.876"
+        if (!separatorMatch) {
+            separatorMatch = pairText.match(/([NSEWÖV]\d+(?:[,.]\d+)?)\s+([NSEWÖV]\d+(?:[,.]\d+)?)/);
+        }
+        
+        // 3. With separator: "X: 6550000 Y: 1350000" or "6550000, 385000"
+        if (!separatorMatch) {
+            separatorMatch = pairText.match(/(?:[A-ZÅÄÖa-zåäö]+\s*:\s*)?(\d+(?:[,.]\d+)?)\s*[,;\s]+\s*(?:[A-ZÅÄÖa-zåäö]+\s*:\s*)?(\d+(?:[,.]\d+)?)/);
+        }
+        
+        // 4. Compact with direction letters: "601230N0193015E"
         if (!separatorMatch) {
             separatorMatch = pairText.match(/(\d+[NSEWÖV])(\d+[NSEWÖV])/);
         }
@@ -1627,9 +1637,10 @@ Point.prototype.originalText = function(opts) {
     // Handle based on maxChars
     if (maxChars === 0) {
         // Default: only coordinates with space between
-        var result = firstCoord + " " + secondCoord;
+        // Trim whitespace from coordinates to avoid double spaces
+        var result = firstCoord.trim() + " " + secondCoord.trim();
         if (html) {
-            result = "<b>" + firstCoord + "</b><i> </i><b>" + secondCoord + "</b>";
+            result = "<b>" + firstCoord.trim() + "</b><i> </i><b>" + secondCoord.trim() + "</b>";
         }
         return result;
     }
@@ -1676,7 +1687,7 @@ Point.prototype.originalText = function(opts) {
 
 Point.prototype.context = function(opts) {
     opts = opts || {};
-    var maxChars = opts.maxchars || opts.maxChars || 50;
+    var maxChars = opts.maxchars || opts.maxChars || 12;
     var ellipse = opts.ellipse !== false; // default true
     
     var before = this.textBefore({maxchars: maxChars, ellipse: ellipse});
@@ -2192,11 +2203,17 @@ Point.prototype.maxErrorBounds = function() {
     var latError = errors.N / GeoUtils.metersPerDegreeLat(lat);
     var lngError = errors.E / GeoUtils.metersPerDegreeLon(lat);
     
+    // Round to avoid floating point precision issues
+    // Use enough decimals to preserve precision (10 decimals ≈ 1mm)
+    var round = function(val) {
+        return Math.round(val * 1e10) / 1e10;
+    };
+    
     return new BoundingBox(
-        lat - latError,
-        lng - lngError,
-        lat + latError,
-        lng + lngError
+        round(lat - latError),
+        round(lng - lngError),
+        round(lat + latError),
+        round(lng + lngError)
     );
 };
 

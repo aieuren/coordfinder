@@ -173,14 +173,26 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
         
         // Collect expected
         if (state === 'expected' && trimmed !== '' && currentTest) {
-            // Check if it's an object property (starts with - followed by name:value)
+            // Check if it's an object property (starts with - followed by name:value or name: with no value)
             // Must have colon to be a property, otherwise it's a negative number
-            if (trimmed.match(/^-\s*([^:]+):\s*(.+)$/)) {
+            if (trimmed.match(/^-\s*([^:]+):\s*(.*)$/)) {
                 var propName = RegExp.$1.trim();
                 var propValue = RegExp.$2.trim();
                 
+                // Handle special property: Inratingorder (list of originalText values)
+                if (propName.toLowerCase() === 'inratingorder') {
+                    if (!currentTest.expectedInRatingOrder) {
+                        currentTest.expectedInRatingOrder = [];
+                        currentTest.expectedType = 'inratingorder';
+                    }
+                    // If there's a value on the same line, add it
+                    if (propValue) {
+                        currentTest.expectedInRatingOrder.push(this._parseValue(propValue));
+                    }
+                    // Next lines with "  - " will be added to this list
+                }
                 // Handle special property: Contains (for string matching)
-                if (propName.toLowerCase() === 'contains') {
+                else if (propName.toLowerCase() === 'contains') {
                     if (!currentTest.expectedContains) {
                         currentTest.expectedContains = [];
                         currentTest.expectedType = 'contains';
@@ -221,7 +233,14 @@ MarkdownTestParser.prototype.parse = function(markdownText) {
                         }
                     }
                 }
-            } else {
+            }
+            // Check if it's an indented list item (starts with spaces and -)
+            else if (line.match(/^\s{2,}-\s+(.+)$/) && currentTest.expectedInRatingOrder) {
+                // Add to inratingorder list
+                var itemValue = RegExp.$1.trim();
+                currentTest.expectedInRatingOrder.push(this._parseValue(itemValue));
+            }
+            else {
                 // Not a property line (or starts with - but no colon), parse as simple value
                 this._parseExpectedValue(currentTest, trimmed);
             }
@@ -401,7 +420,7 @@ MarkdownTestParser.prototype._addTestToSuite = function(suite, test) {
     
     // If test has a Method specified, create a MethodTest
     if (test.method) {
-        var expected = test.expectedObject || test.expected;
+        var expected = test.expectedInRatingOrder || test.expectedObject || test.expected;
         var expectedType = test.expectedType || 'auto';
         var expectedContains = test.expectedContains || null;
         var expectedNotContains = test.expectedNotContains || null;

@@ -279,6 +279,14 @@ MethodTest.prototype._compare = function(actual, expected, type) {
         if (typeof expected === 'number') {
             actual = actual.length;
         }
+        // If expected is an array (inratingorder), convert points to originalText()
+        else if (Array.isArray(expected) && type === 'inratingorder') {
+            var pointStrs = [];
+            for (var i = 0; i < actual.length; i++) {
+                pointStrs.push(actual[i].originalText());
+            }
+            actual = pointStrs;
+        }
         // If expected is a string, convert points to "lat lon" format
         else if (typeof expected === 'string') {
             // Determine decimal places from expected format
@@ -363,6 +371,9 @@ MethodTest.prototype._compare = function(actual, expected, type) {
         
         case 'contains':
             return this._compareContains(actual, this.expectedContains);
+        
+        case 'inratingorder':
+            return this._compareArray(actual, expected);
         
         default:
             return this._compareDefault(actual, expected);
@@ -483,6 +494,57 @@ MethodTest.prototype._compareContains = function(actual, expectedContains) {
         passed: false,
         message: message
     };
+};
+
+MethodTest.prototype._compareArray = function(actual, expected) {
+    // Compare arrays element by element
+    if (!Array.isArray(actual)) {
+        return {
+            passed: false,
+            message: "Expected array\\n   Actual type: " + typeof actual
+        };
+    }
+    
+    if (actual.length !== expected.length) {
+        return {
+            passed: false,
+            message: "Array length mismatch\\n   Expected: " + expected.length + " elements\\n   Actual:   " + actual.length + " elements"
+        };
+    }
+    
+    // For inratingorder: check that all expected values are present
+    // Order matters only for items with different ratings
+    var expectedSet = {};
+    for (var i = 0; i < expected.length; i++) {
+        expectedSet[expected[i]] = true;
+    }
+    
+    var actualSet = {};
+    for (var i = 0; i < actual.length; i++) {
+        actualSet[actual[i]] = true;
+    }
+    
+    // Check all expected values are present
+    for (var i = 0; i < expected.length; i++) {
+        if (!actualSet[expected[i]]) {
+            return {
+                passed: false,
+                message: "Missing expected value: \"" + expected[i] + "\"\\n   Actual: " + JSON.stringify(actual)
+            };
+        }
+    }
+    
+    // Check no unexpected values
+    for (var i = 0; i < actual.length; i++) {
+        if (!expectedSet[actual[i]]) {
+            return {
+                passed: false,
+                message: "Unexpected value: \"" + actual[i] + "\"\\n   Expected: " + JSON.stringify(expected)
+            };
+        }
+    }
+    
+    return { passed: true };
 };
 
 MethodTest.prototype._compareObject = function(actual, expected) {
