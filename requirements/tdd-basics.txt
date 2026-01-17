@@ -478,13 +478,13 @@ Input: 60.5 N and 19.3 E
 Expected: "60.5 N and 19.3 E"
 
 ## Point Test: originalText mellan koordinater långt avstånd med trunkering
-Test-ID: tdd-origtxt-020
+Test-ID: tdd-origtxt-021
 Method: originalText(maxchars: 10)
 Input: 60.5 N with lots of text in between coordinates 19.3 E
 Expected: "60.5 N with...ates 19.3 E"
 
 ## Point Test: originalText med längre text mellan koordinaterna
-Test-ID: tdd-origtxt-021
+Test-ID: tdd-origtxt-022
 Method: originalText(maxchars=10, ellipse=true)
 Input: Området går från en latitud av N 60.12345 hela vägen söder ut och avgränsas i öster av Ö 19.54321. Inga uttrar har siktats för än.
 Expected:
