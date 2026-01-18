@@ -1,4 +1,4 @@
-// Run TDD tests from tdd-basics.txt
+// Run TDD tests from tdd-testsuites.txt
 
 const fs = require('fs');
 
@@ -17,7 +17,7 @@ eval(fs.readFileSync('src/test-framework.js', 'utf-8'));
 eval(fs.readFileSync('src/test-parser.js', 'utf-8'));
 
 // Get test file from command line argument or use default
-const testFile = process.argv[2] || 'requirements/tdd-basics.txt';
+const testFile = process.argv[2] || 'requirements/tdd-testsuites.txt';
 console.log('Running TDD tests from ' + testFile + '...\n');
 
 try {
