@@ -1,5 +1,4 @@
-=== CoordFinder TDD Test Suite - Point Parsing Functions ===
-
+=== CoordFinder TDD Test Suites ===
 
 # GRUNDLÄGGANDE WGS84 DECIMALGRADER
 
@@ -134,13 +133,6 @@ Input: "https://kartor.eniro.se/?c=58.111111,12.222222&g=59.333333,13.444444&z=1
 Expected:
 - Count: 2
 
-## CoordFinder Test: Flera URL-parametrar med koordinater
-Test-ID: tdd-135
-Method: pointsIn()
-Input: "https://kartor.eniro.se/?c=57.715560,11.973150&g=58.123456,12.345678&z=13"
-Expected:
-- Count: 2
-
 ## CoordFinder Test: pointIn returnerar första punkten i URL med flera parametrar
 Test-ID: tdd-141
 Method: pointIn()
@@ -176,7 +168,7 @@ Expected:
 ## CoordFinder Test: Tvåradiga koordinater
 Test-ID: tdd-016
 Method: pointIn()
-Input: |
+Input:
   Lat: 60.12345
   Long: 19.54321
 Expected:
@@ -188,7 +180,7 @@ Expected:
 ## CoordFinder Test: Numrerad lista
 Test-ID: tdd-017
 Method: pointsIn()
-Input: |
+Input: 
   1) 57°30'N 12°15'E
   2) 57°45'N 12°30'E
   3) 58°00'N 12°45'E
@@ -1410,7 +1402,6 @@ Expected:
 - Count: 4
 - Bounds: 60.0 19.0 62.0 21.0
 
-=== CoordFinder TDD Test Suite - Basic Functions ===
 
 # Point.latitude()
 
@@ -1902,6 +1893,12 @@ Input: Området går från en latitud av N 60.12345 hela vägen söder ut och av
 Expected:
 ”...atitud av N 60.12345 hela...r av Ö 19.54321. Inga utt...”
 
+## CoordFinder Test: originalText bevarar gradsymboler utan minuter
+Test-ID: tdd-origtxt-023
+Method: originalText()
+Input: 60.72° 19.97°
+Expected: "60.72° 19.97°"
+
 
 # Point.context()
 
@@ -1949,6 +1946,19 @@ Expected:
 - Contains: “ligger på”
 - Contains: “58.41234 12.56789”
 
+## Point Test: context ellipse bevarar mellanslag före punkten
+Test-ID: tdd-ctx-006
+Method: context(maxchars=8, ellipse=true, html=false)
+Input: The boat was at 60.5 19.3 here
+Expected: 
+- Contains: “... was at "
+
+## Point Test: context ellipse bevarar mellanslag efter punkten
+Test-ID: tdd-ctx-007
+Method: context(maxchars=6, ellipse=true, html=false)
+Input: Pos 60.5 19.3 once again.
+Expected: 
+- Contains: “ once ..."
 
 # Point.asText()
 
@@ -2583,3 +2593,4 @@ Test-ID: tdd-log-003
 Method: asDebugText()
 Input: “57.42 12.23”
 Expected: ”DEPRECATED”
+
