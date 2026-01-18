@@ -357,9 +357,11 @@ MarkdownTestParser.prototype._parseValue = function(str) {
         (firstChar === 34 && lastChar === 34) ||  // "..."
         (firstChar === 39 && lastChar === 39) ||  // '...'
         (firstChar === 8220 && lastChar === 8221) ||  // "..." (left and right)
+        (firstChar === 8220 && lastChar === 34) ||  // "..." (left Unicode + right ASCII)
         (firstChar === 8221 && lastChar === 8221) ||  // "..." (both right)
         (firstChar === 8220 && lastChar === 8220) ||  // "..." (both left)
         (firstChar === 8216 && lastChar === 8217) ||  // '...' (left and right)
+        (firstChar === 8216 && lastChar === 39) ||  // '...' (left Unicode + right ASCII)
         (firstChar === 8217 && lastChar === 8217) ||  // '...' (both right)
         (firstChar === 8216 && lastChar === 8216)     // '...' (both left)
     );

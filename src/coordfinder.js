@@ -562,10 +562,11 @@ Snippet.prototype.textBefore = function(maxChars, showEllipse) {
     if (maxChars && before.length > maxChars) {
         // Take last maxChars characters, ellipsis is extra
         before = before.substring(before.length - maxChars);
-        // Trim leading space if present
+        // Preserve leading space if present, but trim other leading whitespace
+        var leadingSpace = before.match(/^(\s)/);
         before = before.trimStart();
         if (showEllipse) {
-            before = "..." + before;
+            before = "..." + (leadingSpace ? leadingSpace[1] : "") + before;
         }
     }
     return before;
@@ -581,10 +582,11 @@ Snippet.prototype.textAfter = function(maxChars, showEllipse) {
     if (maxChars && after.length > maxChars) {
         // Take first maxChars characters, ellipsis is extra
         after = after.substring(0, maxChars);
-        // Trim trailing space if present
+        // Preserve trailing space if present, but trim other trailing whitespace
+        var trailingSpace = after.match(/(\s)$/);
         after = after.trimEnd();
         if (showEllipse) {
-            after = after + "...";
+            after = after + (trailingSpace ? trailingSpace[1] : "") + "...";
         }
     }
     // Don't trim - preserve leading whitespace
@@ -1569,6 +1571,14 @@ Point.prototype.originalText = function(opts) {
     var eStart = getCoordStart(eParsed);
     var eEnd = eParsed.index + eParsed.text.length;
     
+    // Extend end positions to include trailing degree symbols if present
+    if (originalText[nEnd] && originalText[nEnd].match(/[°º]/)) {
+        nEnd++;
+    }
+    if (originalText[eEnd] && originalText[eEnd].match(/[°º]/)) {
+        eEnd++;
+    }
+    
     // Check if both coordinates are from the same snippet (coordinate pair)
     if (nParsed.index === eParsed.index && nParsed.text === eParsed.text) {
         // Coordinate pair - extract individual values
@@ -1694,7 +1704,12 @@ Point.prototype.context = function(opts) {
     var orig = this.originalText();
     var after = this.textAfter({maxchars: maxChars, ellipse: ellipse});
     
-    return before + " [" + orig + "] " + after;
+    // Trim trailing space from before and leading space from after to avoid double spaces
+    // when adding brackets
+    var beforeTrimmed = before.replace(/\s+$/, '');
+    var afterTrimmed = after.replace(/^\s+/, '');
+    
+    return beforeTrimmed + " [" + orig + "] " + afterTrimmed;
 };
 
 Point.prototype.asText = function(explicitOpts) {
