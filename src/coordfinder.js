@@ -1571,11 +1571,17 @@ Point.prototype.originalText = function(opts) {
     var eStart = getCoordStart(eParsed);
     var eEnd = eParsed.index + eParsed.text.length;
     
-    // Extend end positions to include trailing degree symbols if present
+    // Extend end positions to include trailing degree symbols or direction letters if present
     if (originalText[nEnd] && originalText[nEnd].match(/[°º]/)) {
         nEnd++;
     }
+    if (originalText[nEnd] && originalText[nEnd].match(/[NSEWÖV]/)) {
+        nEnd++;
+    }
     if (originalText[eEnd] && originalText[eEnd].match(/[°º]/)) {
+        eEnd++;
+    }
+    if (originalText[eEnd] && originalText[eEnd].match(/[NSEWÖV]/)) {
         eEnd++;
     }
     
@@ -1648,9 +1654,21 @@ Point.prototype.originalText = function(opts) {
     if (maxChars === 0) {
         // Default: only coordinates with space between
         // Trim whitespace from coordinates to avoid double spaces
-        var result = firstCoord.trim() + " " + secondCoord.trim();
+        var firstTrimmed = firstCoord.trim();
+        var secondTrimmed = secondCoord.trim();
+        
+        // Remove leading direction letter from second coord if it's a duplicate
+        // (happens in compact formats like "60.716N 19.973E" where E coord is parsed as "N 19.973")
+        if (secondTrimmed.match(/^[NSEWÖV]\s+/)) {
+            secondTrimmed = secondTrimmed.replace(/^[NSEWÖV]\s+/, '');
+        }
+        
+        // Use space as separator (default)
+        var separator = " ";
+        
+        var result = firstTrimmed + separator + secondTrimmed;
         if (html) {
-            result = "<b>" + firstCoord.trim() + "</b><i> </i><b>" + secondCoord.trim() + "</b>";
+            result = "<b>" + firstTrimmed + "</b><i>" + separator + "</i><b>" + secondTrimmed + "</b>";
         }
         return result;
     }
