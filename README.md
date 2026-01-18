@@ -4,7 +4,7 @@ A JavaScript library for extracting and parsing geographic coordinates from text
 
 ## 🚀 Quick Start
 
-**Try it live:** [https://aieuren.github.io/coordfinder/](https://aieuren.github.io/coordfinder/)
+**Try it live:** [Interactive Demo](https://aieuren.github.io/coordfinder/examples/demo.html)
 
 ```html
 <script src="src/coordfinder.js"></script>
@@ -18,54 +18,38 @@ A JavaScript library for extracting and parsing geographic coordinates from text
 
 ```
 coordfinder/
-├── src/                    # Source code
-│   ├── coordfinder.js      # Main library (1718 lines)
-│   ├── test-framework.js   # Test framework
-│   └── test-parser.js      # Markdown test parser
-├── tests/                  # Test files and runners
-│   ├── test-runner-md.html # Main test runner (Markdown-based)
-│   └── verification-test-runner.html  # Verification runner
-├── examples/               # Examples and demos
-│   ├── demo.html           # Interactive demo
-│   └── demo-simple.js      # Simple usage example
-├── docs/                   # Documentation
-│   ├── START_HERE.md       # Start here!
-│   ├── QUICKSTART.md       # Quick start guide
-│   ├── IMPLEMENTATION.md   # Technical details
-│   ├── TEST_FRAMEWORK.md   # Testing guide
-│   └── MARKDOWN_TESTS.md   # Test format
-├── requirements/           # Requirements and specifications
-│   ├── kravspecifikation.md
-│   └── test-suites-tdd.txt # 80 TDD tests
-├── index.html              # Demo page
-├── TESTING_STATUS.md       # Current test status (100% pass)
-└── README.md               # This file
+├── src/                        # Source code
+│   ├── coordfinder.js          # Main library
+│   ├── test-framework.js       # Test framework
+│   └── test-parser.js          # Test parser
+├── examples/                   # Examples and demos
+│   └── demo.html               # Interactive demo
+├── docs/                       # Documentation
+│   ├── API.md                  # API reference
+│   └── TESTING.md              # Testing guide
+├── requirements/               # Test specifications
+│   └── tdd-testsuites.txt      # 287 TDD tests
+├── index.html                  # Project homepage
+└── README.md                   # This file
 ```
 
 ## 🧪 Testing
 
-Run the complete TDD test suite (80 tests):
+Run the complete test suite:
 
 ```bash
 npm test
 ```
 
-**Current status:** ✅ 80/80 tests passing (100%)
+**Current status:** ✅ 287/287 tests passing (100%)
 
-This runs all tests from `requirements/test-suites-tdd.txt` and must pass before any commit.
-
-**Test in browser:**
-- [Verification Test Runner](https://aieuren.github.io/coordfinder/tests/verification-test-runner.html) - Load and run test suites
-- [TDD Complete](https://aieuren.github.io/coordfinder/tdd-complete.html) - 23 embedded tests
-
-**Current status:** 35/36 tests passing (97%)
+See [docs/TESTING.md](docs/TESTING.md) for more details.
 
 ## 📖 Documentation
 
-- **[Quick Start Guide](docs/QUICKSTART.md)** - Get started in 5 minutes
-- **[Full Documentation](docs/README.md)** - Complete API reference
-- **[Implementation Details](docs/IMPLEMENTATION.md)** - Technical architecture
-- **[Test Framework](docs/TEST_FRAMEWORK.md)** - Testing documentation
+- **[API Reference](docs/API.md)** - Complete API documentation
+- **[Testing Guide](docs/TESTING.md)** - How to run and write tests
+- **[Interactive Demo](examples/demo.html)** - Try it in your browser
 
 ## ✨ Features
 
@@ -97,38 +81,50 @@ Open test runners in your browser:
 - **[tests/tdd-runner.html](tests/tdd-runner.html)** - TDD tests
 - **[tests/verification-test-runner.html](tests/verification-test-runner.html)** - Large test suites
 
-## 🎯 Examples
+## 🎯 Usage Examples
 
-See [examples/](examples/) directory for:
-- Interactive demo
-- Simple usage examples
-- Expected output examples
+### Basic Parsing
 
-## 📝 Requirements
+```javascript
+// Parse single coordinate
+var point = CF.pointIn("59.32894 18.06491");
+console.log(point.latitude(), point.longitude());
 
-See [requirements/](requirements/) directory for:
-- Formal requirements specification
-- TDD test suite
-- Interface definition
+// Parse multiple coordinates
+var points = CF.pointsIn("First: 59.32 18.06, Second: 58.41 12.56");
+```
 
-## 🤝 Contributing
+### Quality Filtering
 
-This project follows Test-Driven Development (TDD). See [docs/TDD_PROGRESS.md](docs/TDD_PROGRESS.md) for implementation status.
+```javascript
+var cf = new CF();
+cf.parse("Approximate: 59.3 18.1, Precise: 59.32894 18.06491");
 
-## 📄 License
+var all = cf.points();              // All points (rating >= 0.5)
+var precise = cf.points({rating: 0.8}); // Only high quality
+```
 
-MIT License
+### Format Conversion
+
+```javascript
+var point = CF.pointIn("59.32894 18.06491");
+
+point.asText();
+// "59.32894 18.06491"
+
+point.asText({format: 'degreesandminutes'});
+// "59°19.736' 18°3.895'"
+
+point.asText({directionLetter: 'before'});
+// "N59.32894 E18.06491"
+```
+
+See [docs/API.md](docs/API.md) for complete API documentation.
 
 ## 🔗 Links
 
-- **🌐 Live Demo:** https://aieuren.github.io/coordfinder/
+- **🌐 Live Demo:** https://aieuren.github.io/coordfinder/examples/demo.html
 - **💻 Repository:** https://github.com/aieuren/coordfinder
-- **📖 Documentation:** https://aieuren.github.io/coordfinder/docs/README.md
-- **🎮 Interactive Demo:** https://aieuren.github.io/coordfinder/examples/demo.html
-- **🧪 Test Runner:** https://aieuren.github.io/coordfinder/tests/verification-test-runner.html
-- **Version:** 5.0-beta.6
+- **📖 API Docs:** [docs/API.md](docs/API.md)
+- **Version:** 5.0-beta.7
 - **Author:** Bernt Rane, Claude & Ona
-
-**Note:** Version and build are defined in `src/coordfinder.js` as `CF.version` and `CF.build`. Test pages display these to verify GitHub Pages deployment.
-
-**Build number:** Automatically updated by `./update-build.sh` script. The build number (timestamp format YYYYMMDD-HHMMSS) helps verify that GitHub Pages has deployed the latest version.
