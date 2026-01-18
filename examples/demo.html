@@ -114,18 +114,29 @@
 
         <div class="section">
             <h2>1. Simple Usage - CF.pointsIn()</h2>
+            <p>Minimum rating: 
+                <select id="ratingSelect" onchange="runSimpleDemo()" style="padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="">All (default)</option>
+                    <option value="1.0">1.0</option>
+                    <option value="0.9">0.9</option>
+                    <option value="0.8">0.8</option>
+                    <option value="0.7">0.7</option>
+                    <option value="0.6">0.6</option>
+                    <option value="0.5">0.5</option>
+                    <option value="0.4">0.4</option>
+                    <option value="0.3">0.3</option>
+                    <option value="0.2">0.2</option>
+                    <option value="0.1">0.1</option>
+                    <option value="0.0">0.0</option>
+                </select>
+            </p>
             <button onclick="runSimpleDemo()">Run Demo</button>
             <div id="simple-output"></div>
         </div>
 
         <div class="section">
-            <h2>2. Detailed Usage - With Ratings</h2>
-            <button onclick="runDetailedDemo()">Run Demo</button>
-            <div id="detailed-output"></div>
-        </div>
-
-        <div class="section">
-            <h2>3. Different Output Formats</h2>
+            <h2>2. Different Output Formats - p.asText()</h2>
+            <p>Running: <code>p.asText({format: selectedFormat})</code></p>
             <p>Select format: 
                 <select id="formatSelect" onchange="updateFormatOutput()" style="padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
                     <option value="plain">Plain (default)</option>
@@ -163,13 +174,30 @@
         function runSimpleDemo() {
             var text = getText();
             var output = document.getElementById('simple-output');
-            output.innerHTML = '<p>Running: <code>var points = CF.pointsIn(text);</code></p>';
+            var ratingSelect = document.getElementById('ratingSelect');
+            var minRating = ratingSelect.value;
+            
+            var codeText = minRating ? 
+                'var cf = new CF();<br>cf.parse(text);<br>var points = cf.points({rating: ' + minRating + '});' :
+                'var points = CF.pointsIn(text);';
+            output.innerHTML = '<p>Running:</p><div class="code-block">' + codeText + '</div>';
             
             try {
-                var points = CF.pointsIn(text);
+                var points;
+                if (minRating) {
+                    var cf = new CF();
+                    cf.parse(text);
+                    points = cf.points({rating: parseFloat(minRating)});
+                } else {
+                    points = CF.pointsIn(text);
+                }
                 
                 var html = '<div class="output">';
-                html += '<strong>Found ' + points.length + ' coordinate pairs:</strong><br><br>';
+                html += '<strong>Found ' + points.length + ' coordinate pairs';
+                if (minRating) {
+                    html += ' (rating ≥ ' + minRating + ')';
+                }
+                html += ':</strong><br><br>';
                 
                 for (var i = 0; i < points.length; i++) {
                     var p = points[i];
@@ -183,55 +211,6 @@
                     html += '<strong>Original:</strong> ' + p.originalText() + '<br>';
                     html += '<strong>Context:</strong> ' + p.context({maxChars: 30});
                     html += '</div>';
-                }
-                
-                html += '</div>';
-                output.innerHTML += html;
-            } catch(e) {
-                output.innerHTML += '<div class="output" style="background:#ffebee;border-color:#f44336;">Error: ' + 
-                                   e.message + '</div>';
-            }
-        }
-
-        function runDetailedDemo() {
-            var text = getText();
-            var output = document.getElementById('detailed-output');
-            output.innerHTML = '<p>Running:</p><div class="code-block">var cf = new CF();<br>' +
-                              'cf.parse(text);<br>' +
-                              'var highConfidence = cf.points({rating: 0.8});</div>';
-            
-            try {
-                var cf = new CF();
-                cf.parse(text);
-                var allPoints = cf.points();
-                var highConfidence = cf.points({rating: 0.8});
-                
-                var html = '<div class="output">';
-                html += '<strong>All points:</strong> ' + allPoints.length + '<br>';
-                html += '<strong>High confidence (≥0.8):</strong> ' + highConfidence.length + '<br><br>';
-                
-                html += '<h3>All Points:</h3>';
-                for (var i = 0; i < allPoints.length; i++) {
-                    var p = allPoints[i];
-                    html += '<div class="point-card">';
-                    html += '<strong>Point ' + (i + 1) + ':</strong> ' + p.asText() + ' ';
-                    html += '<span class="rating ' + getRatingClass(p.rating()) + '">' + 
-                            p.rating().toFixed(2) + '</span><br>';
-                    html += '<em>' + p.ratingLog() + '</em>';
-                    html += '</div>';
-                }
-                
-                if (highConfidence.length > 0) {
-                    html += '<h3>High Confidence Points Only:</h3>';
-                    for (var i = 0; i < highConfidence.length; i++) {
-                        var p = highConfidence[i];
-                        html += '<div class="point-card">';
-                        html += '<strong>' + p.asText() + '</strong><br>';
-                        html += 'Lat: ' + p.latitude().toFixed(6) + ', Lng: ' + p.longitude().toFixed(6);
-                        html += '</div>';
-                    }
-                } else {
-                    html += '<p><em>No points with rating ≥ 0.8</em></p>';
                 }
                 
                 html += '</div>';
