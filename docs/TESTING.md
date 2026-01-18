@@ -80,6 +80,7 @@ console.log(points[0].originalText());  // Original input text
 ## Test Files
 
 - `requirements/tdd-testsuites.txt` - Main test suite (287 tests)
-- `run-tdd-tests.js` - Node.js test runner
+- `scripts/run-tdd-tests.js` - Node.js test runner
+- `scripts/run-full-tdd.js` - Full test suite runner
 - `src/test-framework.js` - Test framework implementation
 - `src/test-parser.js` - Test file parser
