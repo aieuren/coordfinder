@@ -262,10 +262,8 @@
                     var p = points[i];
                     html += '<div class="point-card">';
                     html += '<h3>Point ' + (i + 1) + '</h3>';
-                    html += '<strong>Output:</strong> ' + p.asText({format: selectedFormat}) + '<br>';
-                    html += '<strong>Original:</strong> ' + p.originalText() + '<br>';
-                    html += '<strong>Rating:</strong> <span class="rating ' + getRatingClass(p.rating()) + '">' + 
-                            p.rating().toFixed(2) + '</span>';
+                    html += '<strong>Input:</strong> ' + p.originalText() + '<br>';
+                    html += '<strong>Output:</strong> ' + p.asText({format: selectedFormat});
                     html += '</div>';
                 }
                 
