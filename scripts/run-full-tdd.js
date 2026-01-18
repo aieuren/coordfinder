@@ -1,9 +1,16 @@
 #!/usr/bin/env node
 
-// TDD Test Runner - Dynamically runs all TDD tests from tdd-points.txt
+// TDD Test Runner - Dynamically runs all TDD tests from tdd-testsuites.txt
 // This is the canonical test suite that must pass before any commit
 
 var fs = require('fs');
+
+// Try to load proj4 (optional dependency)
+try {
+    global.proj4 = require('proj4');
+} catch(e) {
+    // proj4 not available, reprojection will not work
+}
 
 // Load coordfinder
 var cfCode = fs.readFileSync('./src/coordfinder.js', 'utf8');
@@ -20,7 +27,7 @@ console.log('Build:', CF.build);
 console.log('');
 
 // Parse test file
-var testFile = fs.readFileSync('./requirements/tdd-points.txt', 'utf8');
+var testFile = fs.readFileSync('./requirements/tdd-testsuites.txt', 'utf8');
 var parser = new MarkdownTestParser();
 var suites = parser.parse(testFile);
 
