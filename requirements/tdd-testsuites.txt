@@ -1,6 +1,6 @@
 === CoordFinder TDD Test Suites ===
 
-# GRUNDLÄGGANDE WGS84 DECIMALGRADER
+# Grundläggande tester
 
 ## CoordFinder Test: Enkel decimalform
 Test-ID: tdd-001
@@ -23,8 +23,6 @@ Input: "59.32894; 18.06491"
 Expected:
 59.32894 18.06491
 
-# GRADER OCH MINUTER
-
 ## CoordFinder Test: Grader och decimalminuter
 Test-ID: tdd-004
 Method: pointIn()
@@ -46,7 +44,7 @@ Input: "591944N0180354E"
 Expected:
 59.32889 18.06500
 
-# VÄDERSTRECK OCH KVADRANTER
+# Väderstreck, kvadranter och olika separetingstecken
 
 ## CoordFinder Test: Väderstreck före värden
 Test-ID: tdd-007
@@ -74,9 +72,6 @@ Test-ID: tdd-136
 Method: pointIn()
 Input: "E175.5 N82.3"
 Expected: 82.3 175.5
-
-
-# MINUSTECKEN SOM SEPARATOR
 
 ## CoordFinder Test: Grader-minuter format
 Test-ID: tdd-010
@@ -1898,6 +1893,12 @@ Test-ID: tdd-origtxt-023
 Method: originalText()
 Input: 60.72° 19.97°
 Expected: "60.72° 19.97°"
+
+## Point Test: originalText bevarar kompakt väderstreck utan mellanslag
+Test-ID: tdd-origtxt-024
+Method: originalText()
+Input: 60.716N 19.973E
+Expected: "60.716N 19.973E"
 
 
 # Point.context()
