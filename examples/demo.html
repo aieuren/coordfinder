@@ -114,9 +114,9 @@
 
         <div class="section">
             <h2>1. Simple Usage - CF.pointsIn()</h2>
-            <p>Minimum rating: 
+            <p>rating: 
                 <select id="ratingSelect" onchange="runSimpleDemo()" style="padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
-                    <option value="">All (default)</option>
+                    <option value="default">Default (0.5)</option>
                     <option value="1.0">1.0</option>
                     <option value="0.9">0.9</option>
                     <option value="0.8">0.8</option>
@@ -130,19 +130,45 @@
                     <option value="0.0">0.0</option>
                 </select>
             </p>
-            <button onclick="runSimpleDemo()">Run Demo</button>
             <div id="simple-output"></div>
         </div>
 
         <div class="section">
             <h2>2. Different Output Formats - p.asText()</h2>
-            <p>Running: <code>p.asText({format: selectedFormat})</code></p>
-            <p>Select format: 
+            <p>Running: <code>p.asText(options)</code></p>
+            <p>
+                format: 
                 <select id="formatSelect" onchange="updateFormatOutput()" style="padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
-                    <option value="plain">Plain (default)</option>
-                    <option value="degrees">Degrees</option>
-                    <option value="degreesandminutes">Degrees and Minutes</option>
-                    <option value="degreesminutesandseconds">Degrees, Minutes and Seconds</option>
+                    <option value="plain">plain (default)</option>
+                    <option value="degrees">degrees</option>
+                    <option value="degreesandminutes">degreesandminutes</option>
+                    <option value="degreesminutesandseconds">degreesminutesandseconds</option>
+                </select>
+                &nbsp;&nbsp;
+                directionLetter: 
+                <select id="directionSelect" onchange="updateFormatOutput()" style="padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="null">null (default)</option>
+                    <option value="before">before</option>
+                    <option value="after">after</option>
+                    <option value="none">none</option>
+                </select>
+                <br><br>
+                compact: 
+                <select id="compactSelect" onchange="updateFormatOutput()" style="padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="false">false (default)</option>
+                    <option value="true">true</option>
+                </select>
+                &nbsp;&nbsp;
+                localized: 
+                <select id="localizedSelect" onchange="updateFormatOutput()" style="padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="true">true (default)</option>
+                    <option value="false">false</option>
+                </select>
+                &nbsp;&nbsp;
+                symbols: 
+                <select id="symbolsSelect" onchange="updateFormatOutput()" style="padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
+                    <option value="false">false (default)</option>
+                    <option value="true">true</option>
                 </select>
             </p>
             <div id="format-output"></div>
@@ -177,27 +203,28 @@
             var ratingSelect = document.getElementById('ratingSelect');
             var minRating = ratingSelect.value;
             
-            var codeText = minRating ? 
-                'var cf = new CF();<br>cf.parse(text);<br>var points = cf.points({rating: ' + minRating + '});' :
-                'var points = CF.pointsIn(text);';
+            var codeText, displayRating;
+            if (minRating === 'default') {
+                codeText = 'var cf = new CF();<br>cf.parse(text);<br>var points = cf.points(); // default rating: 0.5';
+                displayRating = '0.5 (default)';
+            } else {
+                codeText = 'var cf = new CF();<br>cf.parse(text);<br>var points = cf.points({rating: ' + minRating + '});';
+                displayRating = minRating;
+            }
             output.innerHTML = '<p>Running:</p><div class="code-block">' + codeText + '</div>';
             
             try {
+                var cf = new CF();
+                cf.parse(text);
                 var points;
-                if (minRating) {
-                    var cf = new CF();
-                    cf.parse(text);
-                    points = cf.points({rating: parseFloat(minRating)});
+                if (minRating === 'default') {
+                    points = cf.points();
                 } else {
-                    points = CF.pointsIn(text);
+                    points = cf.points({rating: parseFloat(minRating)});
                 }
                 
                 var html = '<div class="output">';
-                html += '<strong>Found ' + points.length + ' coordinate pairs';
-                if (minRating) {
-                    html += ' (rating ≥ ' + minRating + ')';
-                }
-                html += ':</strong><br><br>';
+                html += '<strong>Found ' + points.length + ' coordinate pairs (rating ≥ ' + displayRating + '):</strong><br><br>';
                 
                 for (var i = 0; i < points.length; i++) {
                     var p = points[i];
@@ -224,8 +251,24 @@
         function updateFormatOutput() {
             var text = getText();
             var output = document.getElementById('format-output');
-            var formatSelect = document.getElementById('formatSelect');
-            var selectedFormat = formatSelect.value;
+            
+            // Get all option values
+            var format = document.getElementById('formatSelect').value;
+            var direction = document.getElementById('directionSelect').value;
+            var compact = document.getElementById('compactSelect').value === 'true';
+            var localized = document.getElementById('localizedSelect').value === 'true';
+            var symbols = document.getElementById('symbolsSelect').value === 'true';
+            
+            // Build options object
+            var opts = {
+                format: format,
+                compact: compact,
+                localized: localized,
+                symbols: symbols
+            };
+            if (direction !== 'null') {
+                opts.directionLetter = direction;
+            }
             
             try {
                 var points = CF.pointsIn(text);
@@ -235,14 +278,14 @@
                 }
                 
                 var html = '<div class="output">';
-                html += '<strong>Format: ' + formatSelect.options[formatSelect.selectedIndex].text + '</strong><br><br>';
+                html += '<strong>Options: </strong><code>' + JSON.stringify(opts) + '</code><br><br>';
                 
                 for (var i = 0; i < points.length; i++) {
                     var p = points[i];
                     html += '<div class="point-card">';
                     html += '<h3>Point ' + (i + 1) + '</h3>';
                     html += '<strong>Input:</strong> ' + p.originalText() + '<br>';
-                    html += '<strong>Output:</strong> ' + p.asText({format: selectedFormat});
+                    html += '<strong>Output:</strong> ' + p.asText(opts);
                     html += '</div>';
                 }
                 
