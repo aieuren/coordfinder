@@ -144,7 +144,7 @@
                     <option value="degreesandminutes">degreesandminutes</option>
                     <option value="degreesminutesandseconds">degreesminutesandseconds</option>
                 </select>
-                &nbsp;&nbsp;
+                <br><br>
                 directionLetter: 
                 <select id="directionSelect" onchange="updateFormatOutput()" style="padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
                     <option value="null">null (default)</option>
@@ -158,13 +158,13 @@
                     <option value="false">false (default)</option>
                     <option value="true">true</option>
                 </select>
-                &nbsp;&nbsp;
+                <br><br>
                 localized: 
                 <select id="localizedSelect" onchange="updateFormatOutput()" style="padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
                     <option value="true">true (default)</option>
                     <option value="false">false</option>
                 </select>
-                &nbsp;&nbsp;
+                <br><br>
                 symbols: 
                 <select id="symbolsSelect" onchange="updateFormatOutput()" style="padding: 6px; border-radius: 4px; border: 1px solid #ddd;">
                     <option value="false">false (default)</option>
@@ -249,28 +249,28 @@
         }
 
         function updateFormatOutput() {
-            var text = getText();
-            var output = document.getElementById('format-output');
-            
-            // Get all option values
-            var format = document.getElementById('formatSelect').value;
-            var direction = document.getElementById('directionSelect').value;
-            var compact = document.getElementById('compactSelect').value === 'true';
-            var localized = document.getElementById('localizedSelect').value === 'true';
-            var symbols = document.getElementById('symbolsSelect').value === 'true';
-            
-            // Build options object
-            var opts = {
-                format: format,
-                compact: compact,
-                localized: localized,
-                symbols: symbols
-            };
-            if (direction !== 'null') {
-                opts.directionLetter = direction;
-            }
-            
             try {
+                var text = getText();
+                var output = document.getElementById('format-output');
+                
+                // Get all option values
+                var format = document.getElementById('formatSelect').value;
+                var direction = document.getElementById('directionSelect').value;
+                var compact = document.getElementById('compactSelect').value === 'true';
+                var localized = document.getElementById('localizedSelect').value === 'true';
+                var symbols = document.getElementById('symbolsSelect').value === 'true';
+                
+                // Build options object
+                var opts = {
+                    format: format,
+                    compact: compact,
+                    localized: localized,
+                    symbols: symbols
+                };
+                if (direction !== 'null') {
+                    opts.directionLetter = direction;
+                }
+                
                 var points = CF.pointsIn(text);
                 if (points.length === 0) {
                     output.innerHTML = '<div class="output">No points found</div>';
@@ -292,8 +292,12 @@
                 html += '</div>';
                 output.innerHTML = html;
             } catch(e) {
-                output.innerHTML = '<div class="output" style="background:#ffebee;border-color:#f44336;">Error: ' + 
-                                   e.message + '</div>';
+                var output = document.getElementById('format-output');
+                if (output) {
+                    output.innerHTML = '<div class="output" style="background:#ffebee;border-color:#f44336;">Error: ' + 
+                                       e.message + '<br>Stack: ' + e.stack + '</div>';
+                }
+                console.error('updateFormatOutput error:', e);
             }
         }
 
