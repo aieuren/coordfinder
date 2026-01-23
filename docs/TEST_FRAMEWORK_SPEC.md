@@ -1,19 +1,18 @@
 # Test Framework Specification
 
-Version: 1.0  
+Version: 2.0  
 Date: 2026-01-23
 
-This document provides a complete specification for implementing a test framework compatible with CoordFinder's test format. The specification is detailed enough for independent implementation.
+This document specifies the test file format and expected behavior for CoordFinder's test framework. It focuses on what tests should do, not how to implement them.
 
 ## Table of Contents
 
 1. [Overview](#overview)
 2. [Test File Format](#test-file-format)
-3. [Test Execution](#test-execution)
-4. [Test Framework API](#test-framework-api)
-5. [Test Parser Specification](#test-parser-specification)
-6. [Value Comparison Rules](#value-comparison-rules)
-7. [Examples](#examples)
+3. [Test Types](#test-types)
+4. [Test Execution Behavior](#test-execution-behavior)
+5. [Value Comparison Rules](#value-comparison-rules)
+6. [Examples](#examples)
 
 ---
 
@@ -21,33 +20,25 @@ This document provides a complete specification for implementing a test framewor
 
 ### Purpose
 
-The test framework parses Markdown-formatted test files and executes tests against a coordinate parsing library (CoordFinder). It supports:
+The test framework parses Markdown-formatted test files and executes tests against CoordFinder. Tests verify that coordinate parsing, transformation, and output formatting work correctly.
 
-- Point tests (single coordinate)
-- Points tests (multiple coordinates)
-- CoordFinder instance method tests
-- Static method tests
+### Test Types
 
-### Architecture
+The framework supports three types of tests:
 
-```
-Test File (Markdown)
-        ↓
-   Test Parser
-        ↓
-   Test Suites
-        ↓
-   Test Runner
-        ↓
-   Test Results
-```
+1. **Point Test** - Tests methods on a single Point object
+2. **CoordFinder Test** - Tests methods on a CoordFinder instance  
+3. **BoundingBox Test** - Tests methods on a BoundingBox object
 
-### Components
+### Test Flow
 
-1. **Test Parser** - Parses Markdown test files into structured test objects
-2. **Test Framework** - Executes tests and compares results
-3. **Test Suite** - Container for related tests
-4. **Test Result** - Outcome of a single test execution
+1. Parse test file (Markdown format)
+2. For each test:
+   - Parse input text to find coordinates
+   - Execute the specified method
+   - Compare actual result with expected value
+   - Report pass/fail
+3. Generate summary statistics
 
 ---
 
@@ -55,7 +46,7 @@ Test File (Markdown)
 
 ### File Structure
 
-Test files are Markdown documents with the following structure:
+Test files are Markdown documents with this structure:
 
 ```markdown
 # Test Suite Name
@@ -86,8 +77,8 @@ Expected: expected value
 - **Format**: Double `##` followed by test type, colon, and test name
 - **Test Types**:
   - `Point Test:` - Tests a single coordinate point
-  - `Points Test:` - Tests multiple coordinate points
   - `CoordFinder Test:` - Tests CoordFinder instance methods
+  - `BoundingBox Test:` - Tests BoundingBox methods
 - **Example**: `## Point Test: Basic decimal degrees`
 
 ### Test Properties
@@ -99,27 +90,20 @@ Test-ID: tdd-001
 ```
 
 - **Format**: `Test-ID:` followed by unique identifier
-- **Rules**:
-  - Must be unique across all tests
-  - Typically follows pattern: `tdd-category-number`
-  - Used for test identification and reporting
+- **Must be unique** across all tests
+- **Naming convention**: `tdd-category-number`
 
-#### Method (Required for method tests)
+#### Method (Required)
 
 ```markdown
 Method: latitude()
 ```
 
 - **Format**: `Method:` followed by method name with parentheses
-- **Supports**:
-  - Simple methods: `latitude()`
-  - Methods with arguments: `points({rating: 0.8})`
-  - Named arguments with `:` or `=`: `context(maxchars: 10)` or `context(maxchars=10)`
-- **Argument parsing**:
-  - Numeric: `0.8`, `10`
-  - Boolean: `true`, `false`
-  - String: `"value"` or `'value'`
-  - Object: `{key: value}`
+- **With arguments**: `Method: points({rating: 0.8})`
+- **Named arguments**: Use `:` or `=`
+  - `context(maxchars: 10)` 
+  - `context(maxchars=10)`
 
 #### Input (Required)
 
@@ -128,7 +112,7 @@ Input: 59.32894 18.06491
 ```
 
 - **Format**: `Input:` followed by text to parse
-- **Multi-line support**: Continue on next lines until next property
+- **Multi-line**: Continue on next lines until next property
 - **Whitespace**: Preserved exactly as written
 
 #### Expected (Required)
@@ -137,72 +121,70 @@ Input: 59.32894 18.06491
 Expected: 59.32894
 ```
 
-- **Format**: `Expected:` followed by expected value
-- **Types**:
-  - **Number**: `59.32894`
-  - **Approximate**: `~59.329` (tolerance ±0.01)
-  - **String**: `"text"` or `'text'`
-  - **Boolean**: `true` or `false`
-  - **Null**: `null`
-  - **Object**: Properties on following lines with `- property: value`
-  - **Array**: `Inratingorder:` with list items
+**Simple values**:
+- **Number**: `59.32894`
+- **Approximate**: `~59.329` (tolerance ±0.01)
+- **String**: `"text"` (with quotes)
+- **Boolean**: `true` or `false`
+- **Null**: `null`
 
-#### Expected Object Properties
-
+**Object properties**:
 ```markdown
 Expected:
 - property: value
 - nested.property: value
-- Count: 3
-- Contains: "substring"
-- Contains not: "excluded"
 ```
 
-**Special Properties**:
+**Special properties**:
+- **Count**: Expected number of items
+  ```markdown
+  Expected:
+  - Count: 3
+  ```
 
-- **Count**: Expected number of items (for arrays)
-- **Contains**: String must contain this substring
-- **Contains not**: String must NOT contain this substring
-- **Bounds**: Coordinate bounds `minLat minLon maxLat maxLon`
-- **Inratingorder**: Array of values in rating order (order-independent for same rating)
+- **Contains**: String must contain substring
+  ```markdown
+  Expected:
+  - Contains: "substring"
+  - Contains not: "excluded"
+  ```
 
-**Nested Properties**:
-- Use dot notation: `N.value`, `refsys.name`
+- **Bounds**: Coordinate bounds (minLat minLon maxLat maxLon)
+  ```markdown
+  Expected:
+  - Bounds: 58.0 17.0 60.0 19.0
+  ```
 
-#### Implements (Optional)
-
-```markdown
-Implements: tdd-001, tdd-002
-```
-
-- **Format**: `Implements:` followed by comma-separated test IDs
-- **Purpose**: Indicates this test implements/replaces other tests
+- **Inratingorder**: Array of values (order-independent for same rating)
+  ```markdown
+  Expected:
+  - Inratingorder:
+    - "value1"
+    - "value2"
+  ```
 
 ---
 
-## Test Execution
+## Test Types
 
-### Execution Flow
-
-1. **Parse test file** → Create test suites and tests
-2. **For each test**:
-   - Parse input text
-   - Execute method
-   - Compare actual vs expected
-   - Generate test result
-3. **Report results** → Summary and details
-
-### Test Types and Execution
-
-#### Point Test
+### Point Test
 
 Tests a method on a single Point object.
 
-**Execution**:
-1. Parse input: `CF.pointIn(input)`
-2. If no point found → FAIL
-3. Execute method on point: `point.methodName(args)`
-4. Compare result with expected
+**Format**:
+```markdown
+## Point Test: Test Name
+Test-ID: unique-id
+Method: methodName()
+Input: coordinate text
+Expected: expected value
+```
+
+**Behavior**:
+- Parse input to find first coordinate point
+- If no point found → test fails
+- Execute method on the point
+- Compare result with expected value
 
 **Example**:
 ```markdown
@@ -213,34 +195,31 @@ Input: 59.32894 18.06491
 Expected: 59.32894
 ```
 
-#### Points Test
-
-Tests a method that returns multiple points or tests CF.pointsIn().
-
-**Execution**:
-1. Parse input: `CF.pointsIn(input)`
-2. Execute method (if specified)
-3. Compare results
-
-**Example**:
-```markdown
-## Points Test: Find all coordinates
-Test-ID: tdd-points-001
-Method: pointsIn()
-Input: First: 59.32 18.06, Second: 58.41 12.56
-Expected:
-- Count: 2
-```
-
-#### CoordFinder Test
+### CoordFinder Test
 
 Tests methods on a CoordFinder instance.
 
-**Execution**:
-1. Create instance: `cf = new CF()`
-2. Parse input: `cf.parse(input)`
-3. Execute method: `cf.methodName(args)`
-4. Compare result
+**Format**:
+```markdown
+## CoordFinder Test: Test Name
+Test-ID: unique-id
+Method: methodName()
+Input: text with coordinates
+Expected: expected value
+```
+
+**Behavior**:
+- Create CoordFinder instance
+- Parse input text
+- Execute method on instance
+- Compare result with expected value
+
+**Common methods**:
+- `points()` - Get all points (default rating ≥ 0.5)
+- `points({rating: 0.8})` - Get points with rating ≥ 0.8
+- `foundRatings()` - Get list of unique ratings
+- `groups()` - Get coordinate groups
+- `log()` - Get parse log
 
 **Example**:
 ```markdown
@@ -252,255 +231,77 @@ Expected:
 - Count: 1
 ```
 
-### Method Argument Parsing
+### BoundingBox Test
 
-Arguments in method calls are parsed as follows:
+Tests methods on a BoundingBox object.
 
-**Syntax**: `methodName(arg1, arg2, key: value, key=value)`
+**Format**:
+```markdown
+## BoundingBox Test: Test Name
+Test-ID: unique-id
+Method: methodName()
+Input: minLat minLon maxLat maxLon
+Expected: expected value
+```
 
-**Supported formats**:
-- Positional: `method(arg1, arg2)`
-- Named with colon: `method(key: value)`
-- Named with equals: `method(key=value)`
-- Mixed: `method(arg1, key: value)`
+**Behavior**:
+- Create BoundingBox from input coordinates
+- Execute method on bounding box
+- Compare result with expected value
+
+**Common methods**:
+- `covers()` - Check if point is inside
+- `coversPoint()` - Check if Point object is inside
+- `asLatLngArray()` - Get as array [minLat, minLon, maxLat, maxLon]
+
+**Example**:
+```markdown
+## BoundingBox Test: Check if point is inside
+Test-ID: tdd-bbox-001
+Method: covers()
+Input: 58.0 17.0 60.0 19.0
+Expected: true
+```
+
+---
+
+## Test Execution Behavior
+
+### Method Arguments
+
+Methods can have arguments specified in the test.
 
 **Argument types**:
 - **Number**: `10`, `0.5`, `-5`
 - **Boolean**: `true`, `false`
-- **String**: `"text"`, `'text'`
-- **Object**: `{key: value, key2: value2}`
+- **String**: `"text"` or `'text'`
+- **Object**: `{key: value}`
 
-**Parsing rules**:
-1. Split by comma (respecting nesting)
-2. For each argument:
-   - If contains `:` or `=` → named argument
-   - Otherwise → positional argument
-3. Parse value based on type
+**Named arguments** (both formats supported):
+- Colon: `method(maxchars: 10)`
+- Equals: `method(maxchars=10)`
 
----
-
-## Test Framework API
-
-### Core Classes
-
-#### TestSuite
-
-Container for related tests.
-
-```javascript
-function TestSuite(name) {
-    this.name = name;
-    this.tests = [];
-}
-
-TestSuite.prototype.addTest = function(test) {
-    this.tests.push(test);
-};
-
-TestSuite.prototype.run = function() {
-    var results = [];
-    for (var i = 0; i < this.tests.length; i++) {
-        results.push(this.tests[i].run());
-    }
-    return results;
-};
+**Multiple arguments**:
+```markdown
+Method: asText(format=degrees, symbols=true)
+Method: context(maxchars: 10, ellipse: true)
 ```
 
-#### MethodTest
+### Execution Order
 
-Represents a single test case.
+Tests execute in the order they appear in the file. Each test is independent - no state is shared between tests.
 
-```javascript
-function MethodTest(id, name, method, input, expected, expectedType, 
-                    implementsTestIds, expectedContains, expectedNotContains) {
-    this.id = id;
-    this.name = name;
-    this.method = method;
-    this.input = input;
-    this.expected = expected;
-    this.expectedType = expectedType || 'auto';
-    this.implementsTestIds = implementsTestIds || null;
-    this.expectedContains = expectedContains || null;
-    this.expectedNotContains = expectedNotContains || null;
-    this.type = "MethodTest";
-}
+### Test Results
 
-MethodTest.prototype.run = function() {
-    // Execute test and return TestResult
-};
-```
+Each test produces one of two outcomes:
 
-#### TestResult
+- **PASS** ✅ - Actual result matches expected value
+- **FAIL** ❌ - Actual result differs from expected value
 
-Outcome of test execution.
-
-```javascript
-function TestResult(test, passed, message, actual, expected) {
-    this.test = test;
-    this.passed = passed;
-    this.message = message || "";
-    this.actual = actual;
-    this.expected = expected;
-    this.timestamp = new Date();
-}
-```
-
-### Test Execution Methods
-
-#### _executeMethod(point)
-
-Executes the test method on the target object.
-
-**Parameters**:
-- `point` - Point object (null for static methods)
-
-**Returns**: Method result
-
-**Logic**:
-1. Parse method name and arguments
-2. Determine target (CF, cf instance, or point)
-3. Execute method with parsed arguments
-4. Return result
-
-#### _compare(actual, expected, type)
-
-Compares actual result with expected value.
-
-**Parameters**:
-- `actual` - Actual result from method
-- `expected` - Expected value from test
-- `type` - Expected type ('number', 'string', 'object', etc.)
-
-**Returns**: `{passed: boolean, message: string}`
-
-**Comparison types**:
-- `number` - Exact match
-- `approximate` - Within tolerance (±0.01)
-- `string` - Exact match
-- `boolean` - Exact match
-- `null` - Is null
-- `object` - Recursive property comparison
-- `contains` - String contains substrings
-- `inratingorder` - Array contains all values (order-independent for same rating)
-
----
-
-## Test Parser Specification
-
-### Parser Class
-
-```javascript
-function MarkdownTestParser() {
-    this.suites = [];
-}
-
-MarkdownTestParser.prototype.parse = function(markdownText) {
-    // Parse markdown and return array of TestSuite objects
-};
-
-MarkdownTestParser.prototype.parseFile = function(filePath) {
-    // Read file and call parse()
-};
-```
-
-### Parsing Algorithm
-
-**State machine with states**:
-- `none` - Outside any test
-- `test` - Inside test header, collecting properties
-- `input` - Collecting input text
-- `expected` - Collecting expected value
-
-**Line-by-line processing**:
-
-1. **Test Suite Header** (`# Title`)
-   - Create new TestSuite
-   - Finalize previous test if exists
-   - Reset state to `none`
-
-2. **Test Header** (`## Type: Name`)
-   - Finalize previous test if exists
-   - Create new test object
-   - Set state to `test`
-
-3. **Test-ID** (`Test-ID: id`)
-   - Store in current test
-   - Remain in `test` state
-
-4. **Method** (`Method: method()`)
-   - Parse method name and arguments
-   - Store in current test
-   - Remain in `test` state
-
-5. **Input** (`Input: text`)
-   - Start collecting input
-   - Set state to `input`
-   - Continue collecting until next property
-
-6. **Expected** (`Expected: value` or `Expected:`)
-   - Parse expected value
-   - Set state to `expected`
-   - If value on same line → simple value
-   - If no value → collect properties on following lines
-
-7. **Expected Properties** (`- property: value`)
-   - Only in `expected` state
-   - Parse property name and value
-   - Handle special properties (Count, Contains, Bounds, Inratingorder)
-   - Handle nested properties (dot notation)
-
-8. **Indented List Items** (`  - value`)
-   - Only after `Inratingorder:` property
-   - Add to inratingorder array
-
-### Value Parsing
-
-#### _parseValue(str)
-
-Parses a string value into appropriate type.
-
-**Rules**:
-1. **Approximate**: `~123.45` → `{type: 'approximate', value: 123.45}`
-2. **Quoted string**: `"text"` or `'text'` → Remove quotes
-   - Supports Unicode quotes: `"text"` (U+201C + U+0022)
-3. **Boolean**: `true` or `false` → Boolean
-4. **Null**: `null` → null
-5. **Number**: Numeric string → parseFloat()
-6. **Default**: Return as string
-
-**Quote handling**:
-- ASCII: `"..."` or `'...'`
-- Unicode left + ASCII right: `"..."` (U+201C + U+0022)
-- Unicode left + ASCII right: `'...'` (U+2018 + U+0027)
-- Both Unicode: `"..."` (U+201C + U+201D)
-
-### Method Argument Parsing
-
-#### _parseMethodArgs(argsStr)
-
-Parses method arguments from string.
-
-**Input**: `"arg1, key: value, key2=value2"`
-
-**Output**: 
-```javascript
-{
-    positional: [arg1],
-    named: {key: value, key2: value2}
-}
-```
-
-**Algorithm**:
-1. Split by comma (respecting nesting depth)
-2. For each part:
-   - Trim whitespace
-   - Check for `:` or `=` (named argument)
-   - Parse value using _parseValue()
-3. Return object with positional and named arrays
-
-**Nesting handling**:
-- Track depth with `()`, `[]`, `{}`
-- Only split on commas at depth 0
+Failed tests include:
+- Expected value
+- Actual value
+- Explanation of mismatch
 
 ---
 
@@ -509,82 +310,83 @@ Parses method arguments from string.
 ### Number Comparison
 
 **Exact match**:
-```javascript
-actual === expected
+```markdown
+Expected: 59.32894
 ```
-
-**Tolerance**: None (use approximate for tolerance)
+- Actual must equal expected exactly
+- No tolerance
 
 ### Approximate Comparison
 
-**Format**: `~123.45`
+**Format**: `~value`
 
-**Tolerance**: ±0.01
-
-**Logic**:
-```javascript
-Math.abs(actual - expected) <= 0.01
+```markdown
+Expected: ~59.329
 ```
+- **Tolerance**: ±0.01
+- Actual must be within 0.01 of expected
+- Used for floating-point calculations
 
 ### String Comparison
 
 **Exact match** (case-sensitive):
-```javascript
-actual === expected
+```markdown
+Expected: "N59.32894 E18.06491"
 ```
+- Actual must match expected exactly
+- Whitespace is significant
+- Case-sensitive
 
-**Whitespace**: Significant
+**Quote handling**:
+- ASCII quotes: `"text"` or `'text'`
+- Unicode quotes: `"text"` (U+201C + U+0022)
+- Mixed quotes supported
 
 ### Boolean Comparison
 
 **Exact match**:
-```javascript
-actual === expected
+```markdown
+Expected: true
 ```
+- Actual must be exactly `true` or `false`
 
 ### Null Comparison
 
-**Check**:
-```javascript
-actual === null
+**Check for null**:
+```markdown
+Expected: null
 ```
+- Actual must be `null`
 
 ### Object Comparison
 
-**Recursive property comparison**:
+**Property-by-property comparison**:
 
-1. For each expected property:
-   - Get actual value at same path
-   - Compare recursively
-   - If mismatch → FAIL with path
+```markdown
+Expected:
+- property1: value1
+- property2: value2
+- nested.property: value3
+```
 
-2. **Nested properties**:
-   - Use dot notation: `N.value`
-   - Traverse object tree
-
-3. **Special handling**:
-   - `Count` property → compare array length
-   - `Bounds` property → check coordinate bounds
+**Rules**:
+- Each expected property must exist in actual
+- Each property value must match (recursively)
+- Nested properties use dot notation
+- Extra properties in actual are ignored
 
 **Example**:
-```javascript
+```markdown
 Expected:
-- N.value: 6580000
-- E.value: 674000
-- refsys.name: "SWEREF99TM"
+- N.value: 59.32894
+- E.value: 18.06491
+- refsys.name: "WGS84"
 ```
 
 ### Array Comparison (Inratingorder)
 
-**Purpose**: Compare arrays where order matters only for different ratings.
+**Order-independent for same rating**:
 
-**Logic**:
-1. Check length match
-2. Convert both to sets
-3. Check all expected values present in actual
-4. Check no unexpected values in actual
-
-**Example**:
 ```markdown
 Expected:
 - Inratingorder:
@@ -593,9 +395,15 @@ Expected:
   - "value3"
 ```
 
+**Rules**:
+- All expected values must be present in actual
+- No unexpected values in actual
+- Order doesn't matter for items with same rating
+- Used for testing rating-sorted results
+
 ### Contains Comparison
 
-**String contains substring**:
+**Substring matching**:
 
 ```markdown
 Expected:
@@ -604,10 +412,39 @@ Expected:
 - Contains not: "excluded"
 ```
 
-**Logic**:
-1. Check each `Contains` substring is present
-2. Check each `Contains not` substring is absent
-3. All must pass
+**Rules**:
+- Each `Contains` substring must be present
+- Each `Contains not` substring must be absent
+- All conditions must pass
+
+### Count Comparison
+
+**Array length**:
+
+```markdown
+Expected:
+- Count: 3
+```
+
+**Rules**:
+- Actual must be an array
+- Array length must equal expected count
+
+### Bounds Comparison
+
+**Coordinate bounds check**:
+
+```markdown
+Expected:
+- Bounds: 58.0 17.0 60.0 19.0
+```
+
+**Rules**:
+- Format: `minLat minLon maxLat maxLon`
+- All points must be within bounds
+- Detects meters vs degrees automatically
+  - Values > 1000 → meters (SWEREF/RT90)
+  - Values < 360 → degrees (WGS84)
 
 ---
 
@@ -625,9 +462,9 @@ Input: 59.32894 18.06491
 Expected: 59.32894
 ```
 
-**Execution**:
-1. Parse: `CF.pointIn("59.32894 18.06491")`
-2. Execute: `point.latitude()`
+**What happens**:
+1. Parse input → finds point at 59.32894, 18.06491
+2. Execute `point.latitude()`
 3. Compare: `59.32894 === 59.32894` → PASS
 
 ### Example 2: Approximate Value
@@ -640,9 +477,9 @@ Input: 59.329 18.065
 Expected: ~59.329
 ```
 
-**Execution**:
-1. Parse: `CF.pointIn("59.329 18.065")`
-2. Execute: `point.latitude()`
+**What happens**:
+1. Parse input → finds point
+2. Execute `point.latitude()`
 3. Compare: `|59.329 - 59.329| <= 0.01` → PASS
 
 ### Example 3: Object Properties
@@ -657,9 +494,9 @@ Expected:
 - axis.name: "Latitude"
 ```
 
-**Execution**:
-1. Parse: `CF.pointIn("59.32894 18.06491")`
-2. Execute: `point.N`
+**What happens**:
+1. Parse input → finds point
+2. Execute `point.N` (returns coordinate object)
 3. Compare:
    - `point.N.value === 59.32894` → PASS
    - `point.N.axis.name === "Latitude"` → PASS
@@ -676,9 +513,9 @@ Expected:
 - Contains: "59.32894"
 ```
 
-**Execution**:
-1. Parse: `CF.pointIn("The ship was at 59.32894 18.06491 yesterday")`
-2. Execute: `point.context({maxchars: 10, ellipse: true})`
+**What happens**:
+1. Parse input → finds point
+2. Execute `point.context({maxchars: 10, ellipse: true})`
 3. Compare:
    - Result contains "ship" → PASS
    - Result contains "59.32894" → PASS
@@ -686,173 +523,144 @@ Expected:
 ### Example 5: Multiple Points
 
 ```markdown
-## Points Test: Find all coordinates
+## CoordFinder Test: Find all coordinates
 Test-ID: tdd-points-001
-Method: pointsIn()
+Method: points()
 Input: First: 59.32 18.06, Second: 58.41 12.56
 Expected:
 - Count: 2
 ```
 
-**Execution**:
-1. Parse: `CF.pointsIn("First: 59.32 18.06, Second: 58.41 12.56")`
-2. Compare: `points.length === 2` → PASS
+**What happens**:
+1. Create CoordFinder instance
+2. Parse input → finds 2 points
+3. Execute `cf.points()`
+4. Compare: `points.length === 2` → PASS
 
-### Example 6: Rating Order
+### Example 6: Rating Filter
 
 ```markdown
-## CoordFinder Test: Points in rating order
+## CoordFinder Test: High quality only
 Test-ID: tdd-rating-001
-Method: points(rating=0.5)
+Method: points({rating: 0.8})
 Input: 59.3 18.1 and 59.32894 18.06491
 Expected:
-- Inratingorder:
-  - "59.32894 18.06491"
-  - "59.3 18.1"
+- Count: 1
 ```
 
-**Execution**:
-1. Create: `cf = new CF()`
-2. Parse: `cf.parse("59.3 18.1 and 59.32894 18.06491")`
-3. Execute: `cf.points({rating: 0.5})`
-4. Compare:
-   - Extract originalText() from each point
-   - Check both values present (order-independent for same rating)
+**What happens**:
+1. Create CoordFinder instance
+2. Parse input → finds 2 points (one low precision, one high)
+3. Execute `cf.points({rating: 0.8})`
+4. Compare: Only high-precision point returned → PASS
+
+### Example 7: BoundingBox Test
+
+```markdown
+## BoundingBox Test: Point inside box
+Test-ID: tdd-bbox-001
+Method: covers()
+Input: 58.0 17.0 60.0 19.0
+Expected: true
+```
+
+**What happens**:
+1. Create BoundingBox(58.0, 17.0, 60.0, 19.0)
+2. Execute `bbox.covers()` (checks if test point is inside)
+3. Compare: `true === true` → PASS
 
 ---
 
-## Implementation Checklist
+## Test File Example
 
-### Parser Implementation
+Complete example showing multiple test types:
 
-- [ ] Parse test suite headers (`#`)
-- [ ] Parse test headers (`##`)
-- [ ] Parse Test-ID
-- [ ] Parse Method with arguments
-- [ ] Parse Input (single and multi-line)
-- [ ] Parse Expected (simple values)
-- [ ] Parse Expected properties (`- property: value`)
-- [ ] Parse nested properties (`- nested.prop: value`)
-- [ ] Parse special properties (Count, Contains, Bounds, Inratingorder)
-- [ ] Parse indented list items (`  - value`)
-- [ ] Handle Unicode quotes
-- [ ] Parse method arguments (positional and named)
-- [ ] Handle `:` and `=` for named arguments
+```markdown
+# Point.latitude()
 
-### Test Framework Implementation
+## Point Test: Decimal degrees
+Test-ID: tdd-lat-001
+Method: latitude()
+Input: 59.32894 18.06491
+Expected: 59.32894
 
-- [ ] TestSuite class
-- [ ] MethodTest class
-- [ ] TestResult class
-- [ ] Execute Point tests
-- [ ] Execute Points tests
-- [ ] Execute CoordFinder tests
-- [ ] Execute static methods (pointIn, pointsIn)
-- [ ] Parse method arguments
-- [ ] Compare numbers (exact)
-- [ ] Compare approximate values (±0.01)
-- [ ] Compare strings (exact)
-- [ ] Compare booleans
-- [ ] Compare null
-- [ ] Compare objects (recursive)
-- [ ] Compare arrays (inratingorder)
-- [ ] Check Contains substrings
-- [ ] Check Contains not substrings
-- [ ] Handle Count property
-- [ ] Handle Bounds property
-- [ ] Convert Point arrays to appropriate format
-- [ ] Generate test results
-- [ ] Report test summary
+## Point Test: Degrees-minutes
+Test-ID: tdd-lat-002
+Method: latitude()
+Input: 59°19.736' 18°3.895'
+Expected: ~59.329
 
-### Test Runner Implementation
+# CoordFinder.points()
 
-- [ ] Load test file
-- [ ] Parse test file
-- [ ] Execute all tests
-- [ ] Collect results
-- [ ] Display results (pass/fail)
-- [ ] Display error messages
-- [ ] Calculate statistics (passed/failed/total)
-- [ ] Exit with appropriate code (0 = all pass, 1 = any fail)
+## CoordFinder Test: Filter by rating
+Test-ID: tdd-cf-001
+Method: points({rating: 0.8})
+Input: 59.3 18.1 and 59.32894 18.06491
+Expected:
+- Count: 1
+
+## CoordFinder Test: All points
+Test-ID: tdd-cf-002
+Method: points()
+Input: 59.3 18.1 and 59.32894 18.06491
+Expected:
+- Count: 2
+
+# BoundingBox.covers()
+
+## BoundingBox Test: Point inside
+Test-ID: tdd-bbox-001
+Method: covers()
+Input: 58.0 17.0 60.0 19.0
+Expected: true
+```
 
 ---
 
-## Error Handling
+## Summary
 
-### Parser Errors
+### Key Points
 
-**Test without suite**:
-- Error: "Test found without test suite at line X"
-- Action: Throw error
+1. **Three test types**: Point, CoordFinder, BoundingBox
+2. **Markdown format**: Human-readable, easy to write
+3. **Flexible comparisons**: Numbers, strings, objects, arrays
+4. **Method arguments**: Named or positional
+5. **Special properties**: Count, Contains, Bounds, Inratingorder
 
-**Missing Test-ID**:
-- Error: "Test missing Test-ID"
-- Action: Skip test or generate warning
+### Test File Location
 
-**Invalid method syntax**:
-- Error: "Invalid method syntax: X"
-- Action: Skip test or use as-is
+- Main test suite: `requirements/tdd-testsuites.txt`
+- 287 tests covering all coordinate formats and methods
 
-### Execution Errors
+### Running Tests
 
-**No point found**:
-- Result: FAIL
-- Message: "No point found in input"
+```bash
+npm test
+```
 
-**Method not found**:
-- Result: FAIL
-- Message: "Method 'X' not found"
-
-**Method throws error**:
-- Result: FAIL
-- Message: Error message from exception
-
-**Type mismatch**:
-- Result: FAIL
-- Message: "Expected X, got Y"
-
----
-
-## Performance Considerations
-
-### Parser Performance
-
-- **Line-by-line**: O(n) where n = number of lines
-- **Memory**: O(m) where m = number of tests
-- **Optimization**: Use string builder for multi-line input
-
-### Execution Performance
-
-- **Per test**: O(1) for most tests
-- **Object comparison**: O(p) where p = number of properties
-- **Array comparison**: O(n) where n = array length
-- **Total**: O(t) where t = number of tests
-
-### Recommended Limits
-
-- **Max tests per file**: 1000
-- **Max input length**: 10,000 characters
-- **Max expected properties**: 100
-- **Max nesting depth**: 10
+Runs all tests and reports pass/fail statistics.
 
 ---
 
 ## Version History
 
+### 2.0 (2026-01-23)
+- Simplified specification - removed implementation details
+- Added BoundingBox test type
+- Focused on format and behavior
+- Removed parser implementation details
+- Removed performance considerations
+
 ### 1.0 (2026-01-23)
-- Initial specification
-- Complete test format documentation
-- Execution rules
-- Comparison logic
-- Examples
+- Initial specification with implementation details
 
 ---
 
 ## References
 
 - Test files: `requirements/tdd-testsuites.txt`
-- Implementation: `src/test-framework.js`, `src/test-parser.js`
 - Test runner: `scripts/run-tdd-tests.js`
+- API documentation: `docs/API.md`
 
 ---
 
