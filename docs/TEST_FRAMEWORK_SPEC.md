@@ -627,19 +627,6 @@ Expected: true
 4. **Method arguments**: Named or positional
 5. **Special properties**: Count, Contains, Bounds, Inratingorder
 
-### Test File Location
-
-- Main test suite: `requirements/tdd-testsuites.txt`
-- 287 tests covering all coordinate formats and methods
-
-### Running Tests
-
-```bash
-npm test
-```
-
-Runs all tests and reports pass/fail statistics.
-
 ---
 
 ## Version History
@@ -650,17 +637,10 @@ Runs all tests and reports pass/fail statistics.
 - Focused on format and behavior
 - Removed parser implementation details
 - Removed performance considerations
+- Removed implementation-specific sections
 
 ### 1.0 (2026-01-23)
 - Initial specification with implementation details
-
----
-
-## References
-
-- Test files: `requirements/tdd-testsuites.txt`
-- Test runner: `scripts/run-tdd-tests.js`
-- API documentation: `docs/API.md`
 
 ---
 
