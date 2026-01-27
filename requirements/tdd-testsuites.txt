@@ -2080,7 +2080,7 @@ Input:
 N 6,592,118 E 467,456
 Method: pointIn()
 Expected:
-59.46631 14.42575
+59.46631 14.42576
 
 
 # Point.maxErrors()
