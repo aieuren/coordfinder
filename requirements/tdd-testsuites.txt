@@ -9,19 +9,6 @@ Input: "59.32894 18.06491"
 Expected:
 59.32894 18.06491
 
-# Utmaning från gamla att-göra-listan
-
-## CoordFinder Test: Udda format men ur verkliga livet
-Test-ID: test-demo-001
-Input:
-Hej.
-Det här är väl inga korrekta koordinatangivelser (i alla fall inte enligt SWEREF99 TM)?
-N 6,129,118 E 465,272
-Hälsningar Thomas Lyrholm Naturhistoriska riksmuseet
-Method: pointIn()
-Expected:
-55.30723 14.45292
-
 ## CoordFinder Test: Decimalkomma
 Test-ID: tdd-002
 Method: pointIn()
@@ -2086,8 +2073,14 @@ Method: asText(format=degreesandminutes, directionLetter=before, symbols=true)
 Input: “58.41234 12.56789”
 Expected: “N 58° 24.740’ E 12° 34.073’”
 
-
-
+# Övrigt
+## CoordFinder Test: Udda format
+Test-ID: test-odd-001
+Input:
+N 6,592,118 E 467,456
+Method: pointIn()
+Expected:
+59.46631 14.42575
 
 
 # Point.maxErrors()
@@ -2607,5 +2600,4 @@ Test-ID: tdd-log-003
 Method: asDebugText()
 Input: “57.42 12.23”
 Expected: ”DEPRECATED”
-
 
