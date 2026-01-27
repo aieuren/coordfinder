@@ -438,6 +438,9 @@ var Patterns = {
     // Leading whitespace included to match before plain pattern
     largePairs: /[ \t]*(\d{6,}(?:[,.]\d{1,3})?)[ \t]*(?:,[ \t]+|;[ \t]*|x[ \t]*|[ \t]+)(\d{6,}(?:[,.]\d{1,3})?)\b/gi,
     
+    // Prefix formats with large numbers and thousand separators: N 6,592,118 E 467,456
+    prefixLargeNumbersWithSeparators: /([NEXY]|Nordlig|Östlig)\s+(-?\d{1,3}(?:,\d{3})+)[\s,;]+([NEXY]|Nordlig|Östlig)\s+(-?\d{1,3}(?:,\d{3})+)/gi,
+    
     // Prefix formats with large numbers: N: 6504089 E: 278978 or Y: 1570600, X: 7546077
     prefixLargeNumbers: /([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})[\s,;]+([NEXY]|Nordlig|Östlig)\s*:\s*(-?\d{5,})/gi,
     
@@ -513,6 +516,7 @@ Patterns.allPatterns = [
     {regex: Patterns.urlCoords, format: CoordFormat.Degs, handler: 'url'},
     {regex: Patterns.urlParams, format: CoordFormat.Meters, handler: 'urlParams'},
     {regex: Patterns.urlParamsWGS84, format: CoordFormat.Degs, handler: 'urlParamsWGS84'},
+    {regex: Patterns.prefixLargeNumbersWithSeparators, format: CoordFormat.Meters, handler: 'prefixLargeNumbersWithSeparators'},
     {regex: Patterns.largePairs, format: CoordFormat.Meters, handler: 'largePairs'},
     {regex: Patterns.prefixLargeNumbers, format: CoordFormat.Meters, handler: 'prefixLargeNumbers'},
     {regex: Patterns.singlePrefixLarge, format: CoordFormat.Meters, handler: 'singlePrefixLarge'},
@@ -919,6 +923,38 @@ Snippet.parseFromText = function(encodedText, originalTextPosition, parser) {
         snippet._lat = val1;  // Tentative - will test both orders
         snippet._lon = val2;
         snippet._ambiguousOrder = true;  // Flag to test both X,Y and Y,X
+        
+    } else if (bestPattern.handler === 'prefixLargeNumbersWithSeparators') {
+        // Format: N 6,592,118 E 467,456 (with thousand separators)
+        var prefix1 = bestMatch[1].toUpperCase();
+        var val1 = parseFloat(bestMatch[2].replace(/,/g, ''));  // Remove commas
+        var prefix2 = bestMatch[3].toUpperCase();
+        var val2 = parseFloat(bestMatch[4].replace(/,/g, ''));  // Remove commas
+        
+        // Determine which is N/Y (northing) and which is E/X (easting)
+        var isNorth1 = prefix1.match(/^(N|NORDLIG)$/);
+        var isEast2 = prefix2.match(/^(E|ÖSTLIG)$/);
+        var isY1 = prefix1 === 'Y';
+        var isX2 = prefix2 === 'X';
+        
+        var lat, lon;
+        if (isNorth1 && isEast2) {
+            lat = val1;
+            lon = val2;
+        } else if (isY1 && isX2) {
+            lat = val2;  // X is northing in Swedish systems
+            lon = val1;  // Y is easting in Swedish systems
+        } else {
+            // Default: first is lat, second is lon
+            lat = val1;
+            lon = val2;
+        }
+        
+        snippet.number = lat;
+        snippet.directionLetter = "";
+        snippet.noOfDecimals = 0;
+        snippet._lon = lon;
+        snippet._lat = lat;
         
     } else if (bestPattern.handler === 'prefixLargeNumbers') {
         // Format: N: 6504089 E: 278978 or Y: 1570600, X: 7546077
